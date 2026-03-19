@@ -86,3 +86,4 @@ make
 - 确保Qt5的MSVC2017_64版本已正确安装在D:/Qt/5.14.2/msvc2017_64
 - 如果遇到编译问题，请检查Qt5_DIR环境变量是否指向正确的Qt5Config.cmake文件位置
 - Visual Studio 2022可以兼容使用MSVC2017编译的Qt5库，但可能需要额外的运行时库支持
+- 版本控制不同步build文件，git add . -- ':!build'
