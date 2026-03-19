@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\mocs_compilation_Debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\qt_projects\vscodeTest\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\qt_projects\vscodeTest\mainwindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\mocs_compilation_Release.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\mocs_compilation_MinSizeRel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\mocs_compilation_RelWithDebInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\qt_projects\vscodeTest\mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\include_Debug\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\include_Release\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\include_MinSizeRel\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\include_RelWithDebInfo\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\qt_projects\vscodeTest\build\CMakeFiles\a0c66f02c7e402bf3f1c739f53d477c4\vscodeTest_zh_CN.ts.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\qt_projects\vscodeTest\build\CMakeFiles\8717ebcfbcb5e18c9ec63f2d5226c6f6\autouic_(CONFIG).stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\qt_projects\vscodeTest\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\qt_projects\vscodeTest\mainwindow.ui" />
+    <None Include="D:\qt_projects\vscodeTest\vscodeTest_zh_CN.ts" />
+    <None Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\autouic_Debug.stamp" />
+    <None Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\autouic_Release.stamp" />
+    <None Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\autouic_MinSizeRel.stamp" />
+    <None Include="D:\qt_projects\vscodeTest\build\vscodeTest_autogen\autouic_RelWithDebInfo.stamp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{726BE7EE-F377-3B79-BE76-438E7C829462}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{798BB966-AFC3-3354-9D2E-0212D249D8ED}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{2AF40D8B-E1D6-32A9-B583-5EBD49C2001C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
