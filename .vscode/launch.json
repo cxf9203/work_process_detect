@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "调试 Qt 应用程序",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/vscodeTest.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/Release",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/build/Release;D:/Qt/5.14.2/msvc2017_64/bin;D:/opencv4.7_cuda/x64/vc17/bin;D:/libmodbus_dll/bin;D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/bin;C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/bin;${env:PATH}"
+                },
+                {
+                    "name": "QT_PLUGIN_PATH",
+                    "value": "D:/Qt/5.14.2/msvc2017_64/plugins"
+                },
+                {
+                    "name": "QML2_IMPORT_PATH",
+                    "value": "D:/Qt/5.14.2/msvc2017_64/qml"
+                }
+            ],
+            "console": "externalTerminal",
+            "preLaunchTask": "build-qt-project"
+        }
+    ]
+}

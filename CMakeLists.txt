@@ -50,11 +50,98 @@ else()
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    camera.cpp
+    camera.h
+    engine.cpp
+    engine.h
+    imagecleaner.cpp
+    imagecleaner.h
+    reliableimagesaver.cpp
+    reliableimagesaver.h
+    yolov8.cpp
+    yolov8.h
     ${TS_FILES}
   )
 endif()
 
-target_link_libraries(vscodeTest PRIVATE Qt5::Core Qt5::Widgets)
+# 添加头文件路径
+target_include_directories(vscodeTest PRIVATE
+    "D:/opencv4.7_cuda/include"
+    "D:/libmodbus_dll/include"
+    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/include"
+    "D:/C++Projects/CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005/CH-HCNetSDKV6.1.9.48_build20230410_win64/include"
+    "D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/include"
+)
+
+# 添加库文件路径
+target_link_directories(vscodeTest PRIVATE
+    "D:/C++Projects/CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005/CH-HCNetSDKV6.1.9.48_build20230410_win64/LIB"
+    "D:/opencv4.7_cuda/x64/vc17/lib"
+    "D:/libmodbus_dll/lib"
+    "D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/lib"
+    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/lib/x64"
+)
+
+# 链接库文件
+target_link_libraries(vscodeTest PRIVATE
+    Qt5::Core Qt5::Widgets
+    opencv_world470
+    modbus
+    nvinfer
+    nvinfer_plugin
+    nvonnxparser
+    nvparsers
+    cublas
+    cublasLt
+    cuda
+    cudadevrt
+    cudart
+    cudart_static
+    cudnn
+    cudnn64_8
+    cudnn_adv_infer
+    cudnn_adv_infer64_8
+    cudnn_adv_train
+    cudnn_adv_train64_8
+    cudnn_cnn_infer
+    cudnn_cnn_infer64_8
+    cudnn_cnn_train
+    cudnn_cnn_train64_8
+    cudnn_ops_infer
+    cudnn_ops_infer64_8
+    cudnn_ops_train
+    cudnn_ops_train64_8
+    cufft
+    cufftw
+    cufilt
+    curand
+    cusolver
+    cusolverMg
+    cusparse
+    nppc
+    nppial
+    nppicc
+    nppidei
+    nppif
+    nppig
+    nppim
+    nppist
+    nppisu
+    nppitc
+    npps
+    nvblas
+    nvjpeg
+    nvml
+    nvptxcompiler_static
+    nvrtc-builtins_static
+    nvrtc
+    nvrtc_static
+    OpenCL
+    GdiPlus
+    HCCore
+    HCNetSDK
+    PlayCtrl
+)
 
 # Windows平台特定设置
 if(WIN32)
