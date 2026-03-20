@@ -76,6 +76,8 @@ private :
   bool p2Detected = false;
   bool p3Detected = false;
   std::vector<std::string> classes = {"process1", "process2", "process3"};
+  // 用于存储每个类别的计数
+  std::unordered_map<int, int> classCount;
   int CHILUN_NUM = 1; //标准齿轮数
   int LUOSI_NUM = 4; //标准螺丝数
   bool res_flag = false; //结果标志位

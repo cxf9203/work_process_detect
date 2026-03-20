@@ -458,18 +458,7 @@ std::vector<Object> YoloV8::postprocessDetect(std::vector<float>& featureVector)
 }
 
 void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale,float area_thresh,float indensity) {
-    cv::Mat diffImage;
-    cv::Mat gray_image ;
-    cv::Mat mask;
-    towel_cnt = 0;
-    defects_cnt = 0;
-    towel_up_pose =0;
-    towel_down_pose =0;
-    bool bMask = false;
-
-    cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-
-
+    
     // If segmentation information is present, start with that
     if (!objects.empty() && !objects[0].boxMask.empty()) {
         std::cout<<"have mask"<<std::endl;
@@ -487,26 +476,13 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
 //            cv::waitKey(1);
             std::cout<<"have mask processed"<<std::endl;
         }
-
-        if(bMask){
-            std::cout<<"add absdiff"<<std::endl;
-            cv::absdiff(mask, image, diffImage);//get objects
-        }
-
-
         // Add all the masks to our image
         std::cout<<"add weighted"<<std::endl;
         cv::addWeighted(image, 0.99, mask, 0.005, 1, image);
-        drawTowelMaskcontour(diffImage,image);
-
-
     }
 
     // Bounding boxes and annotations
-    result = true;//初始化结果，判断是否有缺陷
-
-
-
+    result = true;//初始化结果
     for (auto& object : objects) {
         // Choose the color
         int colorIndex = object.label % COLOR_LIST.size(); // We have only defined 80 unique colors
@@ -523,12 +499,12 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
         const auto& rect = object.rect;
         std::string label_name = CLASS_NAMES[object.label].c_str();
         std::cout << "label_name" << label_name << std::endl;
-        // 向集合中添加字符串 "asd"
-        stringSet.insert(label_name);
         std::cout << "label_id" << object.label << std::endl;
         std::cout << "label_rect" << object.rect << std::endl;
         std::cout <<"probability  "<< object.probability * 100<<std::endl;
-
+        //统计各对象个数
+        classCount[object.label]++;
+        
 
         // Draw rectangles and text
         char text[256];
@@ -579,6 +555,68 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
         }
 
     }
+    getclassnumer();//计算个目标数量
+}
+void YoloV8::getclassnumer(){//获取每个标签类的数量
+    int chilun_num = classCount[0];
+    int keti_num = classCount[1];
+    int luosi_num = classCount[2];
+     //"chilun",   "keti" ,"luosi"
+    std::cout<<"class0"<<chilun_num<<"class1"<<keti_num<<"class2"<<luosi_num<<std::endl;
+    cur_keti = keti_num;
+    if (cur_keti > 0){
+        if (chilun_num == CHILUN_NUM ){
+            //满了 plc res_flag置1
+            //cv2.putText(frame, "OK", (10, 120), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            chilun_flag = true;
+        }
+            
+        if (luosi_num == LUOSI_NUM){
+            //满了 plc res_flag置1
+            //cv2.putText(frame, "OK", (10, 130), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            luosi_flag = true;
+        }  
+    }
+    last_keti = cur_keti;
+    if (chilun_flag && !luosi_flag){
+        //绘制消息框
+        cv::putText(frame, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+        cv::putText(frame, "luosi not yet",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 255, 0), 2)
+    }
+    
+    if luosi_flag and not chilun_flag:
+        //绘制消息框
+        cv2::putText(frame, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+        cv2::putText(frame, "luosi OK",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+    if chilun_flag and luosi_flag:
+        //绘制消息框
+        cv2::putText(frame, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+        cv2::putText(frame, "luosi OK",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+        cv2::putText(frame, "ALL OK",  cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+    if cur_keti==0 and last_keti==1:
+        //keti消失，chilun_flag和luosi_flag置0
+        chilun_flag = 0
+        luosi_flag = 0
+        //并检查是否漏装对齐
+        if not chilun_flag:
+            #绘制消息框
+            cv2::putText(frame, "chilun miss",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+        if not luosi_flag:
+            #绘制消息框 
+            cv2::putText(frame, "luosi miss",  cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
+    if cur_keti==0 and last_keti==0:
+        #keti消失，chilun_flag和luosi_flag置0
+        chilun_flag = 0
+        luosi_flag = 0
+        
+   
+    
+
+
+
+
+    classCount.clear();
+
 }
 bool YoloV8::getResult()//是否检测到defects和折叠或者破边
 {

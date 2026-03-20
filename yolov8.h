@@ -74,7 +74,7 @@ public:
     //std::vector<Object> imageClassify(const cv::cuda::GpuMat& inputImageBGR);
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale = 2,float area_thresh=1,float indensity=1);
-
+    void getclassnumer();
     bool getResult();
     int getPoseUp();//获取上表面
     int getPoseDown();//获取下表面
@@ -96,18 +96,18 @@ public:
     std::set<std::string> getSet();
 private:
     //初始化结果
-    int towel_cnt = 0;
-    int towel_up_pose =0;
-    int towel_down_pose =0;
-    cv::Rect towel_rect;
-    cv::Mat towel_mask;
-    float towel_hight=0;
-    float towel_width = 0;
-    int defects_cnt=0;
-    float towel_theta;
+    int CHILUN_NUM = 1;//标准齿轮数
+    int LUOSI_NUM = 4;//标准螺丝数
+    bool res_flag = 0;
+    bool chilun_flag = 0;
+    bool luosi_flag = 0;
+    int cur_keti = 0;
+    int last_keti = 0;
+    // 用于存储每个类别的计数
+    std::unordered_map<int, int> classCount;
     float area_threshold;
     float intensity_threshold;
-    cv::RotatedRect towel_minRect;
+   
     cv::Point2f vertices[4];//在图像上绘制最小外接矩形四个点
     bool result = true;
     bool cam2_result = true;
