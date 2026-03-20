@@ -89,7 +89,7 @@ void Camera::run()
 {
     // 链接PLC
     //ctx = modbus_new_tcp("192.168.1.11", 502);
-    ctx = modbus_new_tcp("192.168.31.101", 502);//厂里是192.168.1.11
+    ctx = modbus_new_tcp("192.168.1.99", 2001);//西门子smart 200 厂里是192.168.1.11
     if (ctx == NULL)
     {
         qDebug() << "cannot create modbus";
@@ -280,6 +280,8 @@ void Camera::run()
                     cv::putText(BGR_image, "luosi OK", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     emit updateButtonState(true, true, true); // 齿轮/螺丝/ 总体
+                    // PLC 接收
+                    setD(1,1);//绿灯 
                 }
 
                 if (cur_keti == 0 && last_keti == 1)
@@ -293,6 +295,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
+                        setD(0,1);//置位
                     }
 
                     if (!luosi_flag)
@@ -300,6 +303,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
+                        setD(0,1);//置位
                     }
                 }
 
@@ -308,6 +312,9 @@ void Camera::run()
                     // keti消失，chilun_flag和luosi_flag置0
                     chilun_flag = false;
                     luosi_flag = false;
+                    //复位PLC输出
+                    setD(0,0);//复位报警
+                    setD(1,0);//复位绿灯
                 }
             }
             catch (...)
