@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/build/Release/vscodeTest.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Release",
+            "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "PATH",
