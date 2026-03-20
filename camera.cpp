@@ -207,72 +207,79 @@ void Camera::run(){
                 const auto objects = yoloV8.detectObjects(BGR_image);
                 // Draw the bounding boxes on the image
                 yoloV8.drawObjectLabels(BGR_image, objects,2);//绘制框
-
-//                std::set<std::string> stringSet = yoloV8.getSet();
-//                // 检查字符串 "***" 是否在集合中
-//                if (stringSet.find(classes[currentState]) != stringSet.end()) {
-
-//                    std::cout << "工序 在集合中。" << std::endl;
-//                    switch (currentState) {
-//                    case 0: detectedP1 = true; break;
-//                    case 1: detectedP2 = true; break;
-//                    case 2: detectedP3 = true; break;
-//                    }
-//                } else {
-//                    std::cout << "工序 不在集合中。" << std::endl;
-//                }
-//                // 更新状态
-//                if (currentState == WAIT_P1 && detectedP1) {
-//                    p1Detected = true;
-//                    currentState = WAIT_P2;
-//                   // timeoutTimer->start(TIMEOUT_SEC * 1000); // 重置超时计时器
-//                    if (detectedP2 || detectedP3){
-//                        currentState = ALARM;
-//                        emit triggerAlarm();
-//                    }
-//                }
-//                else if (currentState == WAIT_P2 && detectedP2) {
-//                    p2Detected = true;
-//                    currentState = WAIT_P3;
-//                   // timeoutTimer->start(TIMEOUT_SEC * 1000);
-//                    if (detectedP1 || detectedP3){
-//                        currentState = ALARM;
-//                        emit triggerAlarm();
-//                    }
-//                }
-//                else if (currentState == WAIT_P3 && detectedP3) {
-//                    p3Detected = true;
-//                    currentState = COMPLETE;
-//                    if (detectedP1 || detectedP2){
-//                        currentState = ALARM;
-//                        emit triggerAlarm();
-//                    }
-//                }
-//                emit updateButtonState(p1Detected,p2Detected,p3Detected);
-//                // 检查工序完成
-//                if (currentState == COMPLETE) {
-//                    QThread::msleep(1000);
-//                    emit resetSystem();
-//                    currentState = WAIT_P1;
-//                    p1Detected = false;
-//                    p2Detected = false;
-//                    p3Detected = false;
-//                }
+                std::vector<int> classCount = YoloV8.getclassnumer;
+                int chilun_num = classCount[0];
+                int keti_num = classCount[1];
+                int luosi_num = classCount[2];
+                //"chilun",   "keti" ,"luosi"
+                std::cout<<"class0"<<chilun_num<<"class1"<<keti_num<<"class2"<<luosi_num<<std::endl;
+                cur_keti = keti_num;
+                if (cur_keti > 0){
+                    if (chilun_num == CHILUN_NUM ){
+                        //满了 plc res_flag置1
+                        //cv2.putText(image, "OK", (10, 120), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        chilun_flag = true;
+                    }
+                        
+                    if (luosi_num == LUOSI_NUM){
+                        //满了 plc res_flag置1
+                        //cv2.putText(image, "OK", (10, 130), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        luosi_flag = true;
+                    }  
+                }
+                last_keti = cur_keti;
+                if (chilun_flag && !luosi_flag){
+                    //绘制消息框
+                    cv::putText(BGR_image, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    cv::putText(BGR_image, "luosi not yet",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 255, 0), 2);
+                }
+                
+                if (luosi_flag && !chilun_flag){
+                    //绘制消息框
+                    cv::putText(BGR_image, "chilun not yet",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    cv::putText(BGR_image, "luosi OK",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                }
+                    
+                if (chilun_flag && luosi_flag){
+                    //绘制消息框
+                    cv::putText(BGR_image, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    cv::putText(BGR_image, "luosi OK",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    cv::putText(BGR_image, "ALL OK",  cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                }
+                    
+                if (cur_keti==0 && last_keti==1){
+                    //keti消失，chilun_flag和luosi_flag置0
+                    chilun_flag = false;
+                    luosi_flag = false;
+                    //并检查是否漏装对齐
+                    if (!chilun_flag){
+                        //绘制消息框
+                        cv::putText(BGR_image, "chilun miss",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                        //PLC 报警
+                    }
+                        
+                    if (!luosi_flag){
+                        //绘制消息框 
+                        cv::putText(BGR_image, "luosi miss",  cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                        //PLC 报警
+                    }
+                        
+                }
+                    
+                if (cur_keti==0 && last_keti==0){
+                    //keti消失，chilun_flag和luosi_flag置0
+                    chilun_flag = false;
+                    luosi_flag = false;
+                }
 
             } catch (...) {
                 // 处理所有异常的逻辑
                std::cerr << "An unknown exception occurred during image processing." << std::endl;
                sendQStringtoMain("An unknown exception occurred during image processing.");
-
-
-
             }
             QImage a = cvMat2QImage(BGR_image);
             QImage IMG =a.scaled(300, 300, Qt::KeepAspectRatio);
             sendQImgToAutoMain(IMG);
-//            cv::imshow("BGR_image",BGR_image);
-//            cv::waitKey(1);
-
 
     }
 

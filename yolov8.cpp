@@ -233,7 +233,7 @@ std::vector<Object> YoloV8::postProcessSegmentation(std::vector<std::vector<floa
         cnt += 1;
     }
  std::cout <<"finish Object the bounding boxes and class labels " <<std::endl;
-    // Convert segmentation mask to original frame
+    // Convert segmentation mask to original image
     if (!masks.empty()) {
         cv::Mat matmulRes = (masks * protos).t();
         cv::Mat maskMat = matmulRes.reshape(indices.size(), { SEG_W, SEG_H });
@@ -249,7 +249,7 @@ std::vector<Object> YoloV8::postProcessSegmentation(std::vector<std::vector<floa
         else {
             roi = cv::Rect(0, 0, SEG_W, SEG_H * m_imgHeight / m_imgWidth);
         }
-        std::cout<<"Convert segmentation mask to original frame"<<std::endl;
+        std::cout<<"Convert segmentation mask to original image"<<std::endl;
         try {
             for (size_t i = 0; i < indices.size(); i++) {
                 cv::Mat dest, mask;
@@ -458,27 +458,17 @@ std::vector<Object> YoloV8::postprocessDetect(std::vector<float>& featureVector)
 }
 
 void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale,float area_thresh,float indensity) {
-    
+    classCount.clear(); //清空统计
     // If segmentation information is present, start with that
     if (!objects.empty() && !objects[0].boxMask.empty()) {
         std::cout<<"have mask"<<std::endl;
-
-        mask = image.clone();
-        bMask = true;
         for (const auto& object : objects) {
             // Choose the color
             int colorIndex = object.label % COLOR_LIST.size(); // We have only defined 80 unique colors
             cv::Scalar color = cv::Scalar(COLOR_LIST[colorIndex][0], COLOR_LIST[colorIndex][1], COLOR_LIST[colorIndex][2]);
-
-            // Add the mask for said object
-            mask(object.rect).setTo(color * 255, object.boxMask);
-//           cv::imshow("mask",mask);
-//            cv::waitKey(1);
             std::cout<<"have mask processed"<<std::endl;
         }
-        // Add all the masks to our image
-        std::cout<<"add weighted"<<std::endl;
-        cv::addWeighted(image, 0.99, mask, 0.005, 1, image);
+      
     }
 
     // Bounding boxes and annotations
@@ -498,14 +488,18 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
 
         const auto& rect = object.rect;
         std::string label_name = CLASS_NAMES[object.label].c_str();
-        std::cout << "label_name" << label_name << std::endl;
+        std::cout << "label_name" << label_name << std::endl;//"chilun",   "keti" ,"luosi"
         std::cout << "label_id" << object.label << std::endl;
         std::cout << "label_rect" << object.rect << std::endl;
         std::cout <<"probability  "<< object.probability * 100<<std::endl;
         //统计各对象个数
-        classCount[object.label]++;
-        
-
+        if (object.label == 0){
+            classCount[0] += 1;
+        } else if (object.label == 1){
+            classCount[1] += 1;
+        } else if (object.label == 2){
+            classCount[2] += 1;
+        }
         // Draw rectangles and text
         char text[256];
         sprintf(text, "%s %.1f%%", CLASS_NAMES[object.label].c_str(), object.probability * 100);
@@ -555,245 +549,17 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
         }
 
     }
-    getclassnumer();//计算个目标数量
+ 
 }
-void YoloV8::getclassnumer(){//获取每个标签类的数量
-    int chilun_num = classCount[0];
-    int keti_num = classCount[1];
-    int luosi_num = classCount[2];
-     //"chilun",   "keti" ,"luosi"
-    std::cout<<"class0"<<chilun_num<<"class1"<<keti_num<<"class2"<<luosi_num<<std::endl;
-    cur_keti = keti_num;
-    if (cur_keti > 0){
-        if (chilun_num == CHILUN_NUM ){
-            //满了 plc res_flag置1
-            //cv2.putText(frame, "OK", (10, 120), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            chilun_flag = true;
-        }
-            
-        if (luosi_num == LUOSI_NUM){
-            //满了 plc res_flag置1
-            //cv2.putText(frame, "OK", (10, 130), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            luosi_flag = true;
-        }  
-    }
-    last_keti = cur_keti;
-    if (chilun_flag && !luosi_flag){
-        //绘制消息框
-        cv::putText(frame, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-        cv::putText(frame, "luosi not yet",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 255, 0), 2)
-    }
-    
-    if luosi_flag and not chilun_flag:
-        //绘制消息框
-        cv2::putText(frame, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-        cv2::putText(frame, "luosi OK",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-    if chilun_flag and luosi_flag:
-        //绘制消息框
-        cv2::putText(frame, "chilun OK",  cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-        cv2::putText(frame, "luosi OK",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-        cv2::putText(frame, "ALL OK",  cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-    if cur_keti==0 and last_keti==1:
-        //keti消失，chilun_flag和luosi_flag置0
-        chilun_flag = 0
-        luosi_flag = 0
-        //并检查是否漏装对齐
-        if not chilun_flag:
-            #绘制消息框
-            cv2::putText(frame, "chilun miss",  cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-        if not luosi_flag:
-            #绘制消息框 
-            cv2::putText(frame, "luosi miss",  cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2)
-    if cur_keti==0 and last_keti==0:
-        #keti消失，chilun_flag和luosi_flag置0
-        chilun_flag = 0
-        luosi_flag = 0
-        
-   
-    
-
-
-
-
-    classCount.clear();
+std::vector<int> YoloV8::getclassnumer(){//获取每个标签类的数量
+    return classCount;
 
 }
 bool YoloV8::getResult()//是否检测到defects和折叠或者破边
 {
     return result;
 }
-int YoloV8::getPoseUp(){
-    return towel_up_pose;
-}
-int YoloV8::getPoseDown(){
-    return towel_down_pose;
-}
-int YoloV8::getTowelCnt(){
-    return towel_cnt;
-}
-cv::Rect YoloV8::getTowel_rect(){
-    return towel_rect;
-}
-cv::Mat YoloV8::getTowelMask(){
-    return towel_mask;
-}
-float YoloV8::getTowelHight(){
-    return towel_hight;
-}
-float YoloV8::getTowelWidth(){
-    return towel_width;
-}
-float YoloV8::getTowelTheta(){
-    return towel_theta;
-}
-int YoloV8::getDefectsCnt(){
-    return defects_cnt;
-}
-void YoloV8::drawTowelMaskcontour(cv::Mat diffImage,cv::Mat bgr_image){
-    std::cout<<"run draw cntour"<<std::endl;
-    cv::Mat grayImage;
-    // 将BGR图像转换为灰度图像
-    cv::cvtColor(diffImage, grayImage, cv::COLOR_BGR2GRAY);
-    // 将图像转换为二值图像
-    cv::Mat binaryImage;
-    double thresholdValue = 30; // 可以根据实际情况调整阈值
-    cv::threshold(grayImage, binaryImage, thresholdValue, 255, cv::THRESH_BINARY);
-    // 查找轮廓
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(binaryImage, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    // 遍历轮廓，寻找最小外接矩形和旋转角度
-    for (size_t i = 0; i < contours.size(); i++) {
-        // 计算最小外接矩形
-        cv::RotatedRect minRect = cv::minAreaRect(contours[i]);
-
-        // 获取中心点、宽度、高度和旋转角度
-        cv::Point2f center = minRect.center;
-        float width = minRect.size.width;
-        float height = minRect.size.height;
-        float angle = minRect.angle; // 旋转角度，单位是度
-
-        // 计算最小外接矩形的面积
-        float area = width * height;
-
-
-        if (area>100000){
-            //是毛巾
-//            towel_cnt++;
-
-            towel_minRect = minRect;
-            //towel_theta = normalize_angle(angle);
-            // 输出结果
-            std::cout << "轮廓 " << i << " 的信息:" << std::endl;
-            std::cout << "中心: (" << center.x << ", " << center.y << ")" << std::endl;
-//            std::cout << "宽度: " << width << ", 高度: " << height << std::endl;
-            std::cout << "旋转角度: " << angle << " 度" << std::endl;
-            std::cout << "面积: " << area << std::endl;
-
-            // 可选：在图像上绘制最小外接矩形
-
-            minRect.points(vertices);
-
-            // 计算四条边的斜率
-            std::vector<float> slopes;
-            for (int i = 0; i < 4; ++i) {
-                int j = (i + 1) % 4;
-                cv::Point2f edge = vertices[j] - vertices[i];
-                float slope = std::atan2(edge.y, edge.x) * 180.0 / CV_PI;
-                slopes.push_back(slope);
-            }
-
-            // 输出斜率
-            //towel_theta  = slope_to_angle(slopes[0]);
-            if(angle>45){
-                towel_theta = 90-angle;
-                towel_hight = width;//最小外接矩形的宽高
-                towel_width = height;
-
-            }else{
-                towel_theta = angle;
-                towel_hight = height;//最小外接矩形的宽高
-                towel_width = width;
-            }
-
-            std::cout << "斜率 " << slopes[0]<< " 对应的角度为: " << towel_theta << " 度" << std::endl;
-//            std::cout << "最小外接矩形的四条边的斜率：" << std::endl;
-//            for (float slope : slopes) {
-//                std::cout << slope << " 度" << std::endl;
-//            }
-            for (int j = 0; j < 4; j++) {
-                cv::line(bgr_image, vertices[j], vertices[(j + 1) % 4], cv::Scalar(0,255,0), 2);
-            }
-        }
-
-    }
-    //    cv::imshow("diffImage",diffImage);
-    //    cv::imshow("binaryImage",binaryImage);
-    //    cv::waitKey(100);
-
-}
-// 将斜率转换为角度，并控制在0°到45°之间
-float YoloV8::slope_to_angle(float m) {
-    // 如果斜率的绝对值大于1，取其倒数并调整符号
-    if (std::abs(m) > 1) {
-        m = 1.0 / m;
-    }
-
-    // 计算原始角度
-    float angle = std::abs(atan(m) * 180.0 /3.14159);
-
-    return angle;
-}
-// 判断点是否在多边形内
-bool YoloV8::isPointInPolygon(const std::vector<cv::Point2f>& polygon, const cv::Point2f& point) {
-    int windingNumber = 0;
-    int n = polygon.size();
-    for (int i = 0; i < n; ++i) {
-        cv::Point2f p1 = polygon[i];
-        cv::Point2f p2 = polygon[(i + 1) % n];
-
-        if (p1.y <= point.y) {
-            if (p2.y > point.y) {
-                if ((point.x - p1.x) * (p2.y - p1.y) - (point.y - p1.y) * (p2.x - p1.x) > 0) {
-                    windingNumber++;
-                }
-            }
-        } else {
-            if (p2.y <= point.y) {
-                if ((point.x - p1.x) * (p2.y - p1.y) - (point.y - p1.y) * (p2.x - p1.x) < 0) {
-                    windingNumber--;
-                }
-            }
-        }
-    }
-    return windingNumber != 0;
-}
-
-// 判断水平矩形是否完全包含在旋转矩形内
-bool YoloV8::isRectInsideRotatedRect(const cv::RotatedRect& minRect, const cv::Rect& box) {
-    // 获取旋转矩形的四个顶点
-    cv::Point2f vertices[4];
-    minRect.points(vertices);
-
-    // 将旋转矩形的顶点存储在 vector 中
-    std::vector<cv::Point2f> polygon(vertices, vertices + 4);
-
-    // 获取矩形对象的四个顶点
-    cv::Point2f rectPoints[4] = {
-        box.tl(),
-        cv::Point2f(box.x + box.width, box.y),
-        box.br(),
-        cv::Point2f(box.x, box.y + box.height)
-    };
-
-    // 检查矩形对象的四个顶点是否都在旋转矩形内
-    for (int i = 0; i < 4; ++i) {
-        if (!isPointInPolygon(polygon, rectPoints[i])) {
-            return false;
-        }
-    }
-    return true;
-}
 float YoloV8::calculateAveragePixelValue(const cv::Mat& image, const cv::Rect& rect) {
     // 提取矩形区域内的像素值
     cv::Mat roi = image(rect);

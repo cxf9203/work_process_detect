@@ -74,37 +74,17 @@ public:
     //std::vector<Object> imageClassify(const cv::cuda::GpuMat& inputImageBGR);
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale = 2,float area_thresh=1,float indensity=1);
-    void getclassnumer();
+    std::vector<int> getclassnumer();
     bool getResult();
-    int getPoseUp();//获取上表面
-    int getPoseDown();//获取下表面
-    int getTowelCnt();
-    cv::Rect getTowel_rect();
-    cv::Mat getTowelMask();
-    void drawTowelMaskcontour(cv::Mat towel_mask,cv::Mat bgr_image);//提取毛巾掩膜旋转角度和绘制最小外接矩形
-    float getTowelHight();
-    float getTowelWidth();
-    float getTowelTheta();
-    int getDefectsCnt();
-    float slope_to_angle(float m) ;
-    bool isPointInPolygon(const std::vector<cv::Point2f>& polygon, const cv::Point2f& point);
-    bool isRectInsideRotatedRect(const cv::RotatedRect& minRect, const cv::Rect& box);
     float calculateAveragePixelValue(const cv::Mat& image, const cv::Rect& rect);
     void setArea_threshold(float area);
     void setIntensity_threshold(float intensity);
     int getItemIndex();
     std::set<std::string> getSet();
 private:
-    //初始化结果
-    int CHILUN_NUM = 1;//标准齿轮数
-    int LUOSI_NUM = 4;//标准螺丝数
-    bool res_flag = 0;
-    bool chilun_flag = 0;
-    bool luosi_flag = 0;
-    int cur_keti = 0;
-    int last_keti = 0;
+    
     // 用于存储每个类别的计数
-    std::unordered_map<int, int> classCount;
+    std::vector<int> classCount;
     float area_threshold;
     float intensity_threshold;
    
@@ -120,7 +100,7 @@ private:
     std::vector<Object> postprocessDetect(std::vector<float>& featureVector);
     // Postprocess the output for classify
     int postprocessClassify(std::vector<float>& featureVector);
-int Itemindex;
+    int Itemindex;
     // Postprocess the output for pose model
     std::vector<Object> postprocessPose(std::vector<float>& featureVector);
 
