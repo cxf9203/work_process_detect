@@ -13,7 +13,7 @@
 #include<queue>
 #include "yolov8.h"
 #include<vector>
-
+#include <modbus.h>
 #include <QCoreApplication>
 #include <HCNetSDK.h>
 #include <plaympeg4.h>
@@ -22,34 +22,40 @@
 //相机线程类
 class Camera : public QObject
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    Camera(QObject *parent = nullptr);
-    void initCamera();
-    ~Camera();
+  Camera(QObject *parent = nullptr);
+  void initCamera();
+  ~Camera();
   static std::queue<cv::Mat> gImage;
   void closeDevice();//关闭设备
   void stop_camera();
 
-bool imageProcess(cv::Mat image);
+  bool imageProcess(cv::Mat image);
 
   QImage cvMat2QImage(const cv::Mat& mat);
   QImage image;
   cv::Mat getOneFrame();//
   //设定图像处理参数
+  //设定PLC参数
+  // void setM(int value);//设定M元件
+  // void ResetM(int value);//读取M元件
+  void setD(int address, int value);//设置整型D元件
+  void set32D(int address, int32_t value);//设置整型D元件
 
 signals:
-    //给主线程发消息
-void sendImgToAutoMain(cv::Mat img,double left_tuoshuizhou, double right_tuoshuizhou, double left_dashuifeng, double right_dashuifeng,
-                       double theta_t, double theta_d, bool result);
-void sendQImgToAutoMain(QImage img);
-void finished();  // 新增：用于在循环结束时通知主线程
-void sendQStringtoMain(QString message);
-void sendResult(QString left_tuoshuizhou,QString right_tuoshuizhou,QString left_dashuifeng,QString right_dashuifeng,QString theta_t,QString theta_d,QString result);
-void finishedthread();
-void updateButtonState(bool p1,bool p2,bool p3);
-void resetSystem();
-void triggerAlarm();
+  //给主线程发消息
+  void sendImgToAutoMain(cv::Mat img,double left_tuoshuizhou, double right_tuoshuizhou, double left_dashuifeng, double right_dashuifeng,
+                        double theta_t, double theta_d, bool result);
+  void sendQImgToAutoMain(QImage img);
+  void finished();  // 新增：用于在循环结束时通知主线程
+  void sendQStringtoMain(QString message);
+  void sendResult(QString left_tuoshuizhou,QString right_tuoshuizhou,QString left_dashuifeng,QString right_dashuifeng,QString theta_t,QString theta_d,QString result);
+  void finishedthread();
+  void updateButtonState(bool p1,bool p2,bool p3);
+  void send_connectstate(bool state);
+  void resetSystem();
+  void triggerAlarm();
 private :
   QString filePath = "D:\\C++Projects\\openvino_onnx_yolo\\yolo11n.onnx";
   std::string onnxModelPath = filePath.toStdString();
@@ -60,6 +66,13 @@ private :
   int id;
   bool cameraOpened = false;
   bool isGrabbingFlag = false;
+  //连接PLC modbustcp
+  modbus_t* ctx;
+  int rc;
+  uint16_t query[MODBUS_TCP_MAX_ADU_LENGTH];
+  uint32_t query32D[MODBUS_TCP_MAX_ADU_LENGTH];
+
+  uint8_t queryM[MODBUS_TCP_MAX_ADU_LENGTH];
   // cv::VideoCapture cap;
   //------------------------------
   // 登录
@@ -77,14 +90,13 @@ private :
   bool p3Detected = false;
   std::vector<std::string> classes = {"process1", "process2", "process3"};
   // 用于存储每个类别的计数
- 
   int CHILUN_NUM = 1; //标准齿轮数
   int LUOSI_NUM = 4; //标准螺丝数
   bool res_flag = false; //结果标志位
   bool chilun_flag = false; //齿轮标志位
   int luosi_flag = 0; //螺丝标志位
   int cur_keti = 0; //当前keti计数
-  int last_keti = 0；//上次keti计数
+  int last_keti = 0;//上次keti计数
 protected:
 
 public slots:

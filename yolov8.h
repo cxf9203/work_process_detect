@@ -73,7 +73,7 @@ public:
     //std::vector<Object> imageClassify(const cv::Mat& inputImageBGR);
     //std::vector<Object> imageClassify(const cv::cuda::GpuMat& inputImageBGR);
     // Draw the object bounding boxes and labels on the image
-    void drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale = 2,float area_thresh=1,float indensity=1);
+    void drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale = 2);
     std::vector<int> getclassnumer();
     bool getResult();
     float calculateAveragePixelValue(const cv::Mat& image, const cv::Rect& rect);
@@ -84,7 +84,7 @@ public:
 private:
     
     // 用于存储每个类别的计数
-    std::vector<int> classCount;
+    std::vector<int> classCount = {0,0,0};
     float area_threshold;
     float intensity_threshold;
    

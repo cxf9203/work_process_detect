@@ -61,18 +61,21 @@
      <rect>
       <x>30</x>
       <y>90</y>
-      <width>1191</width>
-      <height>581</height>
+      <width>1231</width>
+      <height>591</height>
      </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
     </property>
     <widget class="QWidget" name="page">
      <widget class="QLabel" name="label">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>30</x>
         <y>40</y>
-        <width>621</width>
-        <height>421</height>
+        <width>441</width>
+        <height>451</height>
        </rect>
       </property>
       <property name="text">
@@ -82,9 +85,9 @@
      <widget class="QPushButton" name="btn_proc1">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>0</x>
         <y>500</y>
-        <width>91</width>
+        <width>101</width>
         <height>41</height>
        </rect>
       </property>
@@ -95,7 +98,7 @@
        </font>
       </property>
       <property name="text">
-       <string>proc1</string>
+       <string>大齿轮装配</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_proc2">
@@ -114,7 +117,7 @@
        </font>
       </property>
       <property name="text">
-       <string>proc2</string>
+       <string>螺丝装配</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_proc3">
@@ -133,15 +136,15 @@
        </font>
       </property>
       <property name="text">
-       <string>proc3</string>
+       <string>全程状态</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_proc4">
       <property name="geometry">
        <rect>
-        <x>310</x>
-        <y>500</y>
-        <width>91</width>
+        <x>990</x>
+        <y>40</y>
+        <width>161</width>
         <height>41</height>
        </rect>
       </property>
@@ -152,9 +155,87 @@
        </font>
       </property>
       <property name="text">
-       <string>proc4</string>
+       <string>PLC连接状态</string>
       </property>
      </widget>
+     <widget class="QWidget" name="gridLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>680</x>
+        <y>40</y>
+        <width>281</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="font">
+          <font>
+           <family>3ds</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>齿轮数量</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="font">
+          <font>
+           <family>3ds</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>螺丝数量</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="lb_luosi_num">
+         <property name="font">
+          <font>
+           <family>3ds</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="lb_chilun_num">
+         <property name="font">
+          <font>
+           <family>3ds</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <zorder>btn_proc2</zorder>
+     <zorder>btn_proc3</zorder>
+     <zorder>btn_proc4</zorder>
+     <zorder>label</zorder>
+     <zorder>btn_proc1</zorder>
+     <zorder>gridLayoutWidget</zorder>
     </widget>
     <widget class="QWidget" name="page_2"/>
    </widget>

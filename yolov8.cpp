@@ -457,8 +457,9 @@ std::vector<Object> YoloV8::postprocessDetect(std::vector<float>& featureVector)
     return objects;
 }
 
-void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale,float area_thresh,float indensity) {
-    classCount.clear(); //清空统计
+void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale) {
+    //清空std::vector classCount
+    classCount[0]=0;classCount[1]=0;classCount[2]=0;
     // If segmentation information is present, start with that
     if (!objects.empty() && !objects[0].boxMask.empty()) {
         std::cout<<"have mask"<<std::endl;
@@ -492,7 +493,7 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
         std::cout << "label_id" << object.label << std::endl;
         std::cout << "label_rect" << object.rect << std::endl;
         std::cout <<"probability  "<< object.probability * 100<<std::endl;
-        //统计各对象个数
+        // //统计各对象个数
         if (object.label == 0){
             classCount[0] += 1;
         } else if (object.label == 1){

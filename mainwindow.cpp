@@ -19,9 +19,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::SetStopThreadC1, cam, &Camera::ExecuteMianToThread, Qt::DirectConnection);//向线程发送信号//线程终止条件设置函数
     //connect(cam,&Camera::sendImgToAutoMain,this,&MainWindow::receiveslotAutoImg,Qt::DirectConnection);
     //connect(cam,&Camera::resetSystem,this,&MainWindow::resetSystem,Qt::DirectConnection);
-    //connect(cam,&Camera::updateButtonState,this,&MainWindow::updateButtonState,Qt::DirectConnection);
+    connect(cam,&Camera::send_connectstate,this,&MainWindow::receive_connectstate,Qt::QueuedConnection);
+    connect(cam,&Camera::updateButtonState,this,&MainWindow::updateButtonState,Qt::DirectConnection);
     //connect(cam,&Camera::triggerAlarm,this,&MainWindow::triggerAlarm,Qt::DirectConnection);
-    connect(cam,&Camera::sendQImgToAutoMain,this,&MainWindow::receiveslotQImg,Qt::DirectConnection);
+    connect(cam,&Camera::sendQImgToAutoMain,this,&MainWindow::receiveslotQImg,Qt::QueuedConnection);
+    
+    
     //connect(cam,&Camera::sendQStringtoMain,this,&MainWindow::receiveQStringtoMain,Qt::DirectConnection);
     connect(cam,&Camera::finishedthread,this,&MainWindow::receivefinish);
     connect(this,&MainWindow::destroyed,cam,&Camera::deleteLater,Qt::DirectConnection);
@@ -49,4 +52,25 @@ void MainWindow::receiveslotQImg(QImage img){
 void MainWindow::receivefinish(){
     qDebug()<<"finished thread";
     cam->closeDevice();//关闭相机线程
+}
+void MainWindow::updateButtonState(bool p1Detected,bool p2Detected,bool p3Detected){
+    ui->btn_proc1->setEnabled(p1Detected);
+    ui->btn_proc2->setEnabled(p2Detected);
+    ui->btn_proc3->setEnabled(p3Detected);
+
+    if (p1Detected)
+        ui->btn_proc1->setStyleSheet("background-color: green;");
+    if (p2Detected)
+        ui->btn_proc2->setStyleSheet("background-color: green;");
+    if (p3Detected)
+        ui->btn_proc3->setStyleSheet("background-color: green;");
+}
+void MainWindow::receive_connectstate(bool state){
+    if(state){
+        ui->btn_proc4->setStyleSheet("background-color: green; color: white;");
+        ui->btn_proc4->setText(QString::fromLocal8Bit ("已连接"));
+    }else{
+        ui->btn_proc4->setStyleSheet("background-color: red; color: white;");
+        ui->btn_proc4->setText(QString::fromLocal8Bit ("未连接"));
+    }
 }
