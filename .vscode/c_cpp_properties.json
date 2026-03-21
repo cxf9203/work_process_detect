@@ -9,7 +9,8 @@
                 "D:\\TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0\\TensorRT-8.6.1.6\\include\\**",
                 "D:\\QT\\5.14.2\\msvc2017_64\\include\\**",
                 "D:\\MVS\\MVS\\Development\\Includes\\**",
-                "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.2\\include\\**"
+                "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.2\\include\\**",
+                "D:\\C++Projects\\CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005\\CH-HCNetSDKV6.1.9.48_build20230410_win64\\include\\**"
             ],
             "defines": [
                 "_DEBUG",

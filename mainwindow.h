@@ -31,6 +31,8 @@ private slots:
 
     void on_stop_clicked();
 
+    void on_btn_setRoi_clicked();
+
 private:
     Ui::MainWindow *ui;
     QThread *THREAD1_cam1;

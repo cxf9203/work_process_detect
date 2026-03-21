@@ -37,6 +37,7 @@ public:
   QImage image;
   cv::Mat getOneFrame();//
   //设定图像处理参数
+  int setRoi();
   //设定PLC参数
   // void setM(int value);//设定M元件
   // void ResetM(int value);//读取M元件
@@ -77,8 +78,8 @@ private :
   //------------------------------
   // 登录
   NET_DVR_USER_LOGIN_INFO pLoginInfo = { 0 };
-  NET_DVR_DEVICEINFO_V40 lpDeviceInfo = { 0 };
-  NET_DVR_PREVIEWINFO struPlayInfo;
+  NET_DVR_DEVICEINFO_V40 lpDeviceInfo = { 0 }; //NET_DVR_DEVICEINFO_V40
+  NET_DVR_PREVIEWINFO struPlayInfo;//NET_DVR_PREVIEWINFO_V30
   WORD wPort = 8000;
   LONG lUserID;
   bool output=false;
@@ -97,6 +98,11 @@ private :
   int luosi_flag = 0; //螺丝标志位
   int cur_keti = 0; //当前keti计数
   int last_keti = 0;//上次keti计数
+  //图像参数
+  int roi_x = 0;
+  int roi_y = 0;
+  int roi_w = 500;
+  int roi_h = 500;
 protected:
 
 public slots:

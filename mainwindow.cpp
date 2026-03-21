@@ -74,3 +74,8 @@ void MainWindow::receive_connectstate(bool state){
         ui->btn_proc4->setText(QString::fromLocal8Bit ("未连接"));
     }
 }
+void MainWindow::on_btn_setRoi_clicked()
+{
+    //设定识别ROI
+    cam->setRoi();
+}

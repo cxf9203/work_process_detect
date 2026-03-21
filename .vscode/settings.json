@@ -1,0 +1,23 @@
+{
+    "cmake.configureOnOpen": false,
+    "cmake.configureOnEdit": false,
+    "cmake.generator": "Ninja",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.defaultVariants": {
+        "buildType": {
+            "default": "Release",
+            "choices": {
+                "Debug": {
+                    "short": "Debug",
+                    "long": "Debug",
+                    "buildType": "Debug"
+                },
+                "Release": {
+                    "short": "Release",
+                    "long": "Release",
+                    "buildType": "Release"
+                }
+            }
+        }
+    }
+}
