@@ -1,2 +1,18 @@
 # Build directories
 build/
+
+
+# CMake configuration
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# VSCode configuration
+.vscode/
+
+
+
