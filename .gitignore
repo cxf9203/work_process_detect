@@ -1,7 +1,8 @@
 # Build directories
 build/
-
-
+video/
+saved_img/
+runs/
 # CMake configuration
 CMakeLists.txt.user
 CMakeCache.txt
