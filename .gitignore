@@ -15,5 +15,8 @@ Makefile
 # VSCode configuration
 .vscode/
 
+# source files
+resource/
+
 
 
