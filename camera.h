@@ -43,6 +43,7 @@ public:
   // void ResetM(int value);//读取M元件
   void setD(int address, int value);//设置整型D元件
   void set32D(int address, int32_t value);//设置整型D元件
+  void aiTest();//ai model test
 
 signals:
   //给主线程发消息
@@ -50,6 +51,7 @@ signals:
                         double theta_t, double theta_d, bool result);
   void sendQImgToAutoMain(QImage img);
   void finished();  // 新增：用于在循环结束时通知主线程
+  void updateActionState(std::vector<bool> actionGroup);
   void sendQStringtoMain(QString message);
   void sendResult(QString left_tuoshuizhou,QString right_tuoshuizhou,QString left_dashuifeng,QString right_dashuifeng,QString theta_t,QString theta_d,QString result);
   void finishedthread();
@@ -58,7 +60,7 @@ signals:
   void resetSystem();
   void triggerAlarm();
 private :
-  QString filePath = "D:\\C++Projects\\openvino_onnx_yolo\\yolo11n.onnx";
+  QString filePath = "YOLO__model_test\\best.onnx";
   std::string onnxModelPath = filePath.toStdString();
   YoloV8Config config;
    // static void __stdcall ImageCallBackEx(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser);
@@ -90,6 +92,7 @@ private :
   bool p2Detected = false;
   bool p3Detected = false;
   std::vector<std::string> classes = {"process1", "process2", "process3"};
+  std::vector<bool> actionGroup = {false,false,false,false ,false};// "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"; //动作序列
   // 用于存储每个类别的计数
   int CHILUN_NUM = 1; //标准齿轮数
   int LUOSI_NUM = 4; //标准螺丝数

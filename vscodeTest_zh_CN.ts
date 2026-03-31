@@ -5,124 +5,130 @@
     <name>MainWindow</name>
     <message>
         <location filename="mainwindow.ui" line="14"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="248"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="254"/>
         <source>MainWindow</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="35"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="249"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="255"/>
         <source>开始</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="56"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="250"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="256"/>
         <source>停止</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="82"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="251"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="257"/>
         <source>img</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="101"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="252"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="258"/>
         <source>大齿轮装配</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="120"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="253"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="259"/>
         <source>螺丝装配</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="139"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="254"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="260"/>
         <source>全程状态</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="158"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="255"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="261"/>
         <source>PLC连接状态</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="182"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="256"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="262"/>
         <source>齿轮数量</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="197"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="257"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="263"/>
         <source>螺丝数量</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="212"/>
         <location filename="mainwindow.ui" line="227"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="258"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="259"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="264"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="265"/>
         <source>0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="249"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="260"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="266"/>
         <source>设定ROI区域</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="270"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="261"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="267"/>
         <source>输出1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="291"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="262"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="268"/>
         <source>输出2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="312"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="263"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="269"/>
         <source>输出3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="334"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="264"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="270"/>
         <source>左上螺丝</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="347"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="265"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="271"/>
         <source>右上螺丝</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="360"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="266"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="272"/>
         <source>左下螺丝</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="373"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="267"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="273"/>
         <source>右下螺丝</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="386"/>
-        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="268"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="274"/>
         <source>放齿轮</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="436"/>
+        <location filename="build/vscodeTest_autogen/include_Release/ui_mainwindow.h" line="275"/>
+        <source>AI模型测试</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

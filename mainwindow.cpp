@@ -20,14 +20,17 @@ MainWindow::MainWindow(QWidget *parent)
     //connect(cam,&Camera::sendImgToAutoMain,this,&MainWindow::receiveslotAutoImg,Qt::DirectConnection);
     //connect(cam,&Camera::resetSystem,this,&MainWindow::resetSystem,Qt::DirectConnection);
     connect(cam,&Camera::send_connectstate,this,&MainWindow::receive_connectstate,Qt::QueuedConnection);
-    connect(cam,&Camera::updateButtonState,this,&MainWindow::updateButtonState,Qt::DirectConnection);
+    connect(cam,&Camera::updateButtonState,this,&MainWindow::updateButtonState,Qt::QueuedConnection);
     //connect(cam,&Camera::triggerAlarm,this,&MainWindow::triggerAlarm,Qt::DirectConnection);
     connect(cam,&Camera::sendQImgToAutoMain,this,&MainWindow::receiveslotQImg,Qt::QueuedConnection);
+    connect(cam,&Camera::updateActionState,this,&MainWindow::getActionState,Qt::QueuedConnection);
     
     
     //connect(cam,&Camera::sendQStringtoMain,this,&MainWindow::receiveQStringtoMain,Qt::DirectConnection);
     connect(cam,&Camera::finishedthread,this,&MainWindow::receivefinish);
     connect(this,&MainWindow::destroyed,cam,&Camera::deleteLater,Qt::DirectConnection);
+    //启动相机1
+    THREAD1_cam1->start();
 }
 
 MainWindow::~MainWindow()
@@ -57,13 +60,21 @@ void MainWindow::updateButtonState(bool p1Detected,bool p2Detected,bool p3Detect
     ui->btn_proc1->setEnabled(p1Detected);
     ui->btn_proc2->setEnabled(p2Detected);
     ui->btn_proc3->setEnabled(p3Detected);
+    //如果ok显示绿色，ng显示红色
 
-    if (p1Detected)
-        ui->btn_proc1->setStyleSheet("background-color: green;");
-    if (p2Detected)
+    if (p1Detected){ ui->btn_proc1->setStyleSheet("background-color: green;");
+    }else{ ui->btn_proc1->setStyleSheet("background-color: red;");}
+       
+    if (p2Detected){
         ui->btn_proc2->setStyleSheet("background-color: green;");
-    if (p3Detected)
-        ui->btn_proc3->setStyleSheet("background-color: green;");
+    }else{
+        ui->btn_proc2->setStyleSheet("background-color: red;");
+    } 
+    if (p3Detected){ui->btn_proc3->setStyleSheet("background-color: green;");
+    }else{
+        ui->btn_proc3->setStyleSheet("background-color: red;");
+    }
+        
 }
 void MainWindow::receive_connectstate(bool state){
     if(state){
@@ -83,14 +94,57 @@ void MainWindow::on_btn_setRoi_clicked()
 void MainWindow::on_pushButton_clicked()
 {
     qDebug()<<"output1";
+    cam->setD(0,1);
 }
 
 void MainWindow::on_pushButton_2_clicked()
 {
     qDebug()<<"output2";
+    cam->setD(2,1);
 }
 
 void MainWindow::on_pushButton_3_clicked()
 {
     qDebug()<<"output3";
+    cam->setD(4,1);
 }
+
+void MainWindow::on_pushButton_4_clicked()
+{
+    qDebug()<<"ai test";
+    cam->aiTest();
+}
+void MainWindow::getActionState(std::vector<bool> actionState){
+    //qDebug()<<"getActionState";"luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"
+    if(actionState[0]){
+        ui->label_4->setStyleSheet("background-color: green;");
+    }else{
+        ui->label_4->setStyleSheet("background-color: red;");
+    }
+    if(actionState[1]){
+        ui->label_5->setStyleSheet("background-color: green;");
+    }else{
+        ui->label_5->setStyleSheet("background-color: red;");
+    }
+    if(actionState[2]){
+        ui->label_6->setStyleSheet("background-color: green;");
+    }else{
+        ui->label_6->setStyleSheet("background-color: red;");
+    }
+    if(actionState[3]){
+        ui->label_7->setStyleSheet("background-color: green;");
+    }else{
+        ui->label_7->setStyleSheet("background-color: red;");
+    }
+    if(actionState[4]){
+        ui->label_8->setStyleSheet("background-color: green;");
+    }else{
+        ui->label_8->setStyleSheet("background-color: red;");
+    }
+
+}
+
+
+
+
+

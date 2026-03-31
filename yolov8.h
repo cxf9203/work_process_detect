@@ -46,7 +46,8 @@ struct YoloV8Config {
     float kpsThreshold = 0.5f;
     // Class thresholds (default are COCO classes)
     std::vector<std::string> classNames = {
-       "chilun",   "keti" ,"luosi"};
+       "chilun", "keti", "luosi", "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun" 
+      }; 
 //    std::vector<std::string> classNames = {
 //            "person",         "bicycle",    "car",           "motorcycle",    "airplane",     "bus",           "train",
 //            "truck",          "boat",       "traffic light", "fire hydrant",  "stop sign",    "parking meter", "bench",
@@ -75,6 +76,7 @@ public:
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale = 2);
     std::vector<int> getclassnumer();
+    std::vector<bool> getActionFlag();
     bool getResult();
     float calculateAveragePixelValue(const cv::Mat& image, const cv::Rect& rect);
     void setArea_threshold(float area);
@@ -84,7 +86,8 @@ public:
 private:
     
     // 用于存储每个类别的计数
-    std::vector<int> classCount = {0,0,0};
+    std::vector<int> classCount = {0,0,0};//"chilun",   "keti" ,"luosi"
+    std::vector<bool> actionFlag = {false,false,false,false,false};// "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"
     float area_threshold;
     float intensity_threshold;
    

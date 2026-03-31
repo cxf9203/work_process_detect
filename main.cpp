@@ -7,6 +7,8 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    // 注册 std::vector<float> 和 std::size_t 元类型
+    qRegisterMetaType<std::vector<bool>>("std::vector<bool>");
     //全局字体
     QFont font("Arial", 10);
     a.setFont(font);

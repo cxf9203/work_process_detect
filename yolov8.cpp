@@ -460,6 +460,7 @@ std::vector<Object> YoloV8::postprocessDetect(std::vector<float>& featureVector)
 void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects, unsigned int scale) {
     //清空std::vector classCount
     classCount[0]=0;classCount[1]=0;classCount[2]=0;
+    actionFlag = {false,false,false,false, false};//初始化动作标志
     // If segmentation information is present, start with that
     if (!objects.empty() && !objects[0].boxMask.empty()) {
         std::cout<<"have mask"<<std::endl;
@@ -500,6 +501,20 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
             classCount[1] += 1;
         } else if (object.label == 2){
             classCount[2] += 1;
+        }else if (object.label == 3){//左上螺丝
+            actionFlag[0]= true;
+        }
+        else if (object.label == 4){//右上螺丝
+            actionFlag[1] = true;
+        }
+        else if (object.label == 5){//左下螺丝
+            actionFlag[2] = true;
+        }
+        else if (object.label == 6){//右下螺丝
+            actionFlag[3]= true;
+        }
+        else if (object.label == 7){//放置齿轮
+            actionFlag[4]= true;
         }
         // Draw rectangles and text
         char text[256];
@@ -554,7 +569,9 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
 }
 std::vector<int> YoloV8::getclassnumer(){//获取每个标签类的数量
     return classCount;
-
+}
+std::vector<bool> YoloV8::getActionFlag(){
+    return actionFlag;
 }
 bool YoloV8::getResult()//是否检测到defects和折叠或者破边
 {

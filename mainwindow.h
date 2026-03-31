@@ -23,6 +23,7 @@ public slots:
     void receivefinish();
     void updateButtonState(bool p1Detected, bool p2Detected, bool p3Detected);
     void receive_connectstate(bool state);
+    void getActionState(std::vector<bool> actionState);
 signals:
     void SetStopThreadC1(); // send signal to stop thread
 
@@ -38,6 +39,8 @@ private slots:
     void on_pushButton_2_clicked();
 
     void on_pushButton_3_clicked();
+
+    void on_pushButton_4_clicked();
 
 private:
     Ui::MainWindow *ui;
