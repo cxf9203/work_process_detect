@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     //全局字体
     QFont font("Arial", 10);
     a.setFont(font);
-    QFile f("qdarkstyle/dark/darkstyle.qss");
+    QFile f("D:\\jiance\\qdarkstyle\\dark\\darkstyle.qss");
 
     if (!f.exists())   {
         printf("Unable to set stylesheet, file not found\n");

@@ -549,7 +549,7 @@ void Camera::aiTest(){
     //test 实际使用时注释
     qDebug() << "cannot load image" ;
     //load video
-    std::string video_path ="video\\work_process.mp4" ;
+    std::string video_path = "/video/work_process.mp4";
     cv::VideoCapture cap(video_path);
     if (!cap.isOpened()) {
         qDebug() << "cannot open video" ;

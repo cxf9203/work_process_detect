@@ -61,7 +61,7 @@ signals:
   void resetSystem();
   void triggerAlarm();
 private :
-  QString filePath = "YOLO__model_test\\best.onnx";
+  QString filePath = "D:\\jiance\\process.onnx";
   std::string onnxModelPath = filePath.toStdString();
   YoloV8Config config;
    // static void __stdcall ImageCallBackEx(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser);
