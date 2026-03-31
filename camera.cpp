@@ -121,6 +121,7 @@ void Camera::run()
     if (ctx == NULL)
     {
         qDebug() << "cannot create modbus";
+        emit sendQStringtoMain("cannot create modbus");
         return;
     }
 
@@ -131,9 +132,11 @@ void Camera::run()
         modbus_free(ctx);
 
         emit send_connectstate(false);
+        emit sendQStringtoMain("connect to server fail");
         return;
     }
     emit send_connectstate(true);
+    emit sendQStringtoMain("connect to plc success");
     YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
     // 初始化
     NET_DVR_Init();
@@ -166,6 +169,7 @@ void Camera::run()
     if (lUserID < 0)
     {
         std::cout << "注册失败！\n";
+        emit sendQStringtoMain("register fail with camera!");    
         system("pause");
     }
     else
@@ -221,6 +225,7 @@ void Camera::run()
     struPlayInfo.bBlocked = 0;     // 0-非阻塞取流, 1-阻塞取流, 如果阻塞SDK内部connect失败将会有5s的超时才能够返回,不适合于轮询取流操作.
 
     qDebug() << "Camera" << id << "opened successfully";
+    emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
 
     if (NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL)) // 开始取流
     {
@@ -283,7 +288,7 @@ void Camera::run()
                     actionGroup[4] = true;
                 }
                 //"chilun",   "keti" ,"luosi"
-                std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
+                //std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
                 cur_keti = keti_num;
                 if (cur_keti > 0)
                 {
@@ -370,11 +375,11 @@ void Camera::run()
             {
                 // 处理所有异常的逻辑
                 std::cerr << "An unknown exception occurred during image processing." << std::endl;
-                sendQStringtoMain("An unknown exception occurred during image processing.");
+                emit sendQStringtoMain("An unknown exception occurred during image processing.");
             }
             QImage a = cvMat2QImage(BGR_image);
-            QImage IMG = a.scaled(300, 300, Qt::KeepAspectRatio);
-            sendQImgToAutoMain(IMG);
+            QImage IMG = a.scaled(500, 500, Qt::KeepAspectRatio);
+            emit sendQImgToAutoMain(IMG);
         }
 
         // 结束停止采集
@@ -626,7 +631,7 @@ void Camera::aiTest(){
             cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
             emit updateButtonState(true, true, true); // 齿轮/螺丝/ 总体
             // PLC 接收
-            //setD(1,1);//绿灯 
+            setD(2,1);//绿灯 
         }
 
         if (cur_keti == 0 && last_keti == 1)
@@ -640,7 +645,7 @@ void Camera::aiTest(){
                 // 绘制消息框
                 cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                 // PLC 报警
-                //setD(0,2);//置位
+                setD(0,2);//置位
             }
 
             if (!luosi_flag)
@@ -648,7 +653,7 @@ void Camera::aiTest(){
                 // 绘制消息框
                 cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                 // PLC 报警
-                //setD(0,2);//置位
+                setD(0,2);//置位
             }
         }
 
@@ -671,10 +676,8 @@ void Camera::aiTest(){
     }
     cap.release();
     cv::destroyAllWindows();
-
-
-
-     
 }
 
-
+void Camera::igonoreAction(int index){//忽略某个动作,todo: (std::vector<bool> index)作为传递参数较好
+    actionGroup[index] = false;
+}

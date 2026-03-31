@@ -44,6 +44,7 @@ public:
   void setD(int address, int value);//设置整型D元件
   void set32D(int address, int32_t value);//设置整型D元件
   void aiTest();//ai model test
+  void igonoreAction(int index);//忽略某个动作
 
 signals:
   //给主线程发消息

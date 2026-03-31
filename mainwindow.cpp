@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam,&Camera::updateActionState,this,&MainWindow::getActionState,Qt::QueuedConnection);
     
     
-    //connect(cam,&Camera::sendQStringtoMain,this,&MainWindow::receiveQStringtoMain,Qt::DirectConnection);
+    connect(cam,&Camera::sendQStringtoMain,this,&MainWindow::receiveQStringtoMain,Qt::DirectConnection);
     connect(cam,&Camera::finishedthread,this,&MainWindow::receivefinish);
     connect(this,&MainWindow::destroyed,cam,&Camera::deleteLater,Qt::DirectConnection);
     //启动相机1
@@ -143,8 +143,24 @@ void MainWindow::getActionState(std::vector<bool> actionState){
     }
 
 }
+void MainWindow::on_checkBox_toggled(bool checked)
+{
+    qDebug()<<"current state is"<<checked;
+    if(checked){
+        cam->igonoreAction(4);
+    }
+}
+void MainWindow::receiveQStringtoMain(QString s){
+// 获取当前时间
+    QDateTime currentDateTime = QDateTime::currentDateTime();
+    QString timeStamp = currentDateTime.toString("yyyy-MM-dd HH:mm:ss");
 
+    // 构建带有时间戳的日志消息
+    QString logMessage = "[" + timeStamp + "] " + s;
 
+    // 将日志消息添加到 QTextBrowser 中
+    ui->textBrowser->append(logMessage);
 
-
-
+    // 滚动到文本末尾，确保最新的日志消息可见
+    ui->textBrowser->moveCursor(QTextCursor::End);
+}
