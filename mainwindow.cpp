@@ -79,3 +79,18 @@ void MainWindow::on_btn_setRoi_clicked()
     //设定识别ROI
     cam->setRoi();
 }
+
+void MainWindow::on_pushButton_clicked()
+{
+    qDebug()<<"output1";
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    qDebug()<<"output2";
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    qDebug()<<"output3";
+}

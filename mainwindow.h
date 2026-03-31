@@ -33,6 +33,12 @@ private slots:
 
     void on_btn_setRoi_clicked();
 
+    void on_pushButton_clicked();
+
+    void on_pushButton_2_clicked();
+
+    void on_pushButton_3_clicked();
+
 private:
     Ui::MainWindow *ui;
     QThread *THREAD1_cam1;
