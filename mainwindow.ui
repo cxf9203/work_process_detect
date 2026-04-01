@@ -6,12 +6,54 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1598</width>
-    <height>916</height>
+    <width>1600</width>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>工序检测系统</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow {
+    background-color: #2b2b2b;
+}
+
+QPushButton {
+    background-color: #3d3d3d;
+    color: #ffffff;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 8px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #4d4d4d;
+}
+
+QPushButton:pressed {
+    background-color: #5d5d5d;
+}
+
+QPushButton:disabled {
+    background-color: #2d2d2d;
+    color: #888;
+}
+
+QLabel {
+    color: #ffffff;
+}
+
+QTextBrowser {
+    background-color: #1e1e1e;
+    color: #00ff00;
+    border: 1px solid #444;
+    border-radius: 5px;
+}
+
+QCheckBox {
+    color: #ffffff;
+}</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="start">
@@ -19,41 +61,75 @@
      <rect>
       <x>20</x>
       <y>20</y>
-      <width>141</width>
-      <height>61</height>
+      <width>150</width>
+      <height>50</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>Arial</family>
-      <pointsize>18</pointsize>
+      <pointsize>16</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: #2e7d32;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+QPushButton:hover {
+    background-color: #388e3c;
+}
+
+QPushButton:pressed {
+    background-color: #1b5e20;
+}</string>
+    </property>
     <property name="text">
-     <string>开始</string>
+     <string>开始检测</string>
     </property>
    </widget>
    <widget class="QPushButton" name="stop">
     <property name="geometry">
      <rect>
-      <x>180</x>
+      <x>190</x>
       <y>20</y>
-      <width>141</width>
-      <height>61</height>
+      <width>150</width>
+      <height>50</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>Arial</family>
-      <pointsize>18</pointsize>
+      <pointsize>16</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+QPushButton:hover {
+    background-color: #d32f2f;
+}
+
+QPushButton:pressed {
+    background-color: #b71c1c;
+}</string>
+    </property>
     <property name="text">
-     <string>停止</string>
+     <string>停止检测</string>
     </property>
    </widget>
    <widget class="QStackedWidget" name="stackedWidget">
@@ -74,28 +150,55 @@
        <rect>
         <x>30</x>
         <y>40</y>
-        <width>441</width>
-        <height>451</height>
+        <width>500</width>
+        <height>450</height>
        </rect>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel {
+    background-color: #1e1e1e;
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 5px;
+}</string>
+      </property>
       <property name="text">
-       <string>img</string>
+       <string>图像显示区域</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_proc1">
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>500</y>
-        <width>101</width>
-        <height>41</height>
+        <x>30</x>
+        <y>510</y>
+        <width>150</width>
+        <height>45</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Arial</family>
         <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #424242;
+    border-radius: 6px;
+}
+
+QPushButton[enabled="true"] {
+    background-color: #2e7d32;
+}
+
+QPushButton[enabled="false"] {
+    background-color: #c62828;
+}</string>
       </property>
       <property name="text">
        <string>大齿轮装配</string>
@@ -104,17 +207,33 @@
      <widget class="QPushButton" name="btn_proc2">
       <property name="geometry">
        <rect>
-        <x>110</x>
-        <y>500</y>
-        <width>91</width>
-        <height>41</height>
+        <x>195</x>
+        <y>510</y>
+        <width>150</width>
+        <height>45</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Arial</family>
         <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #424242;
+    border-radius: 6px;
+}
+
+QPushButton[enabled="true"] {
+    background-color: #2e7d32;
+}
+
+QPushButton[enabled="false"] {
+    background-color: #c62828;
+}</string>
       </property>
       <property name="text">
        <string>螺丝装配</string>
@@ -123,17 +242,33 @@
      <widget class="QPushButton" name="btn_proc3">
       <property name="geometry">
        <rect>
-        <x>210</x>
-        <y>500</y>
-        <width>91</width>
-        <height>41</height>
+        <x>360</x>
+        <y>510</y>
+        <width>150</width>
+        <height>45</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Arial</family>
         <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #424242;
+    border-radius: 6px;
+}
+
+QPushButton[enabled="true"] {
+    background-color: #2e7d32;
+}
+
+QPushButton[enabled="false"] {
+    background-color: #c62828;
+}</string>
       </property>
       <property name="text">
        <string>全程状态</string>
@@ -152,7 +287,23 @@
        <font>
         <family>Arial</family>
         <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #424242;
+    border-radius: 6px;
+}
+
+QPushButton[enabled="true"] {
+    background-color: #2e7d32;
+}
+
+QPushButton[enabled="false"] {
+    background-color: #c62828;
+}</string>
       </property>
       <property name="text">
        <string>PLC连接状态</string>
@@ -172,11 +323,17 @@
         <widget class="QLabel" name="label_3">
          <property name="font">
           <font>
-           <family>3ds</family>
+           <family>Arial</family>
            <pointsize>14</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    color: #ffffff;
+    padding: 5px;
+}</string>
          </property>
          <property name="text">
           <string>齿轮数量</string>
@@ -187,11 +344,17 @@
         <widget class="QLabel" name="label_2">
          <property name="font">
           <font>
-           <family>3ds</family>
+           <family>Arial</family>
            <pointsize>14</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    color: #ffffff;
+    padding: 5px;
+}</string>
          </property>
          <property name="text">
           <string>螺丝数量</string>
@@ -202,14 +365,27 @@
         <widget class="QLabel" name="lb_luosi_num">
          <property name="font">
           <font>
-           <family>3ds</family>
-           <pointsize>14</pointsize>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    color: #00ff00;
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 5px;
+    min-width: 50px;
+}</string>
+         </property>
          <property name="text">
           <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -217,14 +393,27 @@
         <widget class="QLabel" name="lb_chilun_num">
          <property name="font">
           <font>
-           <family>3ds</family>
-           <pointsize>14</pointsize>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    color: #00ff00;
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 5px;
+    min-width: 50px;
+}</string>
+         </property>
          <property name="text">
           <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -243,7 +432,26 @@
        <font>
         <family>Arial</family>
         <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
        </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #1976d2;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+QPushButton:hover {
+    background-color: #1e88e5;
+}
+
+QPushButton:pressed {
+    background-color: #1565c0;
+}</string>
       </property>
       <property name="text">
        <string>设定ROI区域</string>
@@ -328,10 +536,25 @@
           <font>
            <family>Arial</family>
            <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
          </property>
          <property name="text">
           <string>左上螺丝</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -341,10 +564,25 @@
           <font>
            <family>Arial</family>
            <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
          </property>
          <property name="text">
           <string>右上螺丝</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -354,10 +592,25 @@
           <font>
            <family>Arial</family>
            <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
          </property>
          <property name="text">
           <string>左下螺丝</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -367,10 +620,25 @@
           <font>
            <family>Arial</family>
            <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
          </property>
          <property name="text">
           <string>右下螺丝</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -380,10 +648,25 @@
           <font>
            <family>Arial</family>
            <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
          </property>
          <property name="text">
           <string>放齿轮</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -398,6 +681,11 @@
         <height>171</height>
        </rect>
       </property>
+      <property name="styleSheet">
+       <string notr="true">Line {
+    background-color: #555;
+}</string>
+      </property>
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
@@ -410,6 +698,11 @@
         <width>20</width>
         <height>171</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">Line {
+    background-color: #555;
+}</string>
       </property>
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -451,6 +744,29 @@
         <pointsize>12</pointsize>
        </font>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QCheckBox {
+    color: #ffffff;
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #2e7d32;
+    border: 2px solid #2e7d32;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:unchecked {
+    background-color: #424242;
+    border: 2px solid #555;
+    border-radius: 4px;
+}</string>
+      </property>
       <property name="text">
        <string>忽略该动作</string>
       </property>
@@ -463,6 +779,17 @@
         <width>231</width>
         <height>291</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QTextBrowser {
+    background-color: #1e1e1e;
+    color: #00ff00;
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+}</string>
       </property>
      </widget>
      <zorder>layoutWidget</zorder>
