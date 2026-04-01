@@ -122,7 +122,7 @@ void Camera::run()
     {
         qDebug() << "cannot create modbus";
         emit sendQStringtoMain("cannot create modbus");
-        return;
+        //return;
     }
 
     // 连接到Modbus服务器
@@ -133,11 +133,13 @@ void Camera::run()
 
         emit send_connectstate(false);
         emit sendQStringtoMain("connect to server fail");
-        return;
+        //return;
     }
     emit send_connectstate(true);
     emit sendQStringtoMain("connect to plc success");
+    emit sendQStringtoMain("loading ai model...");
     YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
+    emit sendQStringtoMain("load ai model success");
     // 初始化
     NET_DVR_Init();
     // 设置连接时间与重连时间
@@ -153,8 +155,8 @@ void Camera::run()
     char *sDeviceAddress, *sUserName, *sPassword;
     wPort = 8000;
     // 修改后
-    char ip[] = "192.168.31.105"; // 栈上创建可修改副本
-    // char ip[] = "192.168.1.64"; // 厂里
+    //char ip[] = "192.168.31.105"; // 栈上创建可修改副本
+    char ip[] = "192.168.1.64"; // 厂里
     sDeviceAddress = ip;
     char admin[] = "admin";
     sUserName = admin;
@@ -332,7 +334,7 @@ void Camera::run()
                     cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     emit updateButtonState(true, true, true); // 齿轮/螺丝/ 总体
                     // PLC 接收
-                    setD(2,1);//绿灯 
+                    //setD(2,1);//绿灯 
                 }
 
                 if (cur_keti == 0 && last_keti == 1)
@@ -346,7 +348,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        setD(0,1);//置位
+                        //setD(0,1);//置位
                     }
 
                     if (!luosi_flag)
@@ -354,7 +356,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        setD(0,1);//置位
+                        //setD(0,1);//置位
                     }
                 }
 
@@ -367,8 +369,8 @@ void Camera::run()
                     actionGroup = {false,false,false,false,false};
                     emit updateButtonState(false, true, false); // 齿轮/螺丝/ 总体
                     //复位PLC输出
-                    setD(0,0);//复位报警
-                    setD(2,0);//复位绿灯
+                    //setD(0,0);//复位报警
+                    //setD(2,0);//复位绿灯
                 }
             }
             catch (...)
@@ -500,6 +502,7 @@ void Camera::set32D(int address,int32_t value){//设置32位D
 }
 void Camera::setD(int address,int value){//设置16位 D
     rc =modbus_write_register(ctx,address,value);
+
 }
 int Camera::setRoi(){
     //获取一张BGR_image，显示出来让用户进行手动框选，然后保存框选的坐标保存到roi_x,roi_y,roi_w,roi_h中
