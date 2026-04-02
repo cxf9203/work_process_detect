@@ -272,6 +272,9 @@ void Camera::run()
                 int chilun_num = classCount[0];
                 int keti_num = classCount[1];
                 int luosi_num = classCount[2];
+                QString str_chilun_num = QString::number(chilun_num);
+                QString str_luosi_num = QString::number(luosi_num);
+                emit sendNumber(str_chilun_num,str_luosi_num);
                 //检查动作是否有做到了（瞬时动作可以消失）
                 std::vector<bool> tempAction = yoloV8.getActionFlag();
                 if (tempAction[0]){
@@ -367,7 +370,7 @@ void Camera::run()
                     luosi_flag = false;
                     //reset actionGroup and buttonState
                     actionGroup = {false,false,false,false,false};
-                    emit updateButtonState(false, true, false); // 齿轮/螺丝/ 总体
+                    emit updateButtonState(false, false, false); // 齿轮/螺丝/ 总体
                     //复位PLC输出
                     //setD(0,0);//复位报警
                     //setD(2,0);//复位绿灯

@@ -55,6 +55,7 @@ signals:
   void updateActionState(std::vector<bool> actionGroup);
   void sendQStringtoMain(QString message);
   void sendResult(QString left_tuoshuizhou,QString right_tuoshuizhou,QString left_dashuifeng,QString right_dashuifeng,QString theta_t,QString theta_d,QString result);
+  void sendNumber(QString str_chilun_num,QString str_luosi_num);
   void finishedthread();
   void updateButtonState(bool p1,bool p2,bool p3);
   void send_connectstate(bool state);

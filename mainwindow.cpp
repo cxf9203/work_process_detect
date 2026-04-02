@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     //connect(cam,&Camera::triggerAlarm,this,&MainWindow::triggerAlarm,Qt::DirectConnection);
     connect(cam,&Camera::sendQImgToAutoMain,this,&MainWindow::receiveslotQImg,Qt::QueuedConnection);
     connect(cam,&Camera::updateActionState,this,&MainWindow::getActionState,Qt::QueuedConnection);
+    connect(cam,&Camera::sendNumber,this,&MainWindow::receiveNumber,Qt::QueuedConnection);
     
     
     connect(cam,&Camera::sendQStringtoMain,this,&MainWindow::receiveQStringtoMain,Qt::DirectConnection);
@@ -163,4 +164,8 @@ void MainWindow::receiveQStringtoMain(QString s){
 
     // 滚动到文本末尾，确保最新的日志消息可见
     ui->textBrowser->moveCursor(QTextCursor::End);
+}
+void MainWindow::receiveNumber(QString str_chilun_num,QString str_luosi_num){
+    ui->lb_luosi_num->setText(str_luosi_num);
+    ui->lb_chilun_num->setText(str_chilun_num);
 }

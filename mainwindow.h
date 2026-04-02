@@ -24,6 +24,7 @@ public slots:
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateButtonState(bool p1Detected, bool p2Detected, bool p3Detected);
+    void receiveNumber(QString str_chilun_num,QString str_luosi_num);
     void receive_connectstate(bool state);
     void getActionState(std::vector<bool> actionState);
     void receiveQStringtoMain(QString s);
