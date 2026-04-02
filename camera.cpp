@@ -116,8 +116,8 @@ void Camera::initCamera()
 void Camera::run()
 {
     // 链接PLC
-    //ctx = modbus_new_tcp("192.168.1.11", 502);
-    ctx = modbus_new_tcp("192.168.31.99", 2001);//西门子smart 200 厂里是192.168.1.11
+    //ctx = modbus_new_tcp("192.168.31.99", 502);
+    ctx = modbus_new_tcp("192.168.1.99", 2001);//西门子smart 200 厂里是192.168.1.11
     if (ctx == NULL)
     {
         qDebug() << "cannot create modbus";
@@ -156,7 +156,7 @@ void Camera::run()
     wPort = 8000;
     // 修改后
     //char ip[] = "192.168.31.105"; // 栈上创建可修改副本
-    char ip[] = "192.168.1.64"; // 厂里
+    char ip[] = "192.168.1.64"; // 厂里camera
     sDeviceAddress = ip;
     char admin[] = "admin";
     sUserName = admin;
@@ -380,7 +380,7 @@ void Camera::run()
                 emit sendQStringtoMain("An unknown exception occurred during image processing.");
             }
             QImage a = cvMat2QImage(BGR_image);
-            QImage IMG = a.scaled(500, 500, Qt::KeepAspectRatio);
+            QImage IMG = a.scaled(640, 640, Qt::KeepAspectRatio);
             emit sendQImgToAutoMain(IMG);
         }
 
