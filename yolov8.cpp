@@ -501,16 +501,16 @@ void YoloV8::drawObjectLabels(cv::Mat& image, const std::vector<Object>& objects
             classCount[1] += 1;
         } else if (object.label == 2){
             classCount[2] += 1;
-        }else if (object.label == 3){//左上螺丝
+        }else if (object.label == 4){//左上螺丝 "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun" 
             actionFlag[0]= true;
         }
-        else if (object.label == 4){//右上螺丝
+        else if (object.label == 6){//右上螺丝
             actionFlag[1] = true;
         }
-        else if (object.label == 5){//左下螺丝
+        else if (object.label == 3){//左下螺丝
             actionFlag[2] = true;
         }
-        else if (object.label == 6){//右下螺丝
+        else if (object.label == 5){//右下螺丝
             actionFlag[3]= true;
         }
         else if (object.label == 7){//放置齿轮

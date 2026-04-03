@@ -138,7 +138,10 @@ void Camera::run()
     emit send_connectstate(true);
     emit sendQStringtoMain("connect to plc success");
     emit sendQStringtoMain("loading ai model...");
+    //fp32精度模型
+    config.precision = Precision::FP32;
     YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
+    
     emit sendQStringtoMain("load ai model success");
     // 初始化
     NET_DVR_Init();
@@ -351,7 +354,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        //setD(0,1);//置位
+                        setD(0,1);//置位
                     }
 
                     if (!luosi_flag)
@@ -359,7 +362,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        //setD(0,1);//置位
+                        setD(0,1);//置位
                     }
                 }
 
@@ -372,7 +375,7 @@ void Camera::run()
                     actionGroup = {false,false,false,false,false};
                     emit updateButtonState(false, false, false); // 齿轮/螺丝/ 总体
                     //复位PLC输出
-                    //setD(0,0);//复位报警
+                    setD(0,0);//复位报警
                     //setD(2,0);//复位绿灯
                 }
             }
@@ -382,6 +385,8 @@ void Camera::run()
                 std::cerr << "An unknown exception occurred during image processing." << std::endl;
                 emit sendQStringtoMain("An unknown exception occurred during image processing.");
             }
+            // cv::imshow("Camera",BGR_image);
+            // cv::waitKey(1);
             QImage a = cvMat2QImage(BGR_image);
             QImage IMG = a.scaled(640, 640, Qt::KeepAspectRatio);
             emit sendQImgToAutoMain(IMG);
@@ -555,7 +560,7 @@ void Camera::aiTest(){
     //test 实际使用时注释
     qDebug() << "cannot load image" ;
     //load video
-    std::string video_path = "/video/work_process.mp4";
+    std::string video_path = "D:/qt_projects/work_process_detect/video/work_process.mp4";
     cv::VideoCapture cap(video_path);
     if (!cap.isOpened()) {
         qDebug() << "cannot open video" ;
