@@ -139,7 +139,7 @@ void Camera::run()
     emit sendQStringtoMain("connect to plc success");
     emit sendQStringtoMain("loading ai model...");
     //fp32精度模型
-    config.precision = Precision::FP32;
+    //config.precision = Precision::FP32;
     YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
     
     emit sendQStringtoMain("load ai model success");

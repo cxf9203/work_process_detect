@@ -3,6 +3,7 @@ build/
 video/
 saved_img/
 runs/
+YOLO__model_test/
 # CMake configuration
 CMakeLists.txt.user
 CMakeCache.txt
@@ -17,6 +18,7 @@ Makefile
 
 # source files
 resource/
+
 
 
 
