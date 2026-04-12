@@ -15,7 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam, &Camera::finished, THREAD1_cam1, &QThread::quit); // 停止线程，线程那边触发会停止（finished），可以再次用start启动
     // connect(cam, &Camera::finished, cam, &QObject::deleteLater);//在空闲时间删除线程对象，执行后将不能在用start方法启动线程
     ////---------------------------------------------------------------------------------------------------------------------------------------------//
-<<<<<<< HEAD
     connect(this, &MainWindow::SetStopThreadC1, cam, &Camera::ExecuteMianToThread, Qt::QueuedConnection);//向线程发送信号//线程终止条件设置函数
     //connect(cam,&Camera::sendImgToAutoMain,this,&MainWindow::receiveslotAutoImg,Qt::DirectConnection);
     //connect(cam,&Camera::resetSystem,this,&MainWindow::resetSystem,Qt::DirectConnection);
@@ -31,22 +30,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam,&Camera::finishedthread,this,&MainWindow::receivefinish);
     connect(this,&MainWindow::destroyed,cam,&Camera::deleteLater,Qt::QueuedConnection);
     //启动相机1
-=======
-    connect(this, &MainWindow::SetStopThreadC1, cam, &Camera::ExecuteMianToThread, Qt::DirectConnection); // 向线程发送信号//线程终止条件设置函数
-    // connect(cam,&Camera::sendImgToAutoMain,this,&MainWindow::receiveslotAutoImg,Qt::DirectConnection);
-    // connect(cam,&Camera::resetSystem,this,&MainWindow::resetSystem,Qt::DirectConnection);
-    connect(cam, &Camera::send_connectstate, this, &MainWindow::receive_connectstate, Qt::QueuedConnection);
-    connect(cam, &Camera::updateButtonState, this, &MainWindow::updateButtonState, Qt::QueuedConnection);
-    // connect(cam,&Camera::triggerAlarm,this,&MainWindow::triggerAlarm,Qt::DirectConnection);
-    connect(cam, &Camera::sendQImgToAutoMain, this, &MainWindow::receiveslotQImg, Qt::QueuedConnection);
-    connect(cam, &Camera::updateActionState, this, &MainWindow::getActionState, Qt::QueuedConnection);
-    connect(cam, &Camera::sendNumber, this, &MainWindow::receiveNumber, Qt::QueuedConnection);
-
-    connect(cam, &Camera::sendQStringtoMain, this, &MainWindow::receiveQStringtoMain, Qt::DirectConnection);
-    connect(cam, &Camera::finishedthread, this, &MainWindow::receivefinish);
-    connect(this, &MainWindow::destroyed, cam, &Camera::deleteLater, Qt::DirectConnection);
-    // 启动相机1
->>>>>>> cd51695981bfd2e5c892082de8d0c314ce9651ae
     THREAD1_cam1->start();
 }
 
@@ -134,7 +117,6 @@ void MainWindow::on_btn_setRoi_clicked()
 }
 
 void MainWindow::on_pushButton_clicked()
-<<<<<<< HEAD
 {   
     if(baojing_flag){
         qDebug()<<"output1";
@@ -146,11 +128,6 @@ void MainWindow::on_pushButton_clicked()
         baojing_flag = !baojing_flag;
     }
     
-=======
-{
-    qDebug() << "output1";
-    cam->setD(0, 1);
->>>>>>> cd51695981bfd2e5c892082de8d0c314ce9651ae
 }
 
 void MainWindow::on_pushButton_2_clicked()
