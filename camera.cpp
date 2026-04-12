@@ -547,10 +547,7 @@ void Camera::setD(int address,int value){//设置16位 D
     }
     emit sendQStringtoMain("setD address"+QString::number(address)+"value is: "+QString::number(value));  
 }
-void Camera::setD(int address, int value)
-{ // 设置16位 D
-    rc = modbus_write_register(ctx, address, value);
-}
+
 
 int Camera::setRoi()
 {
