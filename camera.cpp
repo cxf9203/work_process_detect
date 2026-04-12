@@ -231,7 +231,9 @@ void Camera::run()
 
     qDebug() << "Camera" << id << "opened successfully";
     emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
-
+    setD(0,0);
+    setD(1,0);
+    setD(2,0);
     if (NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL)) // 开始取流
     {
         // cv::namedWindow("RGBImage2");
@@ -245,7 +247,7 @@ void Camera::run()
 
         while (true)
         {
-            QThread::msleep(10);
+            QThread::msleep(30);
             if (Camera_thread_flag)
             {
                 break;
@@ -314,7 +316,7 @@ void Camera::run()
                         luosi_flag = true;
                     }
                 }
-                last_keti = cur_keti;
+                
                 emit updateActionState(actionGroup);
                 if (chilun_flag && !luosi_flag)
                 {
@@ -354,7 +356,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        setD(0,1);//置位
+                        setD(0,1);//PLC置位
                     }
 
                     if (!luosi_flag)
@@ -362,7 +364,7 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        setD(0,1);//置位
+                        setD(0,1);//PLC置位
                     }
                 }
 
@@ -375,9 +377,10 @@ void Camera::run()
                     actionGroup = {false,false,false,false,false};
                     emit updateButtonState(false, false, false); // 齿轮/螺丝/ 总体
                     //复位PLC输出
-                    setD(0,0);//复位报警
+                    //setD(0,0);//复位报警
                     //setD(2,0);//复位绿灯
                 }
+            last_keti = cur_keti;
             }
             catch (...)
             {
@@ -509,7 +512,16 @@ void Camera::set32D(int address,int32_t value){//设置32位D
     rc =modbus_write_register(ctx,address+1,high);
 }
 void Camera::setD(int address,int value){//设置16位 D
+    if (ctx == NULL) {
+        emit sendQStringtoMain("Modbus context is NULL");
+        return;
+    }
     rc =modbus_write_register(ctx,address,value);
+    if (rc == -1) {
+        emit sendQStringtoMain("Failed to write register" );
+        // 尝试重新连接
+    }
+    emit sendQStringtoMain("setD address"+QString::number(address)+"value is: "+QString::number(value));  
 
 }
 int Camera::setRoi(){
@@ -556,137 +568,7 @@ int Camera::setRoi(){
 
 }
 void Camera::aiTest(){
-    YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
-    //test 实际使用时注释
-    qDebug() << "cannot load image" ;
-    //load video
-    std::string video_path = "D:/qt_projects/work_process_detect/video/work_process.mp4";
-    cv::VideoCapture cap(video_path);
-    if (!cap.isOpened()) {
-        qDebug() << "cannot open video" ;
-        return;
-    }
-    cv::Mat frame;
-    cv::Mat image ;
-    
-    while (cap.read(frame)) {
-        // 对每一帧进行处理
-        cv::resize(frame, image, cv::Size(640, 480));
-        //模型预测
-        const auto objects = yoloV8.detectObjects(image);
-        // Draw the bounding boxes on the image
-        yoloV8.drawObjectLabels(image, objects); // 绘制框
-        std::vector<int> classCount = yoloV8.getclassnumer();
-        int chilun_num = classCount[0];
-        int keti_num = classCount[1];
-        int luosi_num = classCount[2];
-        //检查动作是否有做到了（瞬时动作可以消失）
-        std::vector<bool> tempAction = yoloV8.getActionFlag();
-        if (tempAction[0]){
-            actionGroup[0] = true;
-        }
-        if (tempAction[1]){
-            actionGroup[1] = true;
-        }
-        if (tempAction[2]){
-            actionGroup[2] = true;
-        }
-        if (tempAction[3]){
-            actionGroup[3] = true;
-        }
-        if (tempAction[4]){
-            actionGroup[4] = true;
-        }
-        //"chilun",   "keti" ,"luosi"
-        std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
-        cur_keti = keti_num;
-        if (cur_keti > 0)
-        {
-            if (chilun_num == CHILUN_NUM)
-            {
-                // 满了 plc res_flag置1
-                // cv2.putText(image, "OK", (10, 120), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                chilun_flag = true;
-            }
-
-            if (luosi_num == LUOSI_NUM)
-            {
-                // 满了 plc res_flag置1
-                // cv2.putText(image, "OK", (10, 130), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                luosi_flag = true;
-            }
-        }
-        last_keti = cur_keti;
-        emit updateActionState(actionGroup);
-        if (chilun_flag && !luosi_flag)
-        {
-            // 绘制消息框
-            cv::putText(BGR_image, "chilun OK", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-            cv::putText(BGR_image, "luosi not yet", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-            emit updateButtonState(true, false, false); // 齿轮/螺丝/ 总体
-        }
-
-        if (luosi_flag && !chilun_flag)
-        {
-            // 绘制消息框
-            cv::putText(BGR_image, "chilun not yet", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-            cv::putText(BGR_image, "luosi OK", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-            emit updateButtonState(false, true, false); // 齿轮/螺丝/ 总体
-        }
-
-        if (chilun_flag && luosi_flag)
-        {
-            // 绘制消息框
-            cv::putText(BGR_image, "chilun OK", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-            cv::putText(BGR_image, "luosi OK", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-            cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-            emit updateButtonState(true, true, true); // 齿轮/螺丝/ 总体
-            // PLC 接收
-            setD(2,1);//绿灯 
-        }
-
-        if (cur_keti == 0 && last_keti == 1)
-        {
-            // keti消失，chilun_flag和luosi_flag置0
-            chilun_flag = false;
-            luosi_flag = false;
-            // 并检查是否漏装对齐
-            if (!chilun_flag)
-            {
-                // 绘制消息框
-                cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                // PLC 报警
-                setD(0,2);//置位
-            }
-
-            if (!luosi_flag)
-            {
-                // 绘制消息框
-                cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                // PLC 报警
-                setD(0,2);//置位
-            }
-        }
-
-        if (cur_keti == 0 && last_keti == 0)
-        {
-            // keti消失，chilun_flag和luosi_flag置0
-            chilun_flag = false;
-            luosi_flag = false;
-            //reset actionGroup and buttonState
-            actionGroup = {false,false,false,false,false};
-            emit updateButtonState(false, true, false); // 齿轮/螺丝/ 总体
-            //复位PLC输出
-            //setD(0,0);//复位报警
-            //setD(2,0);//复位绿灯
-        }
-        cv::imshow("video", image);
-        cv::waitKey(5);
-        
-
-    }
-    cap.release();
-    cv::destroyAllWindows();
+    return;
 }
 
 void Camera::igonoreAction(int index){//忽略某个动作,todo: (std::vector<bool> index)作为传递参数较好

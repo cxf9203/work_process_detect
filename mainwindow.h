@@ -52,5 +52,6 @@ private:
     Ui::MainWindow *ui;
     QThread *THREAD1_cam1;
     Camera *cam; // camera thread
+    bool baojing_flag = true;
 };
 #endif // MAINWINDOW_H
