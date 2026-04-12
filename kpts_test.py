@@ -1,10 +1,11 @@
 from ultralytics import YOLO
 import cv2
+
 # Load a model
 model = YOLO("key_points.pt")  # pretrained YOLO26n model
 video = cv2.VideoCapture("resource\\192.168.1.64_01_2026031014325577.mp4")
 while 1:
-    ret , frame = video.read()
+    ret, frame = video.read()
     # Run batched inference on a list of images
     results = model(frame)  # return a list of Results objects
 
@@ -17,9 +18,9 @@ while 1:
         obb = result.obb  # Oriented boxes object for OBB outputs
         # result.show()  # display to screen
         # result.save(filename="result.jpg")  # save to disk
-    #显示每一张图片的预测结果并将结果绘制在frame中
+    # 显示每一张图片的预测结果并将结果绘制在frame中
     frame = result.plot()
-    cv2.imshow("frame",frame)
+    cv2.imshow("frame", frame)
     cv2.waitKey(1)
 video.release()
 cv2.destroyAllWindows()

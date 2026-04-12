@@ -19,37 +19,43 @@ namespace fs = std::filesystem;
 QMutex queueMutex;
 
 // 鼠标回调函数
-void onMouse(int event, int x, int y, int flags, void* param) {
+void onMouse(int event, int x, int y, int flags, void *param)
+{
     static cv::Point pt1, pt2;
-    cv::Mat* img = static_cast<cv::Mat*>(param);
-    
-    if (event == cv::EVENT_LBUTTONDOWN) {
+    cv::Mat *img = static_cast<cv::Mat *>(param);
+
+    if (event == cv::EVENT_LBUTTONDOWN)
+    {
         pt1 = cv::Point(x, y);
     }
-    else if (event == cv::EVENT_LBUTTONUP) {
+    else if (event == cv::EVENT_LBUTTONUP)
+    {
         pt2 = cv::Point(x, y);
         roi_rect = cv::Rect(pt1, pt2);
         roi_selected = true;
-        
+
         // 在原图上绘制矩形
         cv::Mat display_img = img->clone();
         cv::rectangle(display_img, roi_rect, cv::Scalar(0, 255, 0), 2);
         cv::imshow("Select ROI", display_img);
     }
-    else if (event == cv::EVENT_MOUSEMOVE && (flags & cv::EVENT_FLAG_LBUTTON)) {
+    else if (event == cv::EVENT_MOUSEMOVE && (flags & cv::EVENT_FLAG_LBUTTON))
+    {
         cv::Mat display_img = img->clone();
         cv::rectangle(display_img, pt1, cv::Point(x, y), cv::Scalar(0, 255, 0), 2);
         cv::imshow("Select ROI", display_img);
     }
 }
+
 // 数据解码回调函数，
 // 功能：将YV_12格式的视频数据流转码为可供opencv处理的BGR类型的图片数据，并实时显示。
 void CALLBACK DecCBFun(long nPort, char *pBuf, long nSize, FRAME_INFO *pFrameInfo, long nUser, long nReserved2)
 {
-    //    std::cout << nUser << std::endl;
-    //    if (nUser == 1) {
-    //        std::cout << "camera" << std::endl;
-    //    }
+    // std::cout << nUser << std::endl;
+    // if (nUser == 1)
+    // {
+    //     std::cout << "camera" << std::endl;
+    // }
     if (pFrameInfo->nType == T_YV12)
     {
         // std::cout << "the frame infomation is T_YV12" << std::endl;
@@ -70,6 +76,7 @@ void CALLBACK DecCBFun(long nPort, char *pBuf, long nSize, FRAME_INFO *pFrameInf
         Camera::gImage.push(g_BGRImage.clone()); // 使用clone确保深拷贝，避免内存问题
     }
 }
+
 // 实时视频码流数据获取 回调函数
 void CALLBACK g_RealDataCallBack_V30(LONG lPlayHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void *pUser)
 {
@@ -88,10 +95,12 @@ void CALLBACK g_RealDataCallBack_V30(LONG lPlayHandle, DWORD dwDataType, BYTE *p
         }
     }
 }
+
 Camera::Camera(QObject *parent)
 {
     initCamera();
 }
+
 Camera::~Camera()
 {
     // 销毁事件回调指针
@@ -110,19 +119,21 @@ Camera::~Camera()
         g_BGRImage.release();
     }
 }
+
 void Camera::initCamera()
 { // 初始化相机参数
 }
+
 void Camera::run()
 {
     // 链接PLC
-    //ctx = modbus_new_tcp("192.168.31.99", 502);
-    ctx = modbus_new_tcp("192.168.1.99", 2001);//西门子smart 200 厂里是192.168.1.11
+    // ctx = modbus_new_tcp("192.168.31.99", 502);
+    ctx = modbus_new_tcp("192.168.1.99", 2001); // 西门子smart 200 厂里是192.168.1.11
     if (ctx == NULL)
     {
         qDebug() << "cannot create modbus";
         emit sendQStringtoMain("cannot create modbus");
-        //return;
+        // return;
     }
 
     // 连接到Modbus服务器
@@ -133,15 +144,15 @@ void Camera::run()
 
         emit send_connectstate(false);
         emit sendQStringtoMain("connect to server fail");
-        //return;
+        // return;
     }
     emit send_connectstate(true);
     emit sendQStringtoMain("connect to plc success");
     emit sendQStringtoMain("loading ai model...");
-    //fp32精度模型
-    //config.precision = Precision::FP32;
+    // fp32精度模型
+    // config.precision = Precision::FP32;
     YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
-    
+
     emit sendQStringtoMain("load ai model success");
     // 初始化
     NET_DVR_Init();
@@ -158,7 +169,7 @@ void Camera::run()
     char *sDeviceAddress, *sUserName, *sPassword;
     wPort = 8000;
     // 修改后
-    //char ip[] = "192.168.31.105"; // 栈上创建可修改副本
+    // char ip[] = "192.168.31.105"; // 栈上创建可修改副本
     char ip[] = "192.168.1.64"; // 厂里camera
     sDeviceAddress = ip;
     char admin[] = "admin";
@@ -174,7 +185,7 @@ void Camera::run()
     if (lUserID < 0)
     {
         std::cout << "注册失败！\n";
-        emit sendQStringtoMain("register fail with camera!");    
+        emit sendQStringtoMain("register fail with camera!");
         system("pause");
     }
     else
@@ -279,26 +290,31 @@ void Camera::run()
                 int luosi_num = classCount[2];
                 QString str_chilun_num = QString::number(chilun_num);
                 QString str_luosi_num = QString::number(luosi_num);
-                emit sendNumber(str_chilun_num,str_luosi_num);
-                //检查动作是否有做到了（瞬时动作可以消失）
+                emit sendNumber(str_chilun_num, str_luosi_num);
+                // 检查动作是否有做到了（瞬时动作可以消失）
                 std::vector<bool> tempAction = yoloV8.getActionFlag();
-                if (tempAction[0]){
+                if (tempAction[0])
+                {
                     actionGroup[0] = true;
                 }
-                if (tempAction[1]){
+                if (tempAction[1])
+                {
                     actionGroup[1] = true;
                 }
-                if (tempAction[2]){
+                if (tempAction[2])
+                {
                     actionGroup[2] = true;
                 }
-                if (tempAction[3]){
+                if (tempAction[3])
+                {
                     actionGroup[3] = true;
                 }
-                if (tempAction[4]){
+                if (tempAction[4])
+                {
                     actionGroup[4] = true;
                 }
-                //"chilun",   "keti" ,"luosi"
-                //std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
+                // "chilun",   "keti" ,"luosi"
+                // std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
                 cur_keti = keti_num;
                 if (cur_keti > 0)
                 {
@@ -342,7 +358,7 @@ void Camera::run()
                     cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     emit updateButtonState(true, true, true); // 齿轮/螺丝/ 总体
                     // PLC 接收
-                    //setD(2,1);//绿灯 
+                    // setD(2,1);//绿灯
                 }
 
                 if (cur_keti == 0 && last_keti == 1)
@@ -373,10 +389,10 @@ void Camera::run()
                     // keti消失，chilun_flag和luosi_flag置0
                     chilun_flag = false;
                     luosi_flag = false;
-                    //reset actionGroup and buttonState
-                    actionGroup = {false,false,false,false,false};
+                    // reset actionGroup and buttonState
+                    actionGroup = {false, false, false, false, false};
                     emit updateButtonState(false, false, false); // 齿轮/螺丝/ 总体
-                    //复位PLC输出
+                    //复位PLC输出(让PLC自己复位)
                     //setD(0,0);//复位报警
                     //setD(2,0);//复位绿灯
                 }
@@ -396,7 +412,7 @@ void Camera::run()
         }
 
         // 结束停止采集
-        //  先停止预览
+        // 先停止预览
         NET_DVR_StopRealPlay(lUserID);
 
         // 停止播放库
@@ -424,17 +440,20 @@ void Camera::run()
     // 反初始化库
     // 销毁事件回调指针
 }
+
 void Camera::ExecuteMianToThread()
 {
     stop_camera();
     qDebug() << "shoudao " << "\n";
-    //   DestroyedHandle();
+    // DestroyedHandle();
     emit finished();
 }
+
 void Camera::stop_camera()
 {
     this->Camera_thread_flag = true;
 }
+
 void Camera::closeDevice()
 { // 关闭设备
     // ch:关闭设备 | Close device
@@ -443,10 +462,12 @@ void Camera::closeDevice()
 
     emit finished();
 }
+
 bool Camera::imageProcess(cv::Mat image)
 {
     return true;
 }
+
 QImage Camera::cvMat2QImage(const cv::Mat &mat)
 {
     // 检查Mat是否为空
@@ -499,17 +520,20 @@ QImage Camera::cvMat2QImage(const cv::Mat &mat)
         return QImage();
     }
 }
-void Camera::set32D(int address,int32_t value){//设置32位D
+
+void Camera::set32D(int address, int32_t value)
+{ // 设置32位D
     // 确保value在int32_t的范围内
-    if (value < INT32_MIN || value > INT32_MAX) {
+    if (value < INT32_MIN || value > INT32_MAX)
+    {
         std::cerr << "Value out of range for int32_t" << std::endl;
     }
 
     // 将32位整数分割为两个16位部分
     uint16_t high = static_cast<uint16_t>((value >> 16) & 0xFFFF); // 取高16位
-    uint16_t low = static_cast<uint16_t>(value & 0xFFFF); // 取低16位
-    rc =modbus_write_register(ctx,address,low);
-    rc =modbus_write_register(ctx,address+1,high);
+    uint16_t low = static_cast<uint16_t>(value & 0xFFFF);          // 取低16位
+    rc = modbus_write_register(ctx, address, low);
+    rc = modbus_write_register(ctx, address + 1, high);
 }
 void Camera::setD(int address,int value){//设置16位 D
     if (ctx == NULL) {
@@ -522,55 +546,64 @@ void Camera::setD(int address,int value){//设置16位 D
         // 尝试重新连接
     }
     emit sendQStringtoMain("setD address"+QString::number(address)+"value is: "+QString::number(value));  
-
 }
-int Camera::setRoi(){
-    //获取一张BGR_image，显示出来让用户进行手动框选，然后保存框选的坐标保存到roi_x,roi_y,roi_w,roi_h中
-    //然后根据框选的坐标进行图像处理
-    //test 实际使用时注释
+void Camera::setD(int address, int value)
+{ // 设置16位 D
+    rc = modbus_write_register(ctx, address, value);
+}
+
+int Camera::setRoi()
+{
+    // 获取一张BGR_image，显示出来让用户进行手动框选，然后保存框选的坐标保存到roi_x,roi_y,roi_w,roi_h中
+    // 然后根据框选的坐标进行图像处理
+    // test 实际使用时注释
     cv::Mat BGR_image = cv::imread("C:\\Users\\chenxinfeng\\Desktop\\异物图片 裁剪后\\22.bmp");
-    if (BGR_image.empty()) {
-        qDebug() << "cannot load image" ;
+    if (BGR_image.empty())
+    {
+        qDebug() << "cannot load image";
         return -1;
     }
-    
+
     // 显示图像并设置鼠标回调
     cv::namedWindow("Select ROI", cv::WINDOW_NORMAL);
     cv::setMouseCallback("Select ROI", onMouse, &BGR_image);
     cv::imshow("Select ROI", BGR_image);
-    
-    qDebug() << "select roi by mouse..." ;
+
+    qDebug() << "select roi by mouse...";
     cv::waitKey(0);
-    
-    if (roi_selected) {
+
+    if (roi_selected)
+    {
         // 保存ROI坐标
         int roi_x = roi_rect.x;
         int roi_y = roi_rect.y;
         int roi_w = roi_rect.width;
         int roi_h = roi_rect.height;
-        
-        qDebug() << "select ROI : x=" << roi_x << ", y=" << roi_y 
-             << ", width=" << roi_w << ", height=" << roi_h ;
-        
+
+        qDebug() << "select ROI : x=" << roi_x << ", y=" << roi_y
+                 << ", width=" << roi_w << ", height=" << roi_h;
+
         // 提取ROI区域
         cv::Mat roi_image = BGR_image(roi_rect);
-        
+
         // 显示ROI区域
         cv::imshow("Selected ROI", roi_image);
         cv::waitKey(0);
-    } else {
-        qDebug()<< "not select roi yet" ;
     }
-    qDebug() << "get select ROI : x=" << roi_x << ", y=" << roi_y 
-             << ", width=" << roi_w << ", height=" << roi_h ;
-    
-    return 0;
+    else
+    {
+        qDebug() << "not select roi yet";
+    }
+    qDebug() << "get select ROI : x=" << roi_x << ", y=" << roi_y
+             << ", width=" << roi_w << ", height=" << roi_h;
 
+    return 0;
 }
 void Camera::aiTest(){
     return;
 }
 
-void Camera::igonoreAction(int index){//忽略某个动作,todo: (std::vector<bool> index)作为传递参数较好
+void Camera::igonoreAction(int index)
+{ // 忽略某个动作,todo: (std::vector<bool> index)作为传递参数较好
     actionGroup[index] = false;
 }
