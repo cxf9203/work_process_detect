@@ -127,8 +127,8 @@ void Camera::initCamera()
 void Camera::run()
 {
     // 链接PLC
-    // ctx = modbus_new_tcp("192.168.31.99", 502);
-    ctx = modbus_new_tcp("192.168.1.99", 2001); // 西门子smart 200 厂里是192.168.1.11
+    
+    ctx = modbus_new_tcp("192.168.1.99", 2001); // 西门子smart 200
     if (ctx == NULL)
     {
         qDebug() << "cannot create modbus";
