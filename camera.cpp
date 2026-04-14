@@ -242,9 +242,9 @@ void Camera::run()
 
     qDebug() << "Camera" << id << "opened successfully";
     emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
-    setD(0,0);
-    setD(1,0);
-    setD(2,0);
+    setD(0, 0);
+    setD(1, 0);
+    setD(2, 0);
     if (NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL)) // 开始取流
     {
         // cv::namedWindow("RGBImage2");
@@ -293,25 +293,12 @@ void Camera::run()
                 emit sendNumber(str_chilun_num, str_luosi_num);
                 // 检查动作是否有做到了（瞬时动作可以消失）
                 std::vector<bool> tempAction = yoloV8.getActionFlag();
-                if (tempAction[0])
+                for (size_t i = 0; i < tempAction.size(); i++)
                 {
-                    actionGroup[0] = true;
-                }
-                if (tempAction[1])
-                {
-                    actionGroup[1] = true;
-                }
-                if (tempAction[2])
-                {
-                    actionGroup[2] = true;
-                }
-                if (tempAction[3])
-                {
-                    actionGroup[3] = true;
-                }
-                if (tempAction[4])
-                {
-                    actionGroup[4] = true;
+                    if (tempAction[i])
+                    {
+                        actionGroup[i] = true;
+                    }
                 }
                 // "chilun",   "keti" ,"luosi"
                 // std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
@@ -332,14 +319,13 @@ void Camera::run()
                         luosi_flag = true;
                     }
                 }
-                
                 emit updateActionState(actionGroup);
                 if (chilun_flag && !luosi_flag)
                 {
                     // 绘制消息框
                     cv::putText(BGR_image, "chilun OK", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     cv::putText(BGR_image, "luosi not yet", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    emit updateButtonState(true, false, false); // 齿轮/螺丝/ 总体
+                    emit updateButtonState(true, false, false); // 齿轮/螺丝/总体
                 }
 
                 if (luosi_flag && !chilun_flag)
@@ -347,7 +333,7 @@ void Camera::run()
                     // 绘制消息框
                     cv::putText(BGR_image, "chilun not yet", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     cv::putText(BGR_image, "luosi OK", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    emit updateButtonState(false, true, false); // 齿轮/螺丝/ 总体
+                    emit updateButtonState(false, true, false); // 齿轮/螺丝/总体
                 }
 
                 if (chilun_flag && luosi_flag)
@@ -356,23 +342,20 @@ void Camera::run()
                     cv::putText(BGR_image, "chilun OK", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     cv::putText(BGR_image, "luosi OK", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    emit updateButtonState(true, true, true); // 齿轮/螺丝/ 总体
+                    emit updateButtonState(true, true, true); // 齿轮/螺丝/总体
                     // PLC 接收
                     // setD(2,1);//绿灯
                 }
 
                 if (cur_keti == 0 && last_keti == 1)
                 {
-                    // keti消失，chilun_flag和luosi_flag置0
-                    chilun_flag = false;
-                    luosi_flag = false;
                     // 并检查是否漏装对齐
                     if (!chilun_flag)
                     {
                         // 绘制消息框
                         cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        setD(0,1);//PLC置位
+                        setD(0, 1); // PLC置位
                     }
 
                     if (!luosi_flag)
@@ -380,8 +363,11 @@ void Camera::run()
                         // 绘制消息框
                         cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // PLC 报警
-                        setD(0,1);//PLC置位
+                        setD(0, 1); // PLC置位
                     }
+                    // keti消失，chilun_flag和luosi_flag置0
+                    chilun_flag = false;
+                    luosi_flag = false;
                 }
 
                 if (cur_keti == 0 && last_keti == 0)
@@ -391,12 +377,12 @@ void Camera::run()
                     luosi_flag = false;
                     // reset actionGroup and buttonState
                     actionGroup = {false, false, false, false, false};
-                    emit updateButtonState(false, false, false); // 齿轮/螺丝/ 总体
-                    //复位PLC输出(让PLC自己复位)
-                    //setD(0,0);//复位报警
-                    //setD(2,0);//复位绿灯
+                    emit updateButtonState(false, false, false); // 齿轮/螺丝/总体
+                    // 复位PLC输出(让PLC自己复位)
+                    // setD(0, 0); // 复位报警
+                    // setD(2, 0); // 复位绿灯
                 }
-            last_keti = cur_keti;
+                last_keti = cur_keti;
             }
             catch (...)
             {
@@ -535,19 +521,22 @@ void Camera::set32D(int address, int32_t value)
     rc = modbus_write_register(ctx, address, low);
     rc = modbus_write_register(ctx, address + 1, high);
 }
-void Camera::setD(int address,int value){//设置16位 D
-    if (ctx == NULL) {
+
+void Camera::setD(int address, int value)
+{ // 设置16位 D
+    if (ctx == NULL)
+    {
         emit sendQStringtoMain("Modbus context is NULL");
         return;
     }
-    rc =modbus_write_register(ctx,address,value);
-    if (rc == -1) {
-        emit sendQStringtoMain("Failed to write register" );
+    rc = modbus_write_register(ctx, address, value);
+    if (rc == -1)
+    {
+        emit sendQStringtoMain("Failed to write register");
         // 尝试重新连接
     }
-    emit sendQStringtoMain("setD address"+QString::number(address)+"value is: "+QString::number(value));  
+    emit sendQStringtoMain("setD address" + QString::number(address) + "value is: " + QString::number(value));
 }
-
 
 int Camera::setRoi()
 {
@@ -596,7 +585,9 @@ int Camera::setRoi()
 
     return 0;
 }
-void Camera::aiTest(){
+
+void Camera::aiTest()
+{
     return;
 }
 

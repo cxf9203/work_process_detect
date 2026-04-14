@@ -68,17 +68,17 @@ endif()
 target_include_directories(vscodeTest PRIVATE
     "D:/opencv4.7_cuda/include"
     "D:/libmodbus_dll/include"
-    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/include"
-    "D:/C++Projects/CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005/CH-HCNetSDKV6.1.9.48_build20230410_win64/include"
     "D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/include"
+    "D:/C++Projects/CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005/CH-HCNetSDKV6.1.9.48_build20230410_win64/include"
+    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/include"
 )
 
 # 添加库文件路径
 target_link_directories(vscodeTest PRIVATE
-    "D:/C++Projects/CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005/CH-HCNetSDKV6.1.9.48_build20230410_win64/LIB"
     "D:/opencv4.7_cuda/x64/vc17/lib"
     "D:/libmodbus_dll/lib"
     "D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/lib"
+    "D:/C++Projects/CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005/CH-HCNetSDKV6.1.9.48_build20230410_win64/lib"
     "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/lib/x64"
 )
 

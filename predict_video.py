@@ -7,9 +7,7 @@ model = YOLO("best.pt")
 labelSet = ["chilun", "keti", "luosi"]
 # Open the video file
 # video = cv2.VideoCapture("weights/192.168.1.64_01_20260317141519973_1.mp4")
-video = cv2.VideoCapture(
-    "rtsp://admin:CXF643200@192.168.1.64/Streaming/Channels/1"
-)  # 海康相机ip
+video = cv2.VideoCapture("rtsp://admin:CXF643200@192.168.1.64/Streaming/Channels/1")  # 海康相机ip
 # Get the video properties
 width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))

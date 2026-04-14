@@ -15,21 +15,19 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam, &Camera::finished, THREAD1_cam1, &QThread::quit); // 停止线程，线程那边触发会停止（finished），可以再次用start启动
     // connect(cam, &Camera::finished, cam, &QObject::deleteLater);//在空闲时间删除线程对象，执行后将不能在用start方法启动线程
     ////---------------------------------------------------------------------------------------------------------------------------------------------//
-    connect(this, &MainWindow::SetStopThreadC1, cam, &Camera::ExecuteMianToThread, Qt::QueuedConnection);//向线程发送信号//线程终止条件设置函数
-    //connect(cam,&Camera::sendImgToAutoMain,this,&MainWindow::receiveslotAutoImg,Qt::DirectConnection);
-    //connect(cam,&Camera::resetSystem,this,&MainWindow::resetSystem,Qt::DirectConnection);
-    connect(cam,&Camera::send_connectstate,this,&MainWindow::receive_connectstate,Qt::QueuedConnection);
-    connect(cam,&Camera::updateButtonState,this,&MainWindow::updateButtonState,Qt::QueuedConnection);
-    //connect(cam,&Camera::triggerAlarm,this,&MainWindow::triggerAlarm,Qt::DirectConnection);
-    connect(cam,&Camera::sendQImgToAutoMain,this,&MainWindow::receiveslotQImg,Qt::QueuedConnection);
-    connect(cam,&Camera::updateActionState,this,&MainWindow::getActionState,Qt::QueuedConnection);
-    connect(cam,&Camera::sendNumber,this,&MainWindow::receiveNumber,Qt::QueuedConnection);
-    
-    
-    connect(cam,&Camera::sendQStringtoMain,this,&MainWindow::receiveQStringtoMain,Qt::QueuedConnection);
-    connect(cam,&Camera::finishedthread,this,&MainWindow::receivefinish);
-    connect(this,&MainWindow::destroyed,cam,&Camera::deleteLater,Qt::QueuedConnection);
-    //启动相机1
+    connect(this, &MainWindow::SetStopThreadC1, cam, &Camera::ExecuteMianToThread, Qt::QueuedConnection); // 向线程发送信号//线程终止条件设置函数
+    // connect(cam,&Camera::sendImgToAutoMain,this,&MainWindow::receiveslotAutoImg,Qt::DirectConnection);
+    // connect(cam,&Camera::resetSystem,this,&MainWindow::resetSystem,Qt::DirectConnection);
+    connect(cam, &Camera::send_connectstate, this, &MainWindow::receive_connectstate, Qt::QueuedConnection);
+    connect(cam, &Camera::updateButtonState, this, &MainWindow::updateButtonState, Qt::QueuedConnection);
+    // connect(cam,&Camera::triggerAlarm,this,&MainWindow::triggerAlarm,Qt::DirectConnection);
+    connect(cam, &Camera::sendQImgToAutoMain, this, &MainWindow::receiveslotQImg, Qt::QueuedConnection);
+    connect(cam, &Camera::updateActionState, this, &MainWindow::getActionState, Qt::QueuedConnection);
+    connect(cam, &Camera::sendNumber, this, &MainWindow::receiveNumber, Qt::QueuedConnection);
+    connect(cam, &Camera::sendQStringtoMain, this, &MainWindow::receiveQStringtoMain, Qt::QueuedConnection);
+    connect(cam, &Camera::finishedthread, this, &MainWindow::receivefinish);
+    connect(this, &MainWindow::destroyed, cam, &Camera::deleteLater, Qt::QueuedConnection);
+    // 启动相机1
     THREAD1_cam1->start();
 }
 
@@ -37,8 +35,6 @@ MainWindow::~MainWindow()
 {
     cam->closeDevice();
     delete ui;
-   
-
 }
 
 void MainWindow::on_start_clicked()
@@ -68,7 +64,6 @@ void MainWindow::updateButtonState(bool p1Detected, bool p2Detected, bool p3Dete
     ui->btn_proc2->setEnabled(p2Detected);
     ui->btn_proc3->setEnabled(p3Detected);
     // 如果ok显示绿色，ng显示红色
-
     if (p1Detected)
     {
         ui->btn_proc1->setStyleSheet("background-color: green;");
@@ -77,7 +72,6 @@ void MainWindow::updateButtonState(bool p1Detected, bool p2Detected, bool p3Dete
     {
         ui->btn_proc1->setStyleSheet("background-color: red;");
     }
-
     if (p2Detected)
     {
         ui->btn_proc2->setStyleSheet("background-color: green;");
@@ -117,17 +111,19 @@ void MainWindow::on_btn_setRoi_clicked()
 }
 
 void MainWindow::on_pushButton_clicked()
-{   
-    if(baojing_flag){
-        qDebug()<<"output1";
-        cam->setD(0,1);
-        baojing_flag = !baojing_flag;
-    }else{
-        qDebug()<<"output1";
-        cam->setD(0,0);
+{
+    if (baojing_flag)
+    {
+        qDebug() << "output1";
+        cam->setD(0, 1);
         baojing_flag = !baojing_flag;
     }
-    
+    else
+    {
+        qDebug() << "output1";
+        cam->setD(0, 0);
+        baojing_flag = !baojing_flag;
+    }
 }
 
 void MainWindow::on_pushButton_2_clicked()
@@ -150,7 +146,7 @@ void MainWindow::on_pushButton_4_clicked()
 
 void MainWindow::getActionState(std::vector<bool> actionState)
 {
-    // qDebug()<<"getActionState";"luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"
+    // qDebug() << "getActionState" << "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun";
     if (actionState[0])
     {
         ui->label_4->setStyleSheet("background-color: green;");
