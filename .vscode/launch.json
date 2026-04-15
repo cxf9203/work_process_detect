@@ -23,7 +23,7 @@
                     "value": "D:/Qt/5.14.2/msvc2017_64/qml"
                 }
             ],
-            "console": "externalTerminal",
+            // "console": "externalTerminal",
             "preLaunchTask": "build-qt-project"
         }
     ]
