@@ -280,7 +280,7 @@ void Camera::run()
             try
             {
                 // Run inference 推理
-                // qDebug()<<"run inference";
+                // qDebug() << "run inference";
                 const auto objects = yoloV8.detectObjects(BGR_image);
                 // Draw the bounding boxes on the image
                 yoloV8.drawObjectLabels(BGR_image, objects); // 绘制框
@@ -300,6 +300,7 @@ void Camera::run()
                         actionGroup[i] = true;
                     }
                 }
+                emit updateActionState(actionGroup);
                 // "chilun",   "keti" ,"luosi"
                 // std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
                 cur_keti = keti_num;
@@ -319,7 +320,6 @@ void Camera::run()
                         luosi_flag = true;
                     }
                 }
-                emit updateActionState(actionGroup);
                 if (chilun_flag && !luosi_flag)
                 {
                     // 绘制消息框
@@ -535,7 +535,7 @@ void Camera::setD(int address, int value)
         emit sendQStringtoMain("Failed to write register");
         // 尝试重新连接
     }
-    emit sendQStringtoMain("setD address" + QString::number(address) + "value is: " + QString::number(value));
+    emit sendQStringtoMain("setD address" + QString::number(address) + ", value is: " + QString::number(value));
 }
 
 int Camera::setRoi()
@@ -566,8 +566,7 @@ int Camera::setRoi()
         int roi_w = roi_rect.width;
         int roi_h = roi_rect.height;
 
-        qDebug() << "select ROI : x=" << roi_x << ", y=" << roi_y
-                 << ", width=" << roi_w << ", height=" << roi_h;
+        qDebug() << "select ROI : x=" << roi_x << ", y=" << roi_y << ", width=" << roi_w << ", height=" << roi_h;
 
         // 提取ROI区域
         cv::Mat roi_image = BGR_image(roi_rect);
@@ -580,8 +579,7 @@ int Camera::setRoi()
     {
         qDebug() << "not select roi yet";
     }
-    qDebug() << "get select ROI : x=" << roi_x << ", y=" << roi_y
-             << ", width=" << roi_w << ", height=" << roi_h;
+    qDebug() << "get select ROI : x=" << roi_x << ", y=" << roi_y << ", width=" << roi_w << ", height=" << roi_h;
 
     return 0;
 }
