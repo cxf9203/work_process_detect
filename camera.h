@@ -87,9 +87,6 @@ private:
     // 系统状态
     enum ProcessState { WAIT_P1, WAIT_P2, WAIT_P3, COMPLETE, ALARM };
     ProcessState currentState = WAIT_P1;
-    bool p1Detected = false;
-    bool p2Detected = false;
-    bool p3Detected = false;
     std::vector<std::string> classes = {"process1", "process2", "process3"};
     std::vector<bool> actionGroup = {false, false, false, false, false}; // "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"; //动作序列
     // 用于存储每个类别的计数
