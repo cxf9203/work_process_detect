@@ -535,7 +535,7 @@ void Camera::setD(int address, int value)
         emit sendQStringtoMain("Failed to write register");
         // 尝试重新连接
     }
-    emit sendQStringtoMain("setD address" + QString::number(address) + ", value is: " + QString::number(value));
+    emit sendQStringtoMain("setD address: " + QString::number(address) + ", value is: " + QString::number(value));
 }
 
 int Camera::setRoi()
