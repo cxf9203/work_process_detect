@@ -162,10 +162,10 @@ void Camera::run()
 
     //------------------------------
     // 登录
-    pLoginInfo = {0};
+    lpLoginInfo = {0};
     lpDeviceInfo = {0};
 
-    pLoginInfo.bUseAsynLogin = 0; // 同步登录方式
+    lpLoginInfo.bUseAsynLogin = 0; // 同步登录方式
     char *sDeviceAddress, *sUserName, *sPassword;
     wPort = 8000;
     // 修改后
@@ -176,12 +176,12 @@ void Camera::run()
     sUserName = admin;
     char pwd[] = "CXF643200";
     sPassword = pwd;
-    strcpy_s(pLoginInfo.sDeviceAddress, sDeviceAddress);
-    strcpy_s(pLoginInfo.sUserName, sUserName);
-    strcpy_s(pLoginInfo.sPassword, sPassword);
-    pLoginInfo.wPort = wPort;
+    strcpy_s(lpLoginInfo.sDeviceAddress, sDeviceAddress);
+    strcpy_s(lpLoginInfo.sUserName, sUserName);
+    strcpy_s(lpLoginInfo.sPassword, sPassword);
+    lpLoginInfo.wPort = wPort;
 
-    lUserID = NET_DVR_Login_V40(&pLoginInfo, &lpDeviceInfo);
+    lUserID = NET_DVR_Login_V40(&lpLoginInfo, &lpDeviceInfo);
     if (lUserID < 0)
     {
         std::cout << "注册失败！\n";
@@ -303,7 +303,22 @@ void Camera::run()
                 emit updateActionState(actionGroup);
                 // "chilun",   "keti" ,"luosi"
                 // std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
-                cur_keti = keti_num;
+
+                // 将当前帧的壳体检测结果添加到滑动窗口
+                bool current_keti_detected = keti_num > 0;
+                keti_history.push_back(current_keti_detected);
+
+                // 保持滑动窗口大小为 KETI_WINDOW_SIZE
+                if (keti_history.size() > KETI_WINDOW_SIZE)
+                {
+                    keti_history.pop_front();
+                }
+
+                // 计算滑动窗口中检测到壳体的帧数
+                int keti_count = std::count(keti_history.begin(), keti_history.end(), true);
+
+                // 根据阈值确定最终的壳体状态
+                cur_keti = keti_count >= KETI_THRESHOLD ? 1 : 0;
                 if (cur_keti > 0)
                 {
                     if (chilun_num == CHILUN_NUM)
