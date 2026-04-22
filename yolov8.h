@@ -102,12 +102,12 @@ private:
     std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);
 
     // Postprocess the output
-    std::vector<Object> postprocessDetect(std::vector<float> &featureVector);
+    std::vector<Object> postProcessDetect(std::vector<float> &featureVector);
     // Postprocess the output for classify
-    int postprocessClassify(std::vector<float> &featureVector);
+    int postProcessClassify(std::vector<float> &featureVector);
     int Itemindex;
     // Postprocess the output for pose model
-    std::vector<Object> postprocessPose(std::vector<float> &featureVector);
+    std::vector<Object> postProcessPose(std::vector<float> &featureVector);
 
     // Postprocess the output for segmentation model
     std::vector<Object> postProcessSegmentation(std::vector<std::vector<float>> &featureVectors);

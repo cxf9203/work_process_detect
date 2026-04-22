@@ -146,8 +146,12 @@ void Camera::run()
         emit sendQStringtoMain("connect to server fail");
         // return;
     }
-    emit send_connectstate(true);
-    emit sendQStringtoMain("connect to plc success");
+    else
+    {
+        emit send_connectstate(true);
+        emit sendQStringtoMain("connect to plc success");
+    }
+
     emit sendQStringtoMain("loading ai model...");
     // fp32精度模型
     // config.precision = Precision::FP32;
@@ -254,7 +258,6 @@ void Camera::run()
         this->Camera_thread_flag = false;
         // 等待结束
         int fps;
-        double t = 0;
 
         while (true)
         {
@@ -269,7 +272,6 @@ void Camera::run()
                 continue;
             }
 
-            t = (double)cv::getTickCount();
             QMutexLocker locker(&queueMutex);
             BGR_image = Camera::gImage.front();
             Camera::gImage.pop();
@@ -433,7 +435,6 @@ void Camera::run()
         // 注销远端设备事件
         // 释放资源
     }
-
     catch (std::exception &e)
     {
         qDebug() << "error info: " << e.what();

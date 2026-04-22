@@ -126,14 +126,14 @@ std::vector<Object> YoloV8::detectObjects(const cv::cuda::GpuMat &inputImageBGR)
         if (numChannels == 56)
         {
             // Pose estimation
-            ret = postprocessPose(featureVector);
+            ret = postProcessPose(featureVector);
         }
 
         else
         {
             // Object detection or classify
-            ret = postprocessDetect(featureVector);
-            // Itemindex = postprocessClassify(featureVector);
+            ret = postProcessDetect(featureVector);
+            // Itemindex = postProcessClassify(featureVector);
         }
     }
     else
@@ -305,7 +305,7 @@ std::vector<Object> YoloV8::postProcessSegmentation(std::vector<std::vector<floa
     return objs;
 }
 
-std::vector<Object> YoloV8::postprocessPose(std::vector<float> &featureVector)
+std::vector<Object> YoloV8::postProcessPose(std::vector<float> &featureVector)
 {
     const auto &outputDims = m_trtEngine->getOutputDims();
     auto numChannels = outputDims[0].d[1];
@@ -393,7 +393,7 @@ std::vector<Object> YoloV8::postprocessPose(std::vector<float> &featureVector)
     return objects;
 }
 
-int YoloV8::postprocessClassify(std::vector<float> &featureVector)
+int YoloV8::postProcessClassify(std::vector<float> &featureVector)
 {
     // 图像分类时
     int max_index;
@@ -428,7 +428,7 @@ int YoloV8::postprocessClassify(std::vector<float> &featureVector)
     return max_index;
 }
 
-std::vector<Object> YoloV8::postprocessDetect(std::vector<float> &featureVector)
+std::vector<Object> YoloV8::postProcessDetect(std::vector<float> &featureVector)
 {
     const auto &outputDims = m_trtEngine->getOutputDims();
     auto numChannels = outputDims[0].d[1];
