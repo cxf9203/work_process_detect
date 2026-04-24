@@ -4,9 +4,7 @@ video/
 saved_img/
 runs/
 YOLO__model_test/
-backup
 # CMake configuration
-CMakeLists.txt
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles/
@@ -15,12 +13,7 @@ Makefile
 *.cmake
 
 # VSCode configuration
-.vscode/
+# .vscode/
 
 # source files
 resource/
-
-# Other files
-build_and_run.bat
-
-!backup/*
