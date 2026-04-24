@@ -75,8 +75,8 @@ private:
     uint16_t query[MODBUS_TCP_MAX_ADU_LENGTH];
     uint32_t query32D[MODBUS_TCP_MAX_ADU_LENGTH];
     uint8_t queryM[MODBUS_TCP_MAX_ADU_LENGTH];
-    // cv::VideoCapture cap;
-    //------------------------------
+    cv::VideoCapture cap;
+    std::string m_videoPath = "D:\\jiance\\video.mp4"; // 视频文件路径
     // 登录
     NET_DVR_USER_LOGIN_INFO lpLoginInfo = {0};
     NET_DVR_DEVICEINFO_V40 lpDeviceInfo = {0}; // NET_DVR_DEVICEINFO_V40
