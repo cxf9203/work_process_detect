@@ -112,18 +112,9 @@ void MainWindow::on_btn_setRoi_clicked()
 
 void MainWindow::on_pushButton_clicked()
 {
-    if (baojing_flag)
-    {
-        qDebug() << "output1";
-        cam->setD(0, 1);
-        baojing_flag = !baojing_flag;
-    }
-    else
-    {
-        qDebug() << "output1";
-        cam->setD(0, 0);
-        baojing_flag = !baojing_flag;
-    }
+    qDebug() << "output1";
+    cam->setD(0, baojing_flag ? 1 : 0);
+    baojing_flag = !baojing_flag;
 }
 
 void MainWindow::on_pushButton_2_clicked()
@@ -147,45 +138,13 @@ void MainWindow::on_pushButton_4_clicked()
 void MainWindow::getActionState(std::vector<bool> actionState)
 {
     // qDebug() << "getActionState" << "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun";
-    if (actionState[0])
+
+    QLabel *labels[] = {ui->label_4, ui->label_5, ui->label_6, ui->label_7, ui->label_8};
+
+    // 循环更新颜色
+    for (int i = 0; i < 5; i++)
     {
-        ui->label_4->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->label_4->setStyleSheet("background-color: red;");
-    }
-    if (actionState[1])
-    {
-        ui->label_5->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->label_5->setStyleSheet("background-color: red;");
-    }
-    if (actionState[2])
-    {
-        ui->label_6->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->label_6->setStyleSheet("background-color: red;");
-    }
-    if (actionState[3])
-    {
-        ui->label_7->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->label_7->setStyleSheet("background-color: red;");
-    }
-    if (actionState[4])
-    {
-        ui->label_8->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->label_8->setStyleSheet("background-color: red;");
+        labels[i]->setStyleSheet(actionState[i] ? "background-color: green;" : "background-color: red;");
     }
 }
 
@@ -200,12 +159,24 @@ void MainWindow::on_checkBox_toggled(bool checked)
 
 void MainWindow::receiveQStringtoMain(QString s)
 {
+    static int colorIndex = 0;
+    static QStringList colors = {
+        "#00ff00", // 绿色
+        "#00ffff", // 青色
+        "#ffff00", // 黄色
+        "#ff44ff", // 紫色
+        "#ffa500", // 橙色
+        "#ffffff", // 白色
+    };
+
     // 获取当前时间
     QDateTime currentDateTime = QDateTime::currentDateTime();
     QString timeStamp = currentDateTime.toString("yyyy-MM-dd HH:mm:ss");
 
-    // 构建带有时间戳的日志消息
-    QString logMessage = "[" + timeStamp + "] " + s;
+    // // 构建带有时间戳的日志消息
+    // QString logMessage = "[" + timeStamp + "] " + s;
+    // 构建带有时间戳的日志消息，并根据当前颜色索引设置颜色
+    QString logMessage = QString("<font color=\"%1\">[%2] %3</font>").arg(colors[colorIndex++ % colors.size()]).arg(timeStamp).arg(s);
 
     // 将日志消息添加到 QTextBrowser 中
     ui->textBrowser->append(logMessage);
