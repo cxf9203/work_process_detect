@@ -141,120 +141,142 @@ void Camera::run()
     {
         qDebug() << "connect to server fail";
         modbus_free(ctx);
+        ctx = NULL; // 将ctx置为NULL，避免后续使用已释放的内存
 
         emit send_connectstate(false);
         emit sendQStringtoMain("connect to server fail");
         // return;
     }
-    emit send_connectstate(true);
-    emit sendQStringtoMain("connect to plc success");
+    else
+    {
+        emit send_connectstate(true);
+        emit sendQStringtoMain("connect to plc success");
+    }
+
     emit sendQStringtoMain("loading ai model...");
     // fp32精度模型
     // config.precision = Precision::FP32;
     YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
 
     emit sendQStringtoMain("load ai model success");
-    // 初始化
-    NET_DVR_Init();
-    // 设置连接时间与重连时间
-    NET_DVR_SetConnectTime(2000, 1);
-    NET_DVR_SetReconnect(10000, true);
 
-    //------------------------------
-    // 登录
-    pLoginInfo = {0};
-    lpDeviceInfo = {0};
+    // ========== 相机模式选择 ==========
+    #define USE_LOCAL_VIDEO 0 // 1: 使用本地视频, 0: 使用真实相机
 
-    pLoginInfo.bUseAsynLogin = 0; // 同步登录方式
-    char *sDeviceAddress, *sUserName, *sPassword;
-    wPort = 8000;
-    // 修改后
-    // char ip[] = "192.168.31.105"; // 栈上创建可修改副本
-    char ip[] = "192.168.1.64"; // 厂里camera
-    sDeviceAddress = ip;
-    char admin[] = "admin";
-    sUserName = admin;
-    char pwd[] = "CXF643200";
-    sPassword = pwd;
-    strcpy_s(pLoginInfo.sDeviceAddress, sDeviceAddress);
-    strcpy_s(pLoginInfo.sUserName, sUserName);
-    strcpy_s(pLoginInfo.sPassword, sPassword);
-    pLoginInfo.wPort = wPort;
-
-    lUserID = NET_DVR_Login_V40(&pLoginInfo, &lpDeviceInfo);
-    if (lUserID < 0)
-    {
-        std::cout << "注册失败！\n";
-        emit sendQStringtoMain("register fail with camera!");
-        system("pause");
-    }
-    else
-    {
-        std::cout << "注册成功！" << std::endl;
-        Sleep(1000); // 显示注册相关信息
-    }
-
-    if (PlayM4_GetPort(&g_nPort)) // 获取播放库通道号
-    {
-        if (PlayM4_SetStreamOpenMode(g_nPort, STREAME_REALTIME)) // 设置流模式
+    #if USE_LOCAL_VIDEO
+        // 本地视频模式
+        emit sendQStringtoMain("Using local video mode...");
+        if (!cap.open(m_videoPath))
         {
-            if (PlayM4_OpenStream(g_nPort, NULL, 0, 1024 * 1024)) // 打开流
+            emit sendQStringtoMain("Failed to open local video!");
+            return;
+        }
+        emit sendQStringtoMain("Local video opened successfully");
+    #else
+        // 真实相机模式
+        emit sendQStringtoMain("Using real camera mode...");
+
+        // 初始化
+        NET_DVR_Init();
+        // 设置连接时间与重连时间
+        NET_DVR_SetConnectTime(2000, 1);
+        NET_DVR_SetReconnect(10000, true);
+
+        // 登录
+        lpLoginInfo = {0};
+        lpDeviceInfo = {0};
+
+        lpLoginInfo.bUseAsynLogin = 0; // 同步登录方式
+        char *sDeviceAddress, *sUserName, *sPassword;
+        wPort = 8000;
+        // 修改后
+        // char ip[] = "192.168.31.105"; // 栈上创建可修改副本
+        char ip[] = "192.168.1.64"; // 厂里camera
+        sDeviceAddress = ip;
+        char admin[] = "admin";
+        sUserName = admin;
+        char pwd[] = "CXF643200";
+        sPassword = pwd;
+        strcpy_s(lpLoginInfo.sDeviceAddress, sDeviceAddress);
+        strcpy_s(lpLoginInfo.sUserName, sUserName);
+        strcpy_s(lpLoginInfo.sPassword, sPassword);
+        lpLoginInfo.wPort = wPort;
+
+        lUserID = NET_DVR_Login_V40(&lpLoginInfo, &lpDeviceInfo);
+        if (lUserID < 0)
+        {
+            std::cout << "注册失败！\n";
+            emit sendQStringtoMain("register fail with camera!");
+            system("pause");
+        }
+        else
+        {
+            std::cout << "注册成功！" << std::endl;
+            Sleep(1000); // 显示注册相关信息
+        }
+
+        if (PlayM4_GetPort(&g_nPort)) // 获取播放库通道号
+        {
+            if (PlayM4_SetStreamOpenMode(g_nPort, STREAME_REALTIME)) // 设置流模式
             {
-                if (PlayM4_SetDecCallBackExMend(g_nPort, DecCBFun, NULL, 0, nUser)) // NULL 替换为nUser了
+                if (PlayM4_OpenStream(g_nPort, NULL, 0, 1024 * 1024)) // 打开流
                 {
-                    if (PlayM4_Play(g_nPort, NULL))
+                    if (PlayM4_SetDecCallBackExMend(g_nPort, DecCBFun, NULL, 0, nUser)) // NULL 替换为nUser了
                     {
-                        std::cout << "success to set play mode" << std::endl;
+                        if (PlayM4_Play(g_nPort, NULL))
+                        {
+                            std::cout << "success to set play mode" << std::endl;
+                        }
+                        else
+                        {
+                            std::cout << "fail to set play mode" << std::endl;
+                        }
                     }
                     else
                     {
-                        std::cout << "fail to set play mode" << std::endl;
+                        std::cout << "fail to set dec callback " << std::endl;
                     }
                 }
                 else
                 {
-                    std::cout << "fail to set dec callback " << std::endl;
+                    std::cout << "fail to open stream" << std::endl;
                 }
             }
             else
             {
-                std::cout << "fail to open stream" << std::endl;
+                std::cout << "fail to set stream open mode" << std::endl;
             }
         }
         else
         {
-            std::cout << "fail to set stream open mode" << std::endl;
+            std::cout << "fail to get port" << std::endl;
         }
-    }
-    else
-    {
-        std::cout << "fail to get port" << std::endl;
-    }
-    Sleep(1000); // 显示播放端口打开情况
+        Sleep(1000); // 显示播放端口打开情况
 
-    // 启动预览并设置回调数据流
-    struPlayInfo = {0};
-    struPlayInfo.hPlayWnd = NULL;  // 窗口为空，设备SDK不解码只取流
-    struPlayInfo.lChannel = 1;     // Channel number 设备通道
-    struPlayInfo.dwStreamType = 0; // 码流类型，0-主码流，1-子码流，2-码流3，3-码流4, 4-码流5,5-码流6,7-码流7,8-码流8,9-码流9,10-码流10
-    struPlayInfo.dwLinkMode = 0;   // 0：TCP方式,1：UDP方式,2：多播方式,3 - RTP方式，4-RTP/RTSP,5-RSTP/HTTP
-    struPlayInfo.bBlocked = 0;     // 0-非阻塞取流, 1-阻塞取流, 如果阻塞SDK内部connect失败将会有5s的超时才能够返回,不适合于轮询取流操作.
+        // 启动预览并设置回调数据流
+        struPlayInfo = {0};
+        struPlayInfo.hPlayWnd = NULL;  // 窗口为空，设备SDK不解码只取流
+        struPlayInfo.lChannel = 1;     // Channel number 设备通道
+        struPlayInfo.dwStreamType = 0; // 码流类型，0-主码流，1-子码流，2-码流3，3-码流4, 4-码流5,5-码流6,7-码流7,8-码流8,9-码流9,10-码流10
+        struPlayInfo.dwLinkMode = 0;   // 0：TCP方式,1：UDP方式,2：多播方式,3 - RTP方式，4-RTP/RTSP,5-RSTP/HTTP
+        struPlayInfo.bBlocked = 0;     // 0-非阻塞取流, 1-阻塞取流, 如果阻塞SDK内部connect失败将会有5s的超时才能够返回,不适合于轮询取流操作.
 
-    qDebug() << "Camera" << id << "opened successfully";
-    emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
-    setD(0, 0);
-    setD(1, 0);
-    setD(2, 0);
-    if (NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL)) // 开始取流
-    {
-        // cv::namedWindow("RGBImage2");
-    }
+        qDebug() << "Camera" << id << "opened successfully";
+        emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
+        setD(0, 0);
+        setD(1, 0);
+        setD(2, 0);
+        if (NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL)) // 开始取流
+        {
+            // cv::namedWindow("RGBImage2");
+        }
+    #endif
+
     try
     {
         this->Camera_thread_flag = false;
         // 等待结束
         int fps;
-        double t = 0;
 
         while (true)
         {
@@ -264,16 +286,43 @@ void Camera::run()
                 break;
             }
 
-            if (Camera::gImage.empty())
-            {
-                continue;
-            }
+            #if USE_LOCAL_VIDEO
+                // 从本地视频读取帧
+                cap >> BGR_image;
+                if (BGR_image.empty())
+                {
+                    // 视频结束，循环播放
+                    qDebug() << "Video ended, restarting...";
+                    emit sendQStringtoMain("Video ended, restarting...");
 
-            t = (double)cv::getTickCount();
-            QMutexLocker locker(&queueMutex);
-            BGR_image = Camera::gImage.front();
-            Camera::gImage.pop();
-            // 帧率计算
+                    // 重新打开视频文件
+                    cap.release();
+                    if (!cap.open(m_videoPath))
+                    {
+                        qDebug() << "Failed to reopen video!";
+                        emit sendQStringtoMain("Failed to reopen video!");
+                        break;
+                    }
+                    cap >> BGR_image;
+                    if (BGR_image.empty())
+                    {
+                        qDebug() << "Still cannot read frame!";
+                        continue;
+                    }
+                    qDebug() << "Video restarted successfully";
+                }
+            #else
+                // 从真实相机获取帧
+                if (Camera::gImage.empty())
+                {
+                    continue;
+                }
+
+                QMutexLocker locker(&queueMutex);
+                BGR_image = Camera::gImage.front();
+                Camera::gImage.pop();
+            #endif
+
             // 图像处理
             output = false;
             // 处理检测到的工序
@@ -303,7 +352,22 @@ void Camera::run()
                 emit updateActionState(actionGroup);
                 // "chilun",   "keti" ,"luosi"
                 // std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
-                cur_keti = keti_num;
+
+                // 将当前帧的壳体检测结果添加到滑动窗口
+                bool current_keti_detected = keti_num > 0;
+                keti_history.push_back(current_keti_detected);
+
+                // 保持滑动窗口大小为 KETI_WINDOW_SIZE
+                if (keti_history.size() > KETI_WINDOW_SIZE)
+                {
+                    keti_history.pop_front();
+                }
+
+                // 计算滑动窗口中检测到壳体的帧数
+                int keti_count = std::count(keti_history.begin(), keti_history.end(), true);
+
+                // 根据阈值确定最终的壳体状态
+                cur_keti = keti_count >= KETI_THRESHOLD ? 1 : 0;
                 if (cur_keti > 0)
                 {
                     if (chilun_num == CHILUN_NUM)
@@ -320,6 +384,7 @@ void Camera::run()
                         luosi_flag = true;
                     }
                 }
+
                 if (chilun_flag && !luosi_flag)
                 {
                     // 绘制消息框
@@ -365,6 +430,7 @@ void Camera::run()
                         // PLC 报警
                         setD(0, 1); // PLC置位
                     }
+
                     // keti消失，chilun_flag和luosi_flag置0
                     chilun_flag = false;
                     luosi_flag = false;
@@ -382,6 +448,7 @@ void Camera::run()
                     // setD(0, 0); // 复位报警
                     // setD(2, 0); // 复位绿灯
                 }
+
                 last_keti = cur_keti;
             }
             catch (...)
@@ -390,35 +457,41 @@ void Camera::run()
                 std::cerr << "An unknown exception occurred during image processing." << std::endl;
                 emit sendQStringtoMain("An unknown exception occurred during image processing.");
             }
-            // cv::imshow("Camera",BGR_image);
+            // cv::imshow("Camera", BGR_image);
             // cv::waitKey(1);
             QImage a = cvMat2QImage(BGR_image);
             QImage IMG = a.scaled(640, 640, Qt::KeepAspectRatio);
             emit sendQImgToAutoMain(IMG);
         }
 
-        // 结束停止采集
-        // 先停止预览
-        NET_DVR_StopRealPlay(lUserID);
+        #if USE_LOCAL_VIDEO
+            // 本地视频模式清理
+            cap.release();
+        #else
+            // 真实相机模式清理
+            // 结束停止采集
+            // 先停止预览
+            NET_DVR_StopRealPlay(lUserID);
 
-        // 停止播放库
-        if (g_nPort != -1)
-        {
-            PlayM4_Stop(g_nPort);
-            PlayM4_CloseStream(g_nPort);
-            PlayM4_FreePort(g_nPort);
-            g_nPort = -1;
-        }
+            // 停止播放库
+            if (g_nPort != -1)
+            {
+                PlayM4_Stop(g_nPort);
+                PlayM4_CloseStream(g_nPort);
+                PlayM4_FreePort(g_nPort);
+                g_nPort = -1;
+            }
 
-        // 发送停采命令
-        NET_DVR_Logout(lUserID);
-        NET_DVR_Cleanup();
+            // 发送停采命令
+            NET_DVR_Logout(lUserID);
+            NET_DVR_Cleanup();
+        #endif
+
         emit finishedthread();
         // 注销采集回调
         // 注销远端设备事件
         // 释放资源
     }
-
     catch (std::exception &e)
     {
         qDebug() << "error info: " << e.what();
@@ -509,6 +582,11 @@ QImage Camera::cvMat2QImage(const cv::Mat &mat)
 
 void Camera::set32D(int address, int32_t value)
 { // 设置32位D
+    if (ctx == NULL)
+    {
+        emit sendQStringtoMain("Modbus context is NULL, skip write");
+        return;
+    }
     // 确保value在int32_t的范围内
     if (value < INT32_MIN || value > INT32_MAX)
     {
@@ -523,19 +601,19 @@ void Camera::set32D(int address, int32_t value)
 }
 
 void Camera::setD(int address, int value)
-{ // 设置16位 D
+{ // 设置16位D
     if (ctx == NULL)
     {
-        emit sendQStringtoMain("Modbus context is NULL");
+        emit sendQStringtoMain("Modbus context is NULL, skip write");
         return;
     }
     rc = modbus_write_register(ctx, address, value);
     if (rc == -1)
     {
-        emit sendQStringtoMain("Failed to write register");
+        emit sendQStringtoMain("Failed to write register: " + QString::number(address));
         // 尝试重新连接
     }
-    emit sendQStringtoMain("setD address" + QString::number(address) + ", value is: " + QString::number(value));
+    emit sendQStringtoMain("setD address: " + QString::number(address) + ", value is: " + QString::number(value));
 }
 
 int Camera::setRoi()

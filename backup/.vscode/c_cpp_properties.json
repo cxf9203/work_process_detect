@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:/libmodbus_dll/include/**",
+                "D:/opencv4.7_cuda/include/**",
+                "D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/include/**",
+                "D:/Qt/5.14.2/msvc2017_64/include/**",
+                "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/include/**",
+                "D:/C++Projects/CH-HCNetSDKV6.1.9.48_build20230410_win64_20250312151005/CH-HCNetSDKV6.1.9.48_build20230410_win64/include/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "compilerPath": "D:/VS2022/VC/Tools/MSVC/14.40.33807/bin/Hostx64/x64/cl.exe",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}

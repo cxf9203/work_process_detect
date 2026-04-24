@@ -75,10 +75,10 @@ private:
     uint16_t query[MODBUS_TCP_MAX_ADU_LENGTH];
     uint32_t query32D[MODBUS_TCP_MAX_ADU_LENGTH];
     uint8_t queryM[MODBUS_TCP_MAX_ADU_LENGTH];
-    // cv::VideoCapture cap;
-    //------------------------------
+    cv::VideoCapture cap;
+    std::string m_videoPath = "D:\\jiance\\video.mp4"; // 视频文件路径
     // 登录
-    NET_DVR_USER_LOGIN_INFO pLoginInfo = {0};
+    NET_DVR_USER_LOGIN_INFO lpLoginInfo = {0};
     NET_DVR_DEVICEINFO_V40 lpDeviceInfo = {0}; // NET_DVR_DEVICEINFO_V40
     NET_DVR_PREVIEWINFO struPlayInfo;          // NET_DVR_PREVIEWINFO_V30
     WORD wPort = 8000;
@@ -97,6 +97,10 @@ private:
     int luosi_flag = 0; // 螺丝标志位
     int cur_keti = 0; // 当前keti计数
     int last_keti = 0; // 上次keti计数
+    // 滑动窗口相关变量，用于平滑壳体检测结果
+    std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
+    const int KETI_WINDOW_SIZE = 1; // 滑动窗口大小
+    const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
     // 图像参数
     int roi_x = 0;
     int roi_y = 0;
