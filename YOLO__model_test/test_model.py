@@ -1,11 +1,11 @@
 from ultralytics   import YOLO
 import cv2
-model = YOLO("YOLO__model_test/process.pt")
+model = YOLO("cc.pt")
 #查看model的label信息
 print(model.names)
 # {0: 'chilun', 1: 'keti', 2: 'luosi', 3: 'luosi_left_bottom', 4: 'luosi_left_top', 5: 'luosi_right_bottom', 6: 'luosi_right_top', 7: 'place_chilun'}
 labelSet = ["chilun", "keti", "luosi", "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"]
-video_path = "video/video2.mp4"
+video_path = "test.jpg"
 # image_path = "saved_img/frame_0007.jpg"
 model.predict(source=video_path, save=True, show=False)
 # results = model.predict(source=image_path, save=True, show=True)

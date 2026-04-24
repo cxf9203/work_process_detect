@@ -4,7 +4,7 @@ video/
 saved_img/
 runs/
 YOLO__model_test/
-
+backup
 # CMake configuration
 CMakeLists.txt
 CMakeLists.txt.user
