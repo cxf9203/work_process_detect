@@ -359,16 +359,13 @@ void Camera::run()
                 // 将当前帧的壳体检测结果添加到滑动窗口
                 bool current_keti_detected = keti_num > 0;
                 keti_history.push_back(current_keti_detected);
-
                 // 保持滑动窗口大小为 KETI_WINDOW_SIZE
                 if (keti_history.size() > KETI_WINDOW_SIZE)
                 {
                     keti_history.pop_front();
                 }
-
                 // 计算滑动窗口中检测到壳体的帧数
                 int keti_count = std::count(keti_history.begin(), keti_history.end(), true);
-
                 // 根据阈值确定最终的壳体状态
                 cur_keti = keti_count >= KETI_THRESHOLD ? 1 : 0;
                 if (cur_keti > 0)
