@@ -43,6 +43,17 @@ public:
     void set32D(int address, int32_t value); // 设置整型D元件
     void aiTest();                           // ai model test
     void igonoreAction(int index);           // 忽略某个动作
+    void enableROIDetection(bool enable);    // 启用或禁用ROI检测
+    void setRoiX(int x);
+    void setRoiY(int y);
+    void setRoiW(int w);
+    void setRoiH(int h);
+    // ROI参数
+    bool m_enableROIDetection = false; // ROI检测启用状态
+    int roi_x = 1060;
+    int roi_y = 440;
+    int roi_w = 435;
+    int roi_h = 680;
 
 signals:
     // 给主线程发消息
@@ -101,11 +112,6 @@ private:
     std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
     const int KETI_WINDOW_SIZE = 1; // 滑动窗口大小
     const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
-    // 图像参数
-    int roi_x = 0;
-    int roi_y = 0;
-    int roi_w = 500;
-    int roi_h = 500;
 
 protected:
 

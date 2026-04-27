@@ -41,6 +41,11 @@ private slots:
     void on_pushButton_3_clicked();
     void on_pushButton_4_clicked();
     void on_checkBox_toggled(bool checked);
+    void on_cb_enableROI_toggled(bool checked);
+    void on_spinBox_roi_x_valueChanged(int value);
+    void on_spinBox_roi_y_valueChanged(int value);
+    void on_spinBox_roi_w_valueChanged(int value);
+    void on_spinBox_roi_h_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;

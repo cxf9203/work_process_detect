@@ -330,6 +330,10 @@ void Camera::run()
                 // Run inference 推理
                 // qDebug() << "run inference";
                 const auto objects = yoloV8.detectObjects(BGR_image);
+                // 设置检测区域ROI
+                cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
+                yoloV8.setDetectionROI(detectionROI);
+                yoloV8.enableROIDetection(m_enableROIDetection);
                 // Draw the bounding boxes on the image
                 yoloV8.drawObjectLabels(BGR_image, objects); // 绘制框
                 std::vector<int> classCount = yoloV8.getclassnumer();
@@ -669,4 +673,29 @@ void Camera::aiTest()
 void Camera::igonoreAction(int index)
 { // 忽略某个动作,todo: (std::vector<bool> index)作为传递参数较好
     actionGroup[index] = false;
+}
+
+void Camera::enableROIDetection(bool enable)
+{
+    m_enableROIDetection = enable;
+}
+
+void Camera::setRoiX(int x)
+{
+    roi_x = x;
+}
+
+void Camera::setRoiY(int y)
+{
+    roi_y = y;
+}
+
+void Camera::setRoiW(int w)
+{
+    roi_w = w;
+}
+
+void Camera::setRoiH(int h)
+{
+    roi_h = h;
 }

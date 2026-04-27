@@ -78,6 +78,10 @@ public:
     // std::vector<Object> imageClassify(const cv::cuda::GpuMat& inputImageBGR);
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
+    // Set the detection ROI
+    void setDetectionROI(const cv::Rect &roi);
+    // Enable or disable ROI-based detection
+    void enableROIDetection(bool enable);
     std::vector<int> getclassnumer();
     std::vector<bool> getActionFlag();
     bool getResult();
@@ -98,6 +102,9 @@ private:
     bool cam2_result = true;
     // 创建一个字符串集合
     std::set<std::string> stringSet = {"p1"};
+    // ROI相关变量
+    cv::Rect detectionROI; // 检测区域
+    bool useROI = false; // 是否使用ROI进行检测
     // Preprocess the input
     std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);
 

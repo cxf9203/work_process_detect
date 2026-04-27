@@ -9,6 +9,12 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建相机1
     THREAD1_cam1 = new QThread();
     cam = new Camera;
+    // 初始化ROI参数
+    ui->cb_enableROI->setChecked(cam->m_enableROIDetection);
+    ui->spinBox_roi_x->setValue(cam->roi_x);
+    ui->spinBox_roi_y->setValue(cam->roi_y);
+    ui->spinBox_roi_w->setValue(cam->roi_w);
+    ui->spinBox_roi_h->setValue(cam->roi_h);
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
     connect(THREAD1_cam1, &QThread::started, cam, &Camera::run);   // 启动线程调用线程类里面的主函数
@@ -60,33 +66,14 @@ void MainWindow::receivefinish()
 
 void MainWindow::updateButtonState(bool p1Detected, bool p2Detected, bool p3Detected)
 {
-    ui->btn_proc1->setEnabled(p1Detected);
-    ui->btn_proc2->setEnabled(p2Detected);
-    ui->btn_proc3->setEnabled(p3Detected);
-    // 如果ok显示绿色，ng显示红色
-    if (p1Detected)
+    QPushButton *buttons[] = {ui->btn_proc1, ui->btn_proc2, ui->btn_proc3};
+    bool states[] = {p1Detected, p2Detected, p3Detected};
+
+    for (int i = 0; i < 3; ++i)
     {
-        ui->btn_proc1->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->btn_proc1->setStyleSheet("background-color: red;");
-    }
-    if (p2Detected)
-    {
-        ui->btn_proc2->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->btn_proc2->setStyleSheet("background-color: red;");
-    }
-    if (p3Detected)
-    {
-        ui->btn_proc3->setStyleSheet("background-color: green;");
-    }
-    else
-    {
-        ui->btn_proc3->setStyleSheet("background-color: red;");
+        buttons[i]->setEnabled(states[i]);
+        // 如果ok显示绿色，ng显示红色
+        buttons[i]->setStyleSheet(states[i] ? "background-color: green;" : "background-color: red;");
     }
 }
 
@@ -107,7 +94,12 @@ void MainWindow::receive_connectstate(bool state)
 void MainWindow::on_btn_setRoi_clicked()
 {
     // 设定识别ROI
-    cam->setRoi();
+    // cam->setRoi();
+
+    if (ui->stackedWidget->currentIndex() == 0)
+        ui->stackedWidget->setCurrentIndex(1);
+    else
+        ui->stackedWidget->setCurrentIndex(0);
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -189,4 +181,30 @@ void MainWindow::receiveNumber(QString str_chilun_num, QString str_luosi_num)
 {
     ui->lb_luosi_num->setText(str_luosi_num);
     ui->lb_chilun_num->setText(str_chilun_num);
+}
+
+void MainWindow::on_cb_enableROI_toggled(bool checked)
+{
+    qDebug() << "ROI detection state is" << checked;
+    cam->enableROIDetection(checked);
+}
+
+void MainWindow::on_spinBox_roi_x_valueChanged(int value)
+{
+    cam->setRoiX(value);
+}
+
+void MainWindow::on_spinBox_roi_y_valueChanged(int value)
+{
+    cam->setRoiY(value);
+}
+
+void MainWindow::on_spinBox_roi_w_valueChanged(int value)
+{
+    cam->setRoiW(value);
+}
+
+void MainWindow::on_spinBox_roi_h_valueChanged(int value)
+{
+    cam->setRoiH(value);
 }

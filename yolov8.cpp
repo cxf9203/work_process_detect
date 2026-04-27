@@ -510,6 +510,13 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
     classCount[1] = 0;
     classCount[2] = 0;
     actionFlag = {false, false, false, false, false}; // 初始化动作标志
+
+    // 绘制检测区域ROI
+    if (useROI && !detectionROI.empty())
+    {
+        cv::rectangle(image, detectionROI, cv::Scalar(0, 255, 0), 5);
+    }
+
     // If segmentation information is present, start with that
     if (!objects.empty() && !objects[0].boxMask.empty())
     {
@@ -527,6 +534,18 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
     result = true; // 初始化结果
     for (auto &object : objects)
     {
+        // 检查对象是否在ROI区域内
+        if (useROI && !detectionROI.empty())
+        {
+            // 计算对象中心点
+            cv::Point center(object.rect.x + object.rect.width / 2, object.rect.y + object.rect.height / 2);
+            // 检查中心点是否在ROI区域内
+            if (!detectionROI.contains(center))
+            {
+                continue; // 跳过不在ROI区域内的对象
+            }
+        }
+
         // Choose the color
         int colorIndex = object.label % COLOR_LIST.size(); // We have only defined 80 unique colors
         cv::Scalar color = cv::Scalar(COLOR_LIST[colorIndex][0], COLOR_LIST[colorIndex][1], COLOR_LIST[colorIndex][2]);
@@ -547,38 +566,17 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
         std::cout << "label_id" << object.label << std::endl;
         std::cout << "label_rect" << object.rect << std::endl;
         std::cout << "probability  " << object.probability * 100 << std::endl;
-        // //统计各对象个数
-        if (object.label == 0)
+        // 统计各对象个数和动作标志
+        switch (object.label)
         {
-            classCount[0] += 1;
-        }
-        else if (object.label == 1)
-        {
-            classCount[1] += 1;
-        }
-        else if (object.label == 2)
-        {
-            classCount[2] += 1;
-        }
-        else if (object.label == 4)
-        { // 左上螺丝 "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"
-            actionFlag[0] = true;
-        }
-        else if (object.label == 6)
-        { // 右上螺丝
-            actionFlag[1] = true;
-        }
-        else if (object.label == 3)
-        { // 左下螺丝
-            actionFlag[2] = true;
-        }
-        else if (object.label == 5)
-        { // 右下螺丝
-            actionFlag[3] = true;
-        }
-        else if (object.label == 7)
-        { // 放置齿轮
-            actionFlag[4] = true;
+            case 0: classCount[0]++; break;
+            case 1: classCount[1]++; break;
+            case 2: classCount[2]++; break;
+            case 4: actionFlag[0] = true; break; // 左上螺丝
+            case 6: actionFlag[1] = true; break; // 右上螺丝
+            case 3: actionFlag[2] = true; break; // 左下螺丝
+            case 5: actionFlag[3] = true; break; // 右下螺丝
+            case 7: actionFlag[4] = true; break; // 放置齿轮
         }
         // Draw rectangles and text
         char text[256];
@@ -680,4 +678,16 @@ int YoloV8::getItemIndex()
 std::set<std::string> YoloV8::getSet()
 {
     return stringSet;
+}
+
+// 设置检测区域
+void YoloV8::setDetectionROI(const cv::Rect &roi)
+{
+    detectionROI = roi;
+}
+
+// 启用或禁用ROI检测
+void YoloV8::enableROIDetection(bool enable)
+{
+    useROI = enable;
 }
