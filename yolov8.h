@@ -82,6 +82,10 @@ public:
     void setDetectionROI(const cv::Rect &roi);
     // Enable or disable ROI-based detection
     void enableROIDetection(bool enable);
+    // Set the color of the detection ROI
+    void setRoiColor(const cv::Scalar &color);
+    // Set the opacity of the detection ROI
+    void setRoiOpacity(float opacity);
     std::vector<int> getclassnumer();
     std::vector<bool> getActionFlag();
     bool getResult();
@@ -105,9 +109,11 @@ private:
     // ROI相关变量
     cv::Rect detectionROI; // 检测区域
     bool useROI = false; // 是否使用ROI进行检测
+    cv::Scalar roiColor = cv::Scalar(0, 255, 0); // 默认绿色
+    float roiOpacity = 0.0f; // 默认不透明
+
     // Preprocess the input
     std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);
-
     // Postprocess the output
     std::vector<Object> postProcessDetect(std::vector<float> &featureVector);
     // Postprocess the output for classify
@@ -115,7 +121,6 @@ private:
     int Itemindex;
     // Postprocess the output for pose model
     std::vector<Object> postProcessPose(std::vector<float> &featureVector);
-
     // Postprocess the output for segmentation model
     std::vector<Object> postProcessSegmentation(std::vector<std::vector<float>> &featureVectors);
 

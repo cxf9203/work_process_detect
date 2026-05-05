@@ -514,7 +514,9 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
     // 绘制检测区域ROI
     if (useROI && !detectionROI.empty())
     {
-        cv::rectangle(image, detectionROI, cv::Scalar(0, 255, 0), 5);
+        cv::Mat overlay = image.clone();
+        cv::rectangle(overlay, detectionROI, roiColor, 5);
+        cv::addWeighted(image, roiOpacity, overlay, 1.0f - roiOpacity, 0, image);
     }
 
     // If segmentation information is present, start with that
@@ -690,4 +692,16 @@ void YoloV8::setDetectionROI(const cv::Rect &roi)
 void YoloV8::enableROIDetection(bool enable)
 {
     useROI = enable;
+}
+
+// 设置ROI颜色
+void YoloV8::setRoiColor(const cv::Scalar &color)
+{
+    roiColor = color;
+}
+
+// 设置ROI透明度
+void YoloV8::setRoiOpacity(float opacity)
+{
+    roiOpacity = opacity;
 }

@@ -2,8 +2,10 @@
 #include "./ui_mainwindow.h"
 #include <QDebug>
 #include <iostream>
+#include <QColorDialog>
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     // 创建相机1
@@ -15,12 +17,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->spinBox_roi_y->setValue(cam->roi_y);
     ui->spinBox_roi_w->setValue(cam->roi_w);
     ui->spinBox_roi_h->setValue(cam->roi_h);
+    // 初始化透明度滑块
+    ui->slider_opacity->setValue(static_cast<int>(cam->roi_opacity * 100));
+    ui->label_opacity_display->setText(QString("%1%").arg(static_cast<int>(cam->roi_opacity * 100)));
+    // 初始化颜色预览样式
+    ui->label_color_preview->setStyleSheet(QString("QLabel { color: rgb(%1, %2, %3); }").arg(cam->roi_color_r).arg(cam->roi_color_g).arg(cam->roi_color_b));
+
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
     connect(THREAD1_cam1, &QThread::started, cam, &Camera::run);   // 启动线程调用线程类里面的主函数
     connect(cam, &Camera::finished, THREAD1_cam1, &QThread::quit); // 停止线程，线程那边触发会停止（finished），可以再次用start启动
     // connect(cam, &Camera::finished, cam, &QObject::deleteLater);//在空闲时间删除线程对象，执行后将不能在用start方法启动线程
-    ////---------------------------------------------------------------------------------------------------------------------------------------------//
     connect(this, &MainWindow::SetStopThreadC1, cam, &Camera::ExecuteMianToThread, Qt::QueuedConnection); // 向线程发送信号//线程终止条件设置函数
     // connect(cam,&Camera::sendImgToAutoMain,this,&MainWindow::receiveslotAutoImg,Qt::DirectConnection);
     // connect(cam,&Camera::resetSystem,this,&MainWindow::resetSystem,Qt::DirectConnection);
@@ -207,4 +214,20 @@ void MainWindow::on_spinBox_roi_w_valueChanged(int value)
 void MainWindow::on_spinBox_roi_h_valueChanged(int value)
 {
     cam->setRoiH(value);
+}
+
+void MainWindow::on_btn_colorPicker_clicked()
+{
+    QColor color = QColorDialog::getColor(Qt::green, this, QString::fromLocal8Bit("选择检测框颜色"));
+    if (color.isValid())
+    {
+        ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(color.name()));
+        cam->setRoiColor(color.red(), color.green(), color.blue());
+    }
+}
+
+void MainWindow::on_slider_opacity_valueChanged(int value)
+{
+    ui->label_opacity_display->setText(QString("%1%").arg(value));
+    cam->setRoiOpacity(value / 100.0f);
 }

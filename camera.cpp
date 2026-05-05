@@ -334,6 +334,8 @@ void Camera::run()
                 cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
                 yoloV8.setDetectionROI(detectionROI);
                 yoloV8.enableROIDetection(m_enableROIDetection);
+                yoloV8.setRoiColor(cv::Scalar(roi_color_b, roi_color_g, roi_color_r));
+                yoloV8.setRoiOpacity(roi_opacity);
                 // Draw the bounding boxes on the image
                 yoloV8.drawObjectLabels(BGR_image, objects); // 绘制框
                 std::vector<int> classCount = yoloV8.getclassnumer();
@@ -695,4 +697,16 @@ void Camera::setRoiW(int w)
 void Camera::setRoiH(int h)
 {
     roi_h = h;
+}
+
+void Camera::setRoiColor(int r, int g, int b)
+{
+    roi_color_r = r;
+    roi_color_g = g;
+    roi_color_b = b;
+}
+
+void Camera::setRoiOpacity(float opacity)
+{
+    roi_opacity = opacity;
 }

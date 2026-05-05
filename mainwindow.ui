@@ -125,7 +125,6 @@ QCheckBox {
     border: 1px solid #444;
     border-radius: 5px;
     padding: 5px;
-    min-width: 50px;
 }</string>
        </property>
        <property name="text">
@@ -153,7 +152,6 @@ QCheckBox {
     border: 1px solid #444;
     border-radius: 5px;
     padding: 5px;
-    min-width: 50px;
 }</string>
        </property>
        <property name="text">
@@ -450,7 +448,7 @@ QPushButton[enabled=&quot;false&quot;] {
       <x>870</x>
       <y>260</y>
       <width>591</width>
-      <height>401</height>
+      <height>510</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -969,6 +967,133 @@ QCheckBox::indicator:unchecked {
            </property>
            <property name="value">
             <number>1</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="DisplayControls" native="true">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>330</y>
+        <width>481</width>
+        <height>151</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QWidget {
+	font: 18pt &quot;Arial&quot;;
+}</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLabel" name="label_display_settings">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>显示设置</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="4,0">
+         <item>
+          <widget class="QPushButton" name="btn_colorPicker">
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+    background-color: #1976d2;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+QPushButton:hover {
+    background-color: #1e88e5;
+}
+
+QPushButton:pressed {
+    background-color: #1565c0;
+}</string>
+           </property>
+           <property name="text">
+            <string>选择检测框颜色</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_color_preview">
+           <property name="text">
+            <string>颜色预览</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_opacity">
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="text">
+            <string>透明度:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="slider_opacity">
+           <property name="styleSheet">
+            <string notr="true">QSlider::groove:horizontal {
+    height: 8px;
+    background: #424242;
+    border-radius: 4px;
+}
+
+QSlider::handle:horizontal {
+    background: #2e7d32;
+    width: 18px;
+    margin: -5px 0;
+    border-radius: 9px;
+}
+
+QSlider::handle:horizontal:hover {
+    background: #388e3c;
+}</string>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_opacity_display">
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    color: #00ff00;
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 5px;
+    min-width: 70px;
+}</string>
+           </property>
+           <property name="text">
+            <string>0%</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>

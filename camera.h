@@ -48,12 +48,19 @@ public:
     void setRoiY(int y);
     void setRoiW(int w);
     void setRoiH(int h);
+    void setRoiColor(int r, int g, int b);
+    void setRoiOpacity(float opacity);
     // ROI参数
     bool m_enableROIDetection = false; // ROI检测启用状态
     int roi_x = 1060;
     int roi_y = 440;
     int roi_w = 435;
     int roi_h = 680;
+    // 颜色和透明度参数
+    int roi_color_r = 0;
+    int roi_color_g = 255;
+    int roi_color_b = 0;
+    float roi_opacity = 0.0f;
 
 signals:
     // 给主线程发消息
@@ -110,8 +117,8 @@ private:
     int last_keti = 0; // 上次keti计数
     // 滑动窗口相关变量，用于平滑壳体检测结果
     std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
-    const int KETI_WINDOW_SIZE = 1; // 滑动窗口大小
-    const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
+    const int KETI_WINDOW_SIZE = 5; // 滑动窗口大小
+    const int KETI_THRESHOLD = 3; // 判定壳体存在的阈值
 
 protected:
 
