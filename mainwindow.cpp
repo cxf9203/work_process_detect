@@ -89,16 +89,8 @@ void MainWindow::updateButtonState(bool p1Detected, bool p2Detected, bool p3Dete
 
 void MainWindow::receive_connectstate(bool state)
 {
-    if (state)
-    {
-        ui->btn_proc4->setStyleSheet("background-color: green; color: white;");
-        ui->btn_proc4->setText(QString::fromLocal8Bit("已连接"));
-    }
-    else
-    {
-        ui->btn_proc4->setStyleSheet("background-color: red; color: white;");
-        ui->btn_proc4->setText(QString::fromLocal8Bit("未连接"));
-    }
+    ui->btn_proc4->setStyleSheet(state ? "background-color: green; color: white;" : "background-color: red; color: white;");
+    ui->btn_proc4->setText(QString::fromLocal8Bit(state ? "已连接" : "未连接"));
 }
 
 void MainWindow::on_btn_setRoi_clicked()

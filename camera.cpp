@@ -182,8 +182,7 @@ void Camera::run()
         NET_DVR_SetReconnect(10000, true);
 
         // 登录
-        lpLoginInfo = {0};
-        lpDeviceInfo = {0};
+        lpLoginInfo = lpDeviceInfo = {0};
 
         lpLoginInfo.bUseAsynLogin = 0; // 同步登录方式
         char *sDeviceAddress, *sUserName, *sPassword;
@@ -351,9 +350,7 @@ void Camera::run()
                 for (size_t i = 0; i < tempAction.size(); i++)
                 {
                     if (tempAction[i])
-                    {
                         actionGroup[i] = true;
-                    }
                 }
                 emit updateActionState(actionGroup);
                 // "chilun",   "keti" ,"luosi"
@@ -371,6 +368,7 @@ void Camera::run()
                 int keti_count = std::count(keti_history.begin(), keti_history.end(), true);
                 // 根据阈值确定最终的壳体状态
                 cur_keti = keti_count >= KETI_THRESHOLD ? 1 : 0;
+
                 if (cur_keti > 0)
                 {
                     if (chilun_num == CHILUN_NUM)
@@ -388,63 +386,37 @@ void Camera::run()
                     }
                 }
 
-                if (chilun_flag && !luosi_flag)
+                if (chilun_flag || luosi_flag)
                 {
-                    // 绘制消息框
-                    cv::putText(BGR_image, "chilun OK", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    cv::putText(BGR_image, "luosi not yet", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    emit updateButtonState(true, false, false); // 齿轮/螺丝/总体
-                }
+                    cv::putText(BGR_image, chilun_flag ? "chilun OK" : "chilun not yet", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    cv::putText(BGR_image, luosi_flag ? "luosi OK" : "luosi not yet", cv::Point(10, 240), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    if (chilun_flag && luosi_flag)
+                    {
+                        cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                        // setD(2, 1); // 绿灯
+                    }
 
-                if (luosi_flag && !chilun_flag)
-                {
-                    // 绘制消息框
-                    cv::putText(BGR_image, "chilun not yet", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    cv::putText(BGR_image, "luosi OK", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    emit updateButtonState(false, true, false); // 齿轮/螺丝/总体
-                }
-
-                if (chilun_flag && luosi_flag)
-                {
-                    // 绘制消息框
-                    cv::putText(BGR_image, "chilun OK", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    cv::putText(BGR_image, "luosi OK", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    emit updateButtonState(true, true, true); // 齿轮/螺丝/总体
-                    // PLC 接收
-                    // setD(2, 1); // 绿灯
+                    emit updateButtonState(chilun_flag, luosi_flag, chilun_flag && luosi_flag); // 齿轮/螺丝/总体
                 }
 
                 if (cur_keti == 0 && last_keti == 1)
                 {
                     if (!chilun_flag)
-                    {
-                        // 绘制消息框
-                        cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    }
-
+                        cv::putText(BGR_image, "chilun miss", cv::Point(10, 340), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     if (!luosi_flag)
-                    {
-                        // 绘制消息框
-                        cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    }
+                        cv::putText(BGR_image, "luosi miss", cv::Point(10, 390), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
 
                     if (!chilun_flag || !luosi_flag)
-                    {
-                        // PLC 报警
-                        setD(0, 1);
-                    }
+                        setD(0, 1); // PLC 报警
 
                     // keti消失，chilun_flag和luosi_flag置0
-                    chilun_flag = false;
-                    luosi_flag = false;
+                    chilun_flag = luosi_flag = false;
                 }
 
                 if (cur_keti == 0 && last_keti == 0)
                 {
                     // keti消失，chilun_flag和luosi_flag置0
-                    chilun_flag = false;
-                    luosi_flag = false;
+                    chilun_flag = luosi_flag = false;
                     // reset actionGroup and buttonState
                     actionGroup = {false, false, false, false, false};
                     emit updateButtonState(false, false, false); // 齿轮/螺丝/总体
