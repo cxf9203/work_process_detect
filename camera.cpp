@@ -336,6 +336,7 @@ void Camera::run()
                 yoloV8.enableROIDetection(m_enableROIDetection);
                 yoloV8.setRoiColor(cv::Scalar(roi_color_b, roi_color_g, roi_color_r));
                 yoloV8.setRoiOpacity(roi_opacity);
+                yoloV8.setRoiLineWidth(roi_line_width);
                 // Draw the bounding boxes on the image
                 yoloV8.drawObjectLabels(BGR_image, objects); // 绘制框
                 std::vector<int> classCount = yoloV8.getclassnumer();
@@ -411,26 +412,27 @@ void Camera::run()
                     cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     emit updateButtonState(true, true, true); // 齿轮/螺丝/总体
                     // PLC 接收
-                    // setD(2,1);//绿灯
+                    // setD(2, 1); // 绿灯
                 }
 
                 if (cur_keti == 0 && last_keti == 1)
                 {
-                    // 并检查是否漏装对齐
                     if (!chilun_flag)
                     {
                         // 绘制消息框
                         cv::putText(BGR_image, "chilun miss", cv::Point(10, 210), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                        // PLC 报警
-                        setD(0, 1); // PLC置位
                     }
 
                     if (!luosi_flag)
                     {
                         // 绘制消息框
                         cv::putText(BGR_image, "luosi miss", cv::Point(10, 230), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    }
+
+                    if (!chilun_flag || !luosi_flag)
+                    {
                         // PLC 报警
-                        setD(0, 1); // PLC置位
+                        setD(0, 1);
                     }
 
                     // keti消失，chilun_flag和luosi_flag置0
@@ -709,4 +711,9 @@ void Camera::setRoiColor(int r, int g, int b)
 void Camera::setRoiOpacity(float opacity)
 {
     roi_opacity = opacity;
+}
+
+void Camera::setRoiLineWidth(int lineWidth)
+{
+    roi_line_width = lineWidth;
 }

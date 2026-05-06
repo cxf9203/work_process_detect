@@ -86,6 +86,8 @@ public:
     void setRoiColor(const cv::Scalar &color);
     // Set the opacity of the detection ROI
     void setRoiOpacity(float opacity);
+    // Set the line width of the detection ROI
+    void setRoiLineWidth(int lineWidth);
     std::vector<int> getclassnumer();
     std::vector<bool> getActionFlag();
     bool getResult();
@@ -109,8 +111,9 @@ private:
     // ROI相关变量
     cv::Rect detectionROI; // 检测区域
     bool useROI = false; // 是否使用ROI进行检测
-    cv::Scalar roiColor = cv::Scalar(0, 255, 0); // 默认绿色
-    float roiOpacity = 0.0f; // 默认不透明
+    cv::Scalar roiColor = cv::Scalar(0, 255, 0); // ROI颜色
+    float roiOpacity = 0.0f; // ROI透明度
+    int roiLineWidth = 5; // ROI矩形线宽
 
     // Preprocess the input
     std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);

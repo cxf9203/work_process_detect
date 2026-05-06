@@ -17,11 +17,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->spinBox_roi_y->setValue(cam->roi_y);
     ui->spinBox_roi_w->setValue(cam->roi_w);
     ui->spinBox_roi_h->setValue(cam->roi_h);
+    // 初始化颜色预览样式
+    ui->label_color_preview->setStyleSheet(QString("QLabel { color: rgb(%1, %2, %3); }").arg(cam->roi_color_r).arg(cam->roi_color_g).arg(cam->roi_color_b));
     // 初始化透明度滑块
     ui->slider_opacity->setValue(static_cast<int>(cam->roi_opacity * 100));
     ui->label_opacity_display->setText(QString("%1%").arg(static_cast<int>(cam->roi_opacity * 100)));
-    // 初始化颜色预览样式
-    ui->label_color_preview->setStyleSheet(QString("QLabel { color: rgb(%1, %2, %3); }").arg(cam->roi_color_r).arg(cam->roi_color_g).arg(cam->roi_color_b));
+    // 初始化线宽滑块
+    ui->slider_line_width->setValue(cam->roi_line_width);
+    ui->label_line_width_display->setText(QString("%1").arg(cam->roi_line_width));
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
@@ -230,4 +233,10 @@ void MainWindow::on_slider_opacity_valueChanged(int value)
 {
     ui->label_opacity_display->setText(QString("%1%").arg(value));
     cam->setRoiOpacity(value / 100.0f);
+}
+
+void MainWindow::on_slider_line_width_valueChanged(int value)
+{
+    ui->label_line_width_display->setText(QString("%1").arg(value));
+    cam->setRoiLineWidth(value);
 }

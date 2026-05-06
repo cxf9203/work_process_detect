@@ -48,6 +48,7 @@ private slots:
     void on_spinBox_roi_h_valueChanged(int value);
     void on_btn_colorPicker_clicked();
     void on_slider_opacity_valueChanged(int value);
+    void on_slider_line_width_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;

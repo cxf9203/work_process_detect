@@ -50,17 +50,19 @@ public:
     void setRoiH(int h);
     void setRoiColor(int r, int g, int b);
     void setRoiOpacity(float opacity);
+    void setRoiLineWidth(int lineWidth);
     // ROI参数
     bool m_enableROIDetection = false; // ROI检测启用状态
     int roi_x = 1060;
     int roi_y = 440;
     int roi_w = 435;
     int roi_h = 680;
-    // 颜色和透明度参数
-    int roi_color_r = 0;
-    int roi_color_g = 255;
-    int roi_color_b = 0;
-    float roi_opacity = 0.0f;
+    // ROI框样式参数
+    int roi_color_r = 0;      // ROI颜色红色分量
+    int roi_color_g = 255;    // ROI颜色绿色分量
+    int roi_color_b = 0;      // ROI颜色蓝色分量
+    float roi_opacity = 0.0f; // ROI透明度
+    int roi_line_width = 5;   // ROI矩形线宽
 
 signals:
     // 给主线程发消息

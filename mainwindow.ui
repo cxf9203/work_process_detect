@@ -448,7 +448,7 @@ QPushButton[enabled=&quot;false&quot;] {
       <x>870</x>
       <y>260</y>
       <width>591</width>
-      <height>510</height>
+      <height>440</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -458,7 +458,7 @@ QPushButton[enabled=&quot;false&quot;] {
      <widget class="QPushButton" name="pushButton_4">
       <property name="geometry">
        <rect>
-        <x>460</x>
+        <x>430</x>
         <y>340</y>
         <width>121</width>
         <height>51</height>
@@ -479,7 +479,7 @@ QPushButton[enabled=&quot;false&quot;] {
      <widget class="QPushButton" name="pushButton_3">
       <property name="geometry">
        <rect>
-        <x>330</x>
+        <x>300</x>
         <y>340</y>
         <width>111</width>
         <height>51</height>
@@ -500,7 +500,7 @@ QPushButton[enabled=&quot;false&quot;] {
      <widget class="QPushButton" name="pushButton">
       <property name="geometry">
        <rect>
-        <x>70</x>
+        <x>40</x>
         <y>340</y>
         <width>111</width>
         <height>51</height>
@@ -516,176 +516,6 @@ QPushButton[enabled=&quot;false&quot;] {
       </property>
       <property name="text">
        <string>输出1</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="layoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>40</x>
-        <y>20</y>
-        <width>111</width>
-        <height>256</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QLabel" name="label_4">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    background-color: #c62828;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    padding: 8px;
-    min-height: 30px;
-}</string>
-         </property>
-         <property name="text">
-          <string>左上螺丝</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_5">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    background-color: #c62828;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    padding: 8px;
-    min-height: 30px;
-}</string>
-         </property>
-         <property name="text">
-          <string>右上螺丝</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_6">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    background-color: #c62828;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    padding: 8px;
-    min-height: 30px;
-}</string>
-         </property>
-         <property name="text">
-          <string>左下螺丝</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_7">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    background-color: #c62828;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    padding: 8px;
-    min-height: 30px;
-}</string>
-         </property>
-         <property name="text">
-          <string>右下螺丝</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_8">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    background-color: #c62828;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    padding: 8px;
-    min-height: 30px;
-}</string>
-         </property>
-         <property name="text">
-          <string>放齿轮</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="Line" name="line">
-      <property name="geometry">
-       <rect>
-        <x>13</x>
-        <y>20</y>
-        <width>20</width>
-        <height>261</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">Line {
-    background-color: #555;
-}</string>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
       </property>
      </widget>
      <widget class="QTextBrowser" name="textBrowser">
@@ -754,7 +584,7 @@ QCheckBox::indicator:unchecked {
      <widget class="QPushButton" name="pushButton_2">
       <property name="geometry">
        <rect>
-        <x>200</x>
+        <x>170</x>
         <y>340</y>
         <width>111</width>
         <height>51</height>
@@ -772,6 +602,183 @@ QCheckBox::indicator:unchecked {
        <string>输出2</string>
       </property>
      </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>131</width>
+        <height>258</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="spacing">
+        <number>15</number>
+       </property>
+       <item>
+        <widget class="Line" name="line">
+         <property name="minimumSize">
+          <size>
+           <width>3</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">Line {
+    background-color: #555;
+}</string>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
+           </property>
+           <property name="text">
+            <string>左上螺丝</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
+           </property>
+           <property name="text">
+            <string>右上螺丝</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_6">
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
+           </property>
+           <property name="text">
+            <string>左下螺丝</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_7">
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
+           </property>
+           <property name="text">
+            <string>右下螺丝</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_8">
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    background-color: #c62828;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    min-height: 30px;
+}</string>
+           </property>
+           <property name="text">
+            <string>放齿轮</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
     </widget>
     <widget class="QWidget" name="page_2">
      <widget class="QWidget" name="ROIControls" native="true">
@@ -779,8 +786,8 @@ QCheckBox::indicator:unchecked {
        <rect>
         <x>40</x>
         <y>10</y>
-        <width>481</width>
-        <height>311</height>
+        <width>480</width>
+        <height>230</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -978,9 +985,9 @@ QCheckBox::indicator:unchecked {
       <property name="geometry">
        <rect>
         <x>40</x>
-        <y>330</y>
-        <width>481</width>
-        <height>151</height>
+        <y>240</y>
+        <width>480</width>
+        <height>180</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -1035,18 +1042,35 @@ QPushButton:pressed {
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_opacity">
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="3">
+          <widget class="QLabel" name="label_opacity_display">
            <property name="styleSheet">
-            <string notr="true"/>
+            <string notr="true">QLabel {
+    color: #00ff00;
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 5px;
+    min-width: 70px;
+}</string>
            </property>
            <property name="text">
-            <string>透明度:</string>
+            <string>0%</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
-         <item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_line_width">
+           <property name="text">
+            <string>线宽:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
           <widget class="QSlider" name="slider_opacity">
            <property name="styleSheet">
             <string notr="true">QSlider::groove:horizontal {
@@ -1077,8 +1101,52 @@ QSlider::handle:horizontal:hover {
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QLabel" name="label_opacity_display">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_opacity">
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="text">
+            <string>透明度:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QSlider" name="slider_line_width">
+           <property name="styleSheet">
+            <string notr="true">QSlider::groove:horizontal {
+    height: 8px;
+    background: #424242;
+    border-radius: 4px;
+}
+
+QSlider::handle:horizontal {
+    background: #2e7d32;
+    width: 18px;
+    margin: -5px 0;
+    border-radius: 9px;
+}
+
+QSlider::handle:horizontal:hover {
+    background: #388e3c;
+}</string>
+           </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>5</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QLabel" name="label_line_width_display">
            <property name="styleSheet">
             <string notr="true">QLabel {
     color: #00ff00;
@@ -1090,7 +1158,7 @@ QSlider::handle:horizontal:hover {
 }</string>
            </property>
            <property name="text">
-            <string>0%</string>
+            <string>5</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>

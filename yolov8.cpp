@@ -515,7 +515,7 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
     if (useROI && !detectionROI.empty())
     {
         cv::Mat overlay = image.clone();
-        cv::rectangle(overlay, detectionROI, roiColor, 5);
+        cv::rectangle(overlay, detectionROI, roiColor, roiLineWidth);
         cv::addWeighted(image, roiOpacity, overlay, 1.0f - roiOpacity, 0, image);
     }
 
@@ -704,4 +704,10 @@ void YoloV8::setRoiColor(const cv::Scalar &color)
 void YoloV8::setRoiOpacity(float opacity)
 {
     roiOpacity = opacity;
+}
+
+// 设置ROI线宽
+void YoloV8::setRoiLineWidth(int lineWidth)
+{
+    roiLineWidth = lineWidth;
 }
