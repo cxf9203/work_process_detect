@@ -1056,7 +1056,7 @@ QPushButton:pressed {
 }</string>
            </property>
            <property name="text">
-            <string>0%</string>
+            <string>50%</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -1094,7 +1094,7 @@ QSlider::handle:horizontal:hover {
             <number>100</number>
            </property>
            <property name="value">
-            <number>0</number>
+            <number>50</number>
            </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -1132,7 +1132,7 @@ QSlider::handle:horizontal:hover {
 }</string>
            </property>
            <property name="minimum">
-            <number>2</number>
+            <number>-1</number>
            </property>
            <property name="maximum">
             <number>100</number>

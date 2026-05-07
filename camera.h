@@ -61,7 +61,7 @@ public:
     int roi_color_r = 0;      // ROI颜色红色分量
     int roi_color_g = 255;    // ROI颜色绿色分量
     int roi_color_b = 0;      // ROI颜色蓝色分量
-    float roi_opacity = 0.0f; // ROI透明度
+    float roi_opacity = 0.5f; // ROI透明度
     int roi_line_width = 5;   // ROI矩形线宽
 
 signals:
