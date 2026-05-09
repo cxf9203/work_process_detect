@@ -14,7 +14,9 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "tagNET_DVR_DEVICEINFO_V40",
+                "tagNET_DVR_PREVIEWINFO"
             ],
             "cStandard": "c17",
             "cppStandard": "c++17",

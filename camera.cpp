@@ -182,7 +182,8 @@ void Camera::run()
         NET_DVR_SetReconnect(10000, true);
 
         // 登录
-        lpLoginInfo = lpDeviceInfo = {0};
+        lpLoginInfo = {0};
+        lpDeviceInfo = {0};
 
         lpLoginInfo.bUseAsynLogin = 0; // 同步登录方式
         char *sDeviceAddress, *sUserName, *sPassword;

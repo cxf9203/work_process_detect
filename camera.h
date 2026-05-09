@@ -52,7 +52,7 @@ public:
     void setRoiOpacity(float opacity);
     void setRoiLineWidth(int lineWidth);
     // ROI参数
-    bool m_enableROIDetection = false; // ROI检测启用状态
+    bool m_enableROIDetection = true; // ROI检测启用状态
     int roi_x = 1060;
     int roi_y = 440;
     int roi_w = 435;

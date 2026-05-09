@@ -213,7 +213,7 @@ void MainWindow::on_spinBox_roi_h_valueChanged(int value)
 
 void MainWindow::on_btn_colorPicker_clicked()
 {
-    QColor color = QColorDialog::getColor(Qt::green, this, QString::fromLocal8Bit("选择检测框颜色"));
+    QColor color = QColorDialog::getColor(QColor(cam->roi_color_r, cam->roi_color_g, cam->roi_color_b), this, QString::fromLocal8Bit("选择检测框颜色"));
     if (color.isValid())
     {
         ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(color.name()));
