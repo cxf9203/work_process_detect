@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1600</width>
+    <width>1800</width>
     <height>900</height>
    </rect>
   </property>
@@ -14,11 +14,7 @@
    <string>工序检测系统</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QMainWindow {
-    background-color: #2b2b2b;
-}
-
-QPushButton {
+   <string notr="true">QPushButton {
     background-color: #3d3d3d;
     color: #ffffff;
     border: 1px solid #555;
@@ -40,26 +36,33 @@ QPushButton:disabled {
     color: #888;
 }
 
-QLabel {
-    color: #ffffff;
-}
-
-QTextBrowser {
-    background-color: #1e1e1e;
-    color: #00ff00;
-    border: 1px solid #444;
-    border-radius: 5px;
-}
-
 QCheckBox {
     color: #ffffff;
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #2e7d32;
+    border: 2px solid #2e7d32;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:unchecked {
+    background-color: #424242;
+    border: 2px solid #555;
+    border-radius: 4px;
 }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>920</x>
+      <x>1220</x>
       <y>150</y>
       <width>281</width>
       <height>81</height>
@@ -167,7 +170,7 @@ QCheckBox {
    <widget class="QPushButton" name="start">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>1200</x>
       <y>70</y>
       <width>150</width>
       <height>50</height>
@@ -206,7 +209,7 @@ QPushButton:pressed {
     <property name="geometry">
      <rect>
       <x>60</x>
-      <y>710</y>
+      <y>790</y>
       <width>150</width>
       <height>45</height>
      </rect>
@@ -240,7 +243,7 @@ QPushButton[enabled=&quot;false&quot;] {
    <widget class="QPushButton" name="stop">
     <property name="geometry">
      <rect>
-      <x>1060</x>
+      <x>1360</x>
       <y>70</y>
       <width>150</width>
       <height>50</height>
@@ -278,8 +281,8 @@ QPushButton:pressed {
    <widget class="QPushButton" name="btn_proc3">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>710</y>
+      <x>1010</x>
+      <y>790</y>
       <width>150</width>
       <height>45</height>
      </rect>
@@ -315,20 +318,24 @@ QPushButton[enabled=&quot;false&quot;] {
      <rect>
       <x>60</x>
       <y>60</y>
-      <width>660</width>
-      <height>640</height>
+      <width>1100</width>
+      <height>700</height>
      </rect>
     </property>
     <property name="styleSheet">
      <string notr="true">QLabel {
+    color: #ffffff;
     background-color: #1e1e1e;
     border: 2px solid #444;
     border-radius: 8px;
-    padding: 5px;
+    padding: 40px 20px;
 }</string>
     </property>
     <property name="text">
      <string>图像显示区域</string>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -337,7 +344,7 @@ QPushButton[enabled=&quot;false&quot;] {
    <widget class="QPushButton" name="btn_proc4">
     <property name="geometry">
      <rect>
-      <x>1230</x>
+      <x>1530</x>
       <y>150</y>
       <width>161</width>
       <height>41</height>
@@ -372,7 +379,7 @@ QPushButton[enabled=&quot;false&quot;] {
    <widget class="QPushButton" name="btn_setRoi">
     <property name="geometry">
      <rect>
-      <x>1230</x>
+      <x>1530</x>
       <y>200</y>
       <width>161</width>
       <height>41</height>
@@ -410,8 +417,8 @@ QPushButton:pressed {
    <widget class="QPushButton" name="btn_proc2">
     <property name="geometry">
      <rect>
-      <x>315</x>
-      <y>710</y>
+      <x>535</x>
+      <y>790</y>
       <width>150</width>
       <height>45</height>
      </rect>
@@ -445,7 +452,7 @@ QPushButton[enabled=&quot;false&quot;] {
    <widget class="QStackedWidget" name="stackedWidget">
     <property name="geometry">
      <rect>
-      <x>870</x>
+      <x>1170</x>
       <y>260</y>
       <width>591</width>
       <height>440</height>
@@ -555,27 +562,7 @@ QPushButton[enabled=&quot;false&quot;] {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QCheckBox {
-    color: #ffffff;
-    spacing: 8px;
-}
-
-QCheckBox::indicator {
-    width: 20px;
-    height: 20px;
-}
-
-QCheckBox::indicator:checked {
-    background-color: #2e7d32;
-    border: 2px solid #2e7d32;
-    border-radius: 4px;
-}
-
-QCheckBox::indicator:unchecked {
-    background-color: #424242;
-    border: 2px solid #555;
-    border-radius: 4px;
-}</string>
+       <string notr="true"/>
       </property>
       <property name="text">
        <string>忽略该动作</string>
@@ -808,27 +795,7 @@ QCheckBox::indicator:unchecked {
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">QCheckBox {
-    color: #ffffff;
-    spacing: 8px;
-}
-
-QCheckBox::indicator {
-    width: 20px;
-    height: 20px;
-}
-
-QCheckBox::indicator:checked {
-    background-color: #2e7d32;
-    border: 2px solid #2e7d32;
-    border-radius: 4px;
-}
-
-QCheckBox::indicator:unchecked {
-    background-color: #424242;
-    border: 2px solid #555;
-    border-radius: 4px;
-}</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>启用ROI检测</string>
@@ -1177,7 +1144,7 @@ QSlider::handle:horizontal:hover {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1600</width>
+     <width>1800</width>
      <height>23</height>
     </rect>
    </property>

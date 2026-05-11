@@ -436,8 +436,8 @@ void Camera::run()
             }
             // cv::imshow("Camera", BGR_image);
             // cv::waitKey(1);
-            QImage a = cvMat2QImage(BGR_image);
-            QImage IMG = a.scaled(640, 640, Qt::KeepAspectRatio);
+            QImage IMG = cvMat2QImage(BGR_image);
+            // IMG = IMG.scaled(640, 640, Qt::KeepAspectRatio); // 调整图像大小
             emit sendQImgToAutoMain(IMG);
         }
 
