@@ -488,14 +488,19 @@ void Camera::ExecuteMianToThread()
 void Camera::stop_camera()
 {
     this->Camera_thread_flag = true;
+
+    // 释放 Modbus 资源
+    if (ctx != NULL)
+    {
+        modbus_close(ctx);
+        modbus_free(ctx);
+        ctx = NULL;
+    }
 }
 
 void Camera::closeDevice()
 { // 关闭设备
-    // ch:关闭设备 | Close device
-
     qDebug("Closed");
-
     emit finished();
 }
 
@@ -584,13 +589,14 @@ void Camera::setD(int address, int value)
         emit sendQStringtoMain("Modbus context is NULL, skip write");
         return;
     }
-    rc = modbus_write_register(ctx, address, value);
-    if (rc == -1)
+    if (modbus_write_register(ctx, address, value) == -1)
     {
         emit sendQStringtoMain("Failed to write register: " + QString::number(address));
-        // 尝试重新连接
     }
-    emit sendQStringtoMain("setD address: " + QString::number(address) + ", value is: " + QString::number(value));
+    else
+    {
+        emit sendQStringtoMain("setD address: " + QString::number(address) + ", value is: " + QString::number(value));
+    }
 }
 
 int Camera::setRoi()
