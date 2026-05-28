@@ -119,8 +119,8 @@ private:
     int last_keti = 0; // 上次keti计数
     // 滑动窗口相关变量，用于平滑壳体检测结果
     std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
-    const int KETI_WINDOW_SIZE = 5; // 滑动窗口大小
-    const int KETI_THRESHOLD = 3; // 判定壳体存在的阈值
+    const int KETI_WINDOW_SIZE = 3; // 滑动窗口大小
+    const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
 
 protected:
 

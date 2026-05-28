@@ -526,7 +526,7 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
         for (const auto &object : objects)
         {
             // Choose the color
-            int colorIndex = object.label % COLOR_LIST.size(); // We have only defined 80 unique colors
+            int colorIndex = object.label % COLOR_LIST.size();
             cv::Scalar color = cv::Scalar(COLOR_LIST[colorIndex][0], COLOR_LIST[colorIndex][1], COLOR_LIST[colorIndex][2]);
             std::cout << "have mask processed" << std::endl;
         }
@@ -549,7 +549,7 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
         }
 
         // Choose the color
-        int colorIndex = object.label % COLOR_LIST.size(); // We have only defined 80 unique colors
+        int colorIndex = object.label % COLOR_LIST.size();
         cv::Scalar color = cv::Scalar(COLOR_LIST[colorIndex][0], COLOR_LIST[colorIndex][1], COLOR_LIST[colorIndex][2]);
         float meanColor = cv::mean(color)[0];
         cv::Scalar txtColor;
@@ -682,16 +682,16 @@ std::set<std::string> YoloV8::getSet()
     return stringSet;
 }
 
-// 设置检测区域
-void YoloV8::setDetectionROI(const cv::Rect &roi)
-{
-    detectionROI = roi;
-}
-
 // 启用或禁用ROI检测
 void YoloV8::enableROIDetection(bool enable)
 {
     useROI = enable;
+}
+
+// 设置检测区域
+void YoloV8::setDetectionROI(const cv::Rect &roi)
+{
+    detectionROI = roi;
 }
 
 // 设置ROI颜色

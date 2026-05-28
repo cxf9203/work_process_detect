@@ -331,14 +331,14 @@ void Camera::run()
                 // qDebug() << "run inference";
                 const auto objects = yoloV8.detectObjects(BGR_image);
                 // 设置检测区域ROI
+                yoloV8.enableROIDetection(m_enableROIDetection);
                 cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
                 yoloV8.setDetectionROI(detectionROI);
-                yoloV8.enableROIDetection(m_enableROIDetection);
                 yoloV8.setRoiColor(cv::Scalar(roi_color_b, roi_color_g, roi_color_r));
                 yoloV8.setRoiOpacity(roi_opacity);
                 yoloV8.setRoiLineWidth(roi_line_width);
                 // Draw the bounding boxes on the image
-                yoloV8.drawObjectLabels(BGR_image, objects); // 绘制框
+                yoloV8.drawObjectLabels(BGR_image, objects);
                 std::vector<int> classCount = yoloV8.getclassnumer();
                 int chilun_num = classCount[0];
                 int keti_num = classCount[1];
