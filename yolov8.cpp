@@ -533,7 +533,6 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
     }
 
     // Bounding boxes and annotations
-    result = true; // 初始化结果
     for (auto &object : objects)
     {
         // 检查对象是否在ROI区域内
@@ -552,22 +551,15 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
         int colorIndex = object.label % COLOR_LIST.size();
         cv::Scalar color = cv::Scalar(COLOR_LIST[colorIndex][0], COLOR_LIST[colorIndex][1], COLOR_LIST[colorIndex][2]);
         float meanColor = cv::mean(color)[0];
-        cv::Scalar txtColor;
-        if (meanColor > 0.5)
-        {
-            txtColor = cv::Scalar(0, 0, 0);
-        }
-        else
-        {
-            txtColor = cv::Scalar(255, 255, 255);
-        }
+        cv::Scalar txtColor = meanColor > 0.5 ? cv::Scalar(0, 0, 0) : cv::Scalar(255, 255, 255);
 
         const auto &rect = object.rect;
-        std::string label_name = CLASS_NAMES[object.label].c_str();
-        std::cout << "label_name" << label_name << std::endl; //"chilun",   "keti" ,"luosi"
-        std::cout << "label_id" << object.label << std::endl;
-        std::cout << "label_rect" << object.rect << std::endl;
-        std::cout << "probability  " << object.probability * 100 << std::endl;
+
+        std::string label_name = CLASS_NAMES[object.label];
+        std::cout << "label_name: " << label_name << std::endl;
+        std::cout << "label_id: " << object.label << std::endl;
+        std::cout << "label_rect: " << object.rect << std::endl;
+        std::cout << "probability: " << object.probability * 100 << std::endl;
         // 统计各对象个数和动作标志
         switch (object.label)
         {
@@ -586,16 +578,13 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
 
         int baseLine = 0;
         cv::Size labelSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, scale, &baseLine);
-
         cv::Scalar txt_bk_color = color * 0.7 * 255;
 
         int x = object.rect.x;
         int y = object.rect.y + 1;
 
         cv::rectangle(image, rect, color * 255, scale + 1);
-
         cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(labelSize.width, labelSize.height + baseLine)), txt_bk_color, -1);
-
         cv::putText(image, text, cv::Point(x, y + labelSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, txtColor, scale);
 
         // Pose estimation
@@ -618,13 +607,10 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
                 auto &ske = SKELETON[k];
                 int pos1X = std::round(kps[(ske[0] - 1) * 3]);
                 int pos1Y = std::round(kps[(ske[0] - 1) * 3 + 1]);
-
                 int pos2X = std::round(kps[(ske[1] - 1) * 3]);
                 int pos2Y = std::round(kps[(ske[1] - 1) * 3 + 1]);
-
                 float pos1S = kps[(ske[0] - 1) * 3 + 2];
                 float pos2S = kps[(ske[1] - 1) * 3 + 2];
-
                 if (pos1S > KPS_THRESHOLD && pos2S > KPS_THRESHOLD)
                 {
                     cv::Scalar limbColor = cv::Scalar(LIMB_COLORS[k][0], LIMB_COLORS[k][1], LIMB_COLORS[k][2]);
@@ -643,11 +629,6 @@ std::vector<int> YoloV8::getclassnumer()
 std::vector<bool> YoloV8::getActionFlag()
 {
     return actionFlag;
-}
-
-bool YoloV8::getResult() // 是否检测到defects和折叠或者破边
-{
-    return result;
 }
 
 float YoloV8::calculateAveragePixelValue(const cv::Mat &image, const cv::Rect &rect)

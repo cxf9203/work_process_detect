@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QFont>
 #include <QMetaType>
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -12,7 +13,6 @@ int main(int argc, char *argv[])
     QFont font("Arial", 10);
     a.setFont(font);
     QFile f("D:\\jiance\\qdarkstyle\\dark\\darkstyle.qss");
-
     if (!f.exists())
     {
         printf("Unable to set stylesheet, file not found\n");
@@ -23,7 +23,6 @@ int main(int argc, char *argv[])
         QTextStream ts(&f);
         a.setStyleSheet(ts.readAll());
     }
-
     MainWindow w;
     w.show();
     return a.exec();

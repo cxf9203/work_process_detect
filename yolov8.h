@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include "engine.h"
 #include <fstream>
 
@@ -90,7 +91,6 @@ public:
     void setRoiLineWidth(int lineWidth);
     std::vector<int> getclassnumer();
     std::vector<bool> getActionFlag();
-    bool getResult();
     float calculateAveragePixelValue(const cv::Mat &image, const cv::Rect &rect);
     void setArea_threshold(float area);
     void setIntensity_threshold(float intensity);
@@ -114,7 +114,6 @@ private:
     cv::Scalar roiColor = cv::Scalar(0, 255, 0); // ROI颜色
     float roiOpacity = 0.0f; // ROI透明度
     int roiLineWidth = 5; // ROI矩形线宽
-
     // Preprocess the input
     std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);
     // Postprocess the output
@@ -126,37 +125,29 @@ private:
     std::vector<Object> postProcessPose(std::vector<float> &featureVector);
     // Postprocess the output for segmentation model
     std::vector<Object> postProcessSegmentation(std::vector<std::vector<float>> &featureVectors);
-
     std::unique_ptr<Engine<float>> m_trtEngine = nullptr;
-
     // Used for image preprocessing
     // YoloV8 model expects values between [0.f, 1.f] so we use the following params
     const std::array<float, 3> SUB_VALS{0.f, 0.f, 0.f};
     const std::array<float, 3> DIV_VALS{1.f, 1.f, 1.f};
     const bool NORMALIZE = true;
-
     float m_ratio = 1;
     float m_imgWidth = 0;
     float m_imgHeight = 0;
-
     // Filter thresholds
     const float PROBABILITY_THRESHOLD;
     const float NMS_THRESHOLD;
     const int TOP_K;
-
     // Segmentation constants
     const int SEG_CHANNELS;
     const int SEG_H;
     const int SEG_W;
     const float SEGMENTATION_THRESHOLD;
-
     // Object classes as strings
     const std::vector<std::string> CLASS_NAMES;
-
     // Pose estimation constant
     const int NUM_KPS;
     const float KPS_THRESHOLD;
-
     // Color list for drawing objects
     const std::vector<std::vector<float>> COLOR_LIST = {{1, 1, 1},
                                                         {0.098, 0.325, 0.850},
@@ -238,19 +229,16 @@ private:
                                                         {0.741, 0.447, 0.000},
                                                         {0.741, 0.717, 0.314},
                                                         {0.000, 0.500, 0.500}};
-
     const std::vector<std::vector<unsigned int>> KPS_COLORS = {
         {0, 255, 0},    {0, 255, 0},    {0, 255, 0},    {0, 255, 0},    {0, 255, 0},   {255, 128, 0},
         {255, 128, 0},  {255, 128, 0},  {255, 128, 0},  {255, 128, 0},  {255, 128, 0}, {51, 153, 255},
         {51, 153, 255}, {51, 153, 255}, {51, 153, 255}, {51, 153, 255}, {51, 153, 255}
     };
-
     const std::vector<std::vector<unsigned int>> SKELETON = {
         {16, 14}, {14, 12}, {17, 15}, {15, 13}, {12, 13}, {6, 12}, {7, 13},
         {6, 7},   {6, 8},   {7, 9},   {8, 10},  {9, 11},  {2, 3},  {1, 2},
         {1, 3},   {2, 4},   {3, 5},   {4, 6},   {5, 7}
     };
-
     const std::vector<std::vector<unsigned int>> LIMB_COLORS = {
         {51, 153, 255}, {51, 153, 255}, {51, 153, 255}, {51, 153, 255}, {255, 51, 255}, {255, 51, 255}, {255, 51, 255},
         {255, 128, 0},  {255, 128, 0},  {255, 128, 0},  {255, 128, 0},  {255, 128, 0},  {0, 255, 0},    {0, 255, 0},

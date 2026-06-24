@@ -132,6 +132,7 @@ void Camera::run()
     {
         qDebug() << "cannot create modbus";
         emit sendQStringtoMain("cannot create modbus");
+        // emit finishedthread();
         // return;
     }
 
@@ -144,6 +145,7 @@ void Camera::run()
 
         emit send_connectstate(false);
         emit sendQStringtoMain("connect to server fail");
+        // emit finishedthread();
         // return;
     }
     else
@@ -155,23 +157,39 @@ void Camera::run()
     emit sendQStringtoMain("loading ai model...");
     // fp32精度模型
     // config.precision = Precision::FP32;
-    YoloV8 yoloV8(onnxModelPath, config); // 加载深度学习模型
+    YoloV8 *yoloV8 = nullptr;
+    try
+    {
+        yoloV8 = new YoloV8(onnxModelPath, config); // 加载深度学习模型
+        emit sendQStringtoMain("load ai model success");
+    }
+    catch (const std::exception &e)
+    {
+        emit sendQStringtoMain(QString::fromStdString("Failed to load AI model: " + std::string(e.what())));
+        emit finishedthread();
+        return;
+    }
+    catch (...)
+    {
+        emit sendQStringtoMain(QString::fromStdString("Failed to load AI model: Unknown error!"));
+        emit finishedthread();
+        return;
+    }
 
-    emit sendQStringtoMain("load ai model success");
-
-    // ========== 相机模式选择 ==========
-    #define USE_LOCAL_VIDEO 0 // 1: 使用本地视频, 0: 使用真实相机
-
-    #if USE_LOCAL_VIDEO
+    if (useLocalVideo)
+    {
         // 本地视频模式
         emit sendQStringtoMain("Using local video mode...");
         if (!cap.open(m_videoPath))
         {
             emit sendQStringtoMain("Failed to open local video!");
+            emit finishedthread();
             return;
         }
         emit sendQStringtoMain("Local video opened successfully");
-    #else
+    }
+    else
+    {
         // 真实相机模式
         emit sendQStringtoMain("Using real camera mode...");
 
@@ -204,14 +222,16 @@ void Camera::run()
         lUserID = NET_DVR_Login_V40(&lpLoginInfo, &lpDeviceInfo);
         if (lUserID < 0)
         {
-            std::cout << "注册失败！\n";
-            emit sendQStringtoMain("register fail with camera!");
-            system("pause");
+            DWORD dwErr = NET_DVR_GetLastError(); // 获取错误码
+            std::cout << "注册失败！错误码: " << dwErr << "\n";
+            emit sendQStringtoMain(QString("register fail with camera! Error code: %1").arg(dwErr));
+            emit finishedthread();
+            return;
         }
         else
         {
             std::cout << "注册成功！" << std::endl;
-            Sleep(1000); // 显示注册相关信息
+            emit sendQStringtoMain("register success with camera!");
         }
 
         if (PlayM4_GetPort(&g_nPort)) // 获取播放库通道号
@@ -220,7 +240,7 @@ void Camera::run()
             {
                 if (PlayM4_OpenStream(g_nPort, NULL, 0, 1024 * 1024)) // 打开流
                 {
-                    if (PlayM4_SetDecCallBackExMend(g_nPort, DecCBFun, NULL, 0, nUser)) // NULL 替换为nUser了
+                    if (PlayM4_SetDecCallBackExMend(g_nPort, DecCBFun, NULL, 0, nUser))
                     {
                         if (PlayM4_Play(g_nPort, NULL))
                         {
@@ -254,22 +274,32 @@ void Camera::run()
 
         // 启动预览并设置回调数据流
         struPlayInfo = {0};
-        struPlayInfo.hPlayWnd = NULL;  // 窗口为空，设备SDK不解码只取流
-        struPlayInfo.lChannel = 1;     // Channel number 设备通道
-        struPlayInfo.dwStreamType = 0; // 码流类型，0-主码流，1-子码流，2-码流3，3-码流4, 4-码流5,5-码流6,7-码流7,8-码流8,9-码流9,10-码流10
-        struPlayInfo.dwLinkMode = 0;   // 0：TCP方式,1：UDP方式,2：多播方式,3 - RTP方式，4-RTP/RTSP,5-RSTP/HTTP
-        struPlayInfo.bBlocked = 0;     // 0-非阻塞取流, 1-阻塞取流, 如果阻塞SDK内部connect失败将会有5s的超时才能够返回,不适合于轮询取流操作.
+        struPlayInfo.hPlayWnd = NULL;  // 窗口句柄设为NULL，表示SDK不解码显示，只取原始码流
+        struPlayInfo.lChannel = 1;     // Channel number 设备通道号
+        struPlayInfo.dwStreamType = 0; // 码流类型：0-主码流，1-子码流，2-码流3...
+        struPlayInfo.dwLinkMode = 0;   // 取流协议：0-TCP，1-UDP，2-多播，3-RTP，4-RTP/RTSP，5-RTSP/HTTP
+        struPlayInfo.bBlocked = 0;     // 阻塞模式：0-非阻塞（立即返回），1-阻塞（失败时最多等待5秒，不适合轮询）
 
         qDebug() << "Camera" << id << "opened successfully";
         emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
         setD(0, 0);
         setD(1, 0);
         setD(2, 0);
-        if (NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL)) // 开始取流
+        LONG lRealHandle = NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL); // 开始取流
+        if (lRealHandle < 0)
         {
-            // cv::namedWindow("RGBImage2");
+            DWORD dwErr = NET_DVR_GetLastError(); // 获取错误码
+            std::cout << "预览失败！错误码: " << dwErr << "\n";
+            emit sendQStringtoMain(QString("RealPlay failed! Error code: %1").arg(dwErr));
+            emit finishedthread();
+            return;
         }
-    #endif
+        else
+        {
+            std::cout << "预览成功！句柄: " << lRealHandle << std::endl;
+            emit sendQStringtoMain("RealPlay started successfully");
+        }
+    }
 
     try
     {
@@ -285,7 +315,8 @@ void Camera::run()
                 break;
             }
 
-            #if USE_LOCAL_VIDEO
+            if (useLocalVideo)
+            {
                 // 从本地视频读取帧
                 cap >> BGR_image;
                 if (BGR_image.empty())
@@ -310,7 +341,9 @@ void Camera::run()
                     }
                     qDebug() << "Video restarted successfully";
                 }
-            #else
+            }
+            else
+            {
                 // 从真实相机获取帧
                 if (Camera::gImage.empty())
                 {
@@ -320,7 +353,7 @@ void Camera::run()
                 QMutexLocker locker(&queueMutex);
                 BGR_image = Camera::gImage.front();
                 Camera::gImage.pop();
-            #endif
+            }
 
             // 图像处理
             output = false;
@@ -329,17 +362,17 @@ void Camera::run()
             {
                 // Run inference 推理
                 // qDebug() << "run inference";
-                const auto objects = yoloV8.detectObjects(BGR_image);
+                const auto objects = yoloV8->detectObjects(BGR_image);
                 // 设置检测区域ROI
-                yoloV8.enableROIDetection(m_enableROIDetection);
+                yoloV8->enableROIDetection(m_enableROIDetection);
                 cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
-                yoloV8.setDetectionROI(detectionROI);
-                yoloV8.setRoiColor(cv::Scalar(roi_color_b, roi_color_g, roi_color_r));
-                yoloV8.setRoiOpacity(roi_opacity);
-                yoloV8.setRoiLineWidth(roi_line_width);
+                yoloV8->setDetectionROI(detectionROI);
+                yoloV8->setRoiColor(cv::Scalar(roi_color_b, roi_color_g, roi_color_r));
+                yoloV8->setRoiOpacity(roi_opacity);
+                yoloV8->setRoiLineWidth(roi_line_width);
                 // Draw the bounding boxes on the image
-                yoloV8.drawObjectLabels(BGR_image, objects);
-                std::vector<int> classCount = yoloV8.getclassnumer();
+                yoloV8->drawObjectLabels(BGR_image, objects);
+                std::vector<int> classCount = yoloV8->getclassnumer();
                 int chilun_num = classCount[0];
                 int keti_num = classCount[1];
                 int luosi_num = classCount[2];
@@ -347,7 +380,7 @@ void Camera::run()
                 QString str_luosi_num = QString::number(luosi_num);
                 emit sendNumber(str_chilun_num, str_luosi_num);
                 // 检查动作是否有做到了（瞬时动作可以消失）
-                std::vector<bool> tempAction = yoloV8.getActionFlag();
+                std::vector<bool> tempAction = yoloV8->getActionFlag();
                 for (size_t i = 0; i < tempAction.size(); i++)
                 {
                     if (tempAction[i])
@@ -441,10 +474,13 @@ void Camera::run()
             emit sendQImgToAutoMain(IMG);
         }
 
-        #if USE_LOCAL_VIDEO
+        if (useLocalVideo)
+        {
             // 本地视频模式清理
             cap.release();
-        #else
+        }
+        else
+        {
             // 真实相机模式清理
             // 结束停止采集
             // 先停止预览
@@ -462,7 +498,7 @@ void Camera::run()
             // 发送停采命令
             NET_DVR_Logout(lUserID);
             NET_DVR_Cleanup();
-        #endif
+        }
 
         emit finishedthread();
         // 注销采集回调
@@ -475,14 +511,6 @@ void Camera::run()
     }
     // 反初始化库
     // 销毁事件回调指针
-}
-
-void Camera::ExecuteMianToThread()
-{
-    stop_camera();
-    qDebug() << "shoudao " << "\n";
-    // DestroyedHandle();
-    emit finished();
 }
 
 void Camera::stop_camera()

@@ -29,9 +29,6 @@ public slots:
     void getActionState(std::vector<bool> actionState);
     void receiveQStringtoMain(QString s);
 
-signals:
-    void SetStopThreadC1(); // send signal to stop thread
-
 private slots:
     void on_start_clicked();
     void on_stop_clicked();
@@ -41,7 +38,7 @@ private slots:
     void on_pushButton_3_clicked();
     void on_pushButton_4_clicked();
     void on_checkBox_toggled(bool checked);
-    void on_cb_enableROI_toggled(bool checked);
+    void on_cb_enableROI_toggled(bool value);
     void on_spinBox_roi_x_valueChanged(int value);
     void on_spinBox_roi_y_valueChanged(int value);
     void on_spinBox_roi_w_valueChanged(int value);

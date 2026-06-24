@@ -68,7 +68,7 @@ signals:
     // 给主线程发消息
     void sendImgToAutoMain(cv::Mat img, double left_tuoshuizhou, double right_tuoshuizhou, double left_dashuifeng, double right_dashuifeng, double theta_t, double theta_d, bool result);
     void sendQImgToAutoMain(QImage img);
-    void finished(); // 新增：用于在循环结束时通知主线程
+    void finished();
     void updateActionState(std::vector<bool> actionGroup);
     void sendQStringtoMain(QString message);
     void sendResult(QString left_tuoshuizhou, QString right_tuoshuizhou, QString left_dashuifeng, QString right_dashuifeng, QString theta_t, QString theta_d, QString result);
@@ -76,14 +76,11 @@ signals:
     void finishedthread();
     void updateButtonState(bool p1, bool p2, bool p3);
     void send_connectstate(bool state);
-    void resetSystem();
-    void triggerAlarm();
 
 private:
     QString filePath = "D:\\jiance\\process.onnx";
     std::string onnxModelPath = filePath.toStdString();
     YoloV8Config config;
-    // static void __stdcall ImageCallBackEx(unsigned char *pData, MV_FRAME_OUT_INFO_EX *pFrameInfo, void *pUser);
     bool Camera_thread_flag;
     cv::Mat BGR_image;
     int id;
@@ -96,6 +93,7 @@ private:
     uint32_t query32D[MODBUS_TCP_MAX_ADU_LENGTH];
     uint8_t queryM[MODBUS_TCP_MAX_ADU_LENGTH];
     cv::VideoCapture cap;
+    bool useLocalVideo = false; // true: 使用本地视频, false: 使用真实相机
     std::string m_videoPath = "D:\\jiance\\video.mp4"; // 视频文件路径
     // 登录
     NET_DVR_USER_LOGIN_INFO lpLoginInfo = {0};
@@ -122,11 +120,8 @@ private:
     const int KETI_WINDOW_SIZE = 3; // 滑动窗口大小
     const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
 
-protected:
-
 public slots:
     void run();
-    void ExecuteMianToThread();
 };
 
 #endif // CAMERA_H
