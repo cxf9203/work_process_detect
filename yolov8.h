@@ -2,6 +2,8 @@
 
 #include "engine.h"
 #include <fstream>
+#include <QColor>
+#include <QString>
 
 // Utility method for checking if a file exists on disk
 inline bool doesFileExist(const std::string &name)
@@ -33,7 +35,7 @@ struct YoloV8Config
     // Calibration data directory. Must be specified when using INT8 precision.
     std::string calibrationDataDirectory;
     // Probability threshold used to filter detected objects
-    float probabilityThreshold = 0.2f;
+    float probabilityThreshold = 0.25f;
     // Non-maximum suppression threshold
     float nmsThreshold = 0.65f;
     // Max number of detected objects to return
@@ -50,28 +52,27 @@ struct YoloV8Config
     float kpsThreshold = 0.5f;
     // Class thresholds (default are COCO classes)
     std::vector<std::string> classNames = {
-        "chilun", "keti", "luosi", "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"};
-    // std::vector<std::string> classNames = {
-    //     "person",         "bicycle",    "car",           "motorcycle",    "airplane",     "bus",           "train",
-    //     "truck",          "boat",       "traffic light", "fire hydrant",  "stop sign",    "parking meter", "bench",
-    //     "bird",           "cat",        "dog",           "horse",         "sheep",        "cow",           "elephant",
-    //     "bear",           "zebra",      "giraffe",       "backpack",      "umbrella",     "handbag",       "tie",
-    //     "suitcase",       "frisbee",    "skis",          "snowboard",     "sports ball",  "kite",          "baseball bat",
-    //     "baseball glove", "skateboard", "surfboard",     "tennis racket", "bottle",       "wine glass",    "cup",
-    //     "fork",           "knife",      "spoon",         "bowl",          "banana",       "apple",         "sandwich",
-    //     "orange",         "broccoli",   "carrot",        "hot dog",       "pizza",        "donut",         "cake",
-    //     "chair",          "couch",      "potted plant",  "bed",           "dining table", "toilet",        "tv",
-    //     "laptop",         "mouse",      "remote",        "keyboard",      "cell phone",   "microwave",     "oven",
-    //     "toaster",        "sink",       "refrigerator",  "book",          "clock",        "vase",          "scissors",
-    //     "teddy bear",     "hair drier", "toothbrush"
-    // };
+        "chilun", "keti", "luosi", "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"
+        /*"person",         "bicycle",    "car",           "motorcycle",    "airplane",     "bus",           "train",
+        "truck",          "boat",       "traffic light", "fire hydrant",  "stop sign",    "parking meter", "bench",
+        "bird",           "cat",        "dog",           "horse",         "sheep",        "cow",           "elephant",
+        "bear",           "zebra",      "giraffe",       "backpack",      "umbrella",     "handbag",       "tie",
+        "suitcase",       "frisbee",    "skis",          "snowboard",     "sports ball",  "kite",          "baseball bat",
+        "baseball glove", "skateboard", "surfboard",     "tennis racket", "bottle",       "wine glass",    "cup",
+        "fork",           "knife",      "spoon",         "bowl",          "banana",       "apple",         "sandwich",
+        "orange",         "broccoli",   "carrot",        "hot dog",       "pizza",        "donut",         "cake",
+        "chair",          "couch",      "potted plant",  "bed",           "dining table", "toilet",        "tv",
+        "laptop",         "mouse",      "remote",        "keyboard",      "cell phone",   "microwave",     "oven",
+        "toaster",        "sink",       "refrigerator",  "book",          "clock",        "vase",          "scissors",
+        "teddy bear",     "hair drier", "toothbrush"*/
+    };
 };
 
 class YoloV8
 {
 public:
     // Builds the onnx model into a TensorRT engine, and loads the engine into memory
-    YoloV8(const std::string &onnxModelPath, const YoloV8Config &config);
+    YoloV8(const std::string &modelPath, const YoloV8Config &config);
     // Detect the objects in the image
     std::vector<Object> detectObjects(const cv::Mat &inputImageBGR);
     std::vector<Object> detectObjects(const cv::cuda::GpuMat &inputImageBGR);
@@ -84,7 +85,7 @@ public:
     // Set the detection ROI
     void setDetectionROI(const cv::Rect &roi);
     // Set the color of the detection ROI
-    void setRoiColor(const cv::Scalar &color);
+    void setRoiColor(const QString color);
     // Set the opacity of the detection ROI
     void setRoiOpacity(float opacity);
     // Set the line width of the detection ROI

@@ -1,4 +1,4 @@
-# vscodeTest Qt项目
+# work_process_detect Qt项目
 
 这是一个使用CMake构建的Qt应用程序项目。
 
@@ -7,7 +7,7 @@
 - `main.cpp`: 应用程序入口点
 - `mainwindow.h/cpp`: 主窗口类
 - `mainwindow.ui`: UI界面设计文件
-- `vscodeTest_zh_CN.ts`: 中文翻译文件
+- `work_process_detect_zh_CN.ts`: 中文翻译文件
 - `CMakeLists.txt`: CMake构建配置文件
 - `build_and_run.bat`: Windows下快速构建和运行脚本
 - `run.bat`: Windows下快速运行已编译应用程序的脚本
@@ -61,7 +61,7 @@ mkdir build
 cd build
 cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=D:/Qt/5.14.2/msvc2017_64
 cmake --build . --config Release
-Release\vscodeTest.exe
+Release\work_process_detect.exe
 ```
 
 #### Windows (Visual Studio 2019)
@@ -71,7 +71,7 @@ mkdir build
 cd build
 cmake .. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=D:/Qt/5.14.2/msvc2017_64
 cmake --build . --config Release
-Release\vscodeTest.exe
+Release\work_process_detect.exe
 ```
 
 #### Linux/macOS
@@ -81,7 +81,7 @@ mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
-./vscodeTest
+./work_process_detect
 ```
 
 ## 环境要求
@@ -92,13 +92,13 @@ make
 
 ## 翻译
 
-项目包含中文翻译文件 `vscodeTest_zh_CN.ts`。翻译文件会在构建过程中自动处理。
+项目包含中文翻译文件 `work_process_detect_zh_CN.ts`。翻译文件会在构建过程中自动处理。
 
 要手动更新翻译：
 
 1. 使用Qt Linguist工具打开并编辑翻译文件：
    ```
-   linguist vscodeTest_zh_CN.ts
+   linguist work_process_detect_zh_CN.ts
    ```
 
 2. 重新构建项目以生成翻译文件(.qm)

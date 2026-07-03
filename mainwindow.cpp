@@ -23,20 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建相机1
     THREAD1_cam1 = new QThread();
     cam = new Camera;
-    // 初始化ROI参数
-    ui->cb_enableROI->setChecked(cam->m_enableROIDetection);
-    ui->spinBox_roi_x->setValue(cam->roi_x);
-    ui->spinBox_roi_y->setValue(cam->roi_y);
-    ui->spinBox_roi_w->setValue(cam->roi_w);
-    ui->spinBox_roi_h->setValue(cam->roi_h);
-    // 初始化颜色预览样式
-    ui->label_color_preview->setStyleSheet(QString("QLabel { color: rgb(%1, %2, %3); }").arg(cam->roi_color_r).arg(cam->roi_color_g).arg(cam->roi_color_b));
-    // 初始化透明度滑块
-    ui->slider_opacity->setValue(static_cast<int>(cam->roi_opacity * 100));
-    ui->label_opacity_display->setText(QString("%1%").arg(static_cast<int>(cam->roi_opacity * 100)));
-    // 初始化线宽滑块
-    ui->slider_line_width->setValue(cam->roi_line_width);
-    ui->label_line_width_display->setText(QString("%1").arg(cam->roi_line_width));
+    loadROIParametersToUI();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
@@ -51,8 +38,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam, &Camera::sendQStringtoMain, this, &MainWindow::receiveQStringtoMain, Qt::QueuedConnection);
     connect(cam, &Camera::finishedthread, this, &MainWindow::receivefinish);
     connect(this, &MainWindow::destroyed, cam, &Camera::deleteLater, Qt::QueuedConnection);
+
     // 启动相机1
-    THREAD1_cam1->start();
+    on_start_clicked();
 }
 
 MainWindow::~MainWindow()
@@ -61,14 +49,57 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::loadROIParametersToUI()
+{
+    // 从 INI 文件读取 ROI 配置
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("ROI");
+    // 读取 ROI 参数
+    bool enableROI = settings.value("EnableROI").toBool();
+    int roi_x = settings.value("RoiX").toInt();
+    int roi_y = settings.value("RoiY").toInt();
+    int roi_w = settings.value("RoiW").toInt();
+    int roi_h = settings.value("RoiH").toInt();
+    QString roiColorStr = settings.value("RoiColor").toString();
+    currentRoiColor = roiColorStr;
+    int roi_opacity = settings.value("RoiOpacity").toInt();
+    int roi_line_width = settings.value("RoiLineWidth").toInt();
+    settings.endGroup();
+
+    // 更新 UI
+    ui->cb_enableROI->setChecked(enableROI);
+    ui->spinBox_roi_x->setValue(roi_x);
+    ui->spinBox_roi_y->setValue(roi_y);
+    ui->spinBox_roi_w->setValue(roi_w);
+    ui->spinBox_roi_h->setValue(roi_h);
+    // 初始化颜色预览样式
+    ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(roiColorStr));
+    // 初始化透明度滑块
+    ui->slider_opacity->setValue(roi_opacity);
+    ui->label_opacity_display->setText(QString("%1%").arg(roi_opacity));
+    // 初始化线宽滑块
+    ui->slider_line_width->setValue(roi_line_width);
+    ui->label_line_width_display->setText(QString("%1").arg(roi_line_width));
+}
+
 void MainWindow::on_start_clicked()
 {
-    THREAD1_cam1->start();
+    if (!THREAD1_cam1->isRunning())
+    {
+        THREAD1_cam1->start();
+        ui->start->setDisabled(true);
+        ui->stop->setDisabled(false);
+    }
 }
 
 void MainWindow::on_stop_clicked()
 {
-    cam->stop_camera();
+    if (THREAD1_cam1->isRunning())
+    {
+        cam->stop_camera();
+        ui->start->setDisabled(false);
+        ui->stop->setDisabled(true);
+    }
 }
 
 void MainWindow::receiveslotQImg(QImage img)
@@ -78,6 +109,8 @@ void MainWindow::receiveslotQImg(QImage img)
 
 void MainWindow::receivefinish()
 {
+    ui->start->setDisabled(false);
+    ui->stop->setDisabled(true);
     qDebug() << "finished thread";
     cam->closeDevice(); // 关闭相机线程
 }
@@ -189,49 +222,67 @@ void MainWindow::receiveNumber(QString str_chilun_num, QString str_luosi_num)
     ui->lb_chilun_num->setText(str_chilun_num);
 }
 
+void MainWindow::modifyROIParameter(const QString &parameterName, const QVariant &newValue)
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("ROI");
+    settings.setValue(parameterName, newValue);
+    settings.endGroup();
+}
+
 void MainWindow::on_cb_enableROI_toggled(bool value)
 {
+    modifyROIParameter("EnableROI", value);
     cam->enableROIDetection(value);
 }
 
 void MainWindow::on_spinBox_roi_x_valueChanged(int value)
 {
+    modifyROIParameter("RoiX", value);
     cam->setRoiX(value);
 }
 
 void MainWindow::on_spinBox_roi_y_valueChanged(int value)
 {
+    modifyROIParameter("RoiY", value);
     cam->setRoiY(value);
 }
 
 void MainWindow::on_spinBox_roi_w_valueChanged(int value)
 {
+    modifyROIParameter("RoiW", value);
     cam->setRoiW(value);
 }
 
 void MainWindow::on_spinBox_roi_h_valueChanged(int value)
 {
+    modifyROIParameter("RoiH", value);
     cam->setRoiH(value);
 }
 
 void MainWindow::on_btn_colorPicker_clicked()
 {
-    QColor color = QColorDialog::getColor(QColor(cam->roi_color_r, cam->roi_color_g, cam->roi_color_b), this, QString::fromLocal8Bit("选择检测框颜色"));
+    QColor color = QColorDialog::getColor(QColor(currentRoiColor), this, QString::fromLocal8Bit("选择检测框颜色"));
     if (color.isValid())
     {
-        ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(color.name()));
-        cam->setRoiColor(color.red(), color.green(), color.blue());
+        QString colorName = color.name();
+        modifyROIParameter("RoiColor", colorName);
+        currentRoiColor = colorName;
+        ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(colorName));
+        cam->setRoiColor(colorName);
     }
 }
 
 void MainWindow::on_slider_opacity_valueChanged(int value)
 {
+    modifyROIParameter("RoiOpacity", value);
     ui->label_opacity_display->setText(QString("%1%").arg(value));
     cam->setRoiOpacity(value / 100.0f);
 }
 
 void MainWindow::on_slider_line_width_valueChanged(int value)
 {
+    modifyROIParameter("RoiLineWidth", value);
     ui->label_line_width_display->setText(QString("%1").arg(value));
     cam->setRoiLineWidth(value);
 }

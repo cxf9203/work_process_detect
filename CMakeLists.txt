@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(vscodeTest LANGUAGES CXX)
+project(work_process_detect LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -29,7 +29,7 @@ set(CMAKE_PREFIX_PATH "D:/Qt/5.14.2/msvc2017_64" ${CMAKE_PREFIX_PATH})
 
 find_package(Qt5 COMPONENTS Core Widgets LinguistTools REQUIRED)
 
-set(TS_FILES vscodeTest_zh_CN.ts)
+set(TS_FILES work_process_detect_zh_CN.ts)
 
 # 处理翻译文件
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
@@ -37,15 +37,17 @@ qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 set_source_files_properties(${QM_FILES} PROPERTIES GENERATED TRUE)
 
 if(ANDROID)
-  add_library(vscodeTest SHARED
+  add_library(work_process_detect SHARED
     main.cpp
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    qdarkstyle/dark/darkstyle.qrc
+    app.rc
     ${TS_FILES}
   )
 else()
-  add_executable(vscodeTest
+  add_executable(work_process_detect
     main.cpp
     mainwindow.cpp
     mainwindow.h
@@ -60,12 +62,14 @@ else()
     reliableimagesaver.h
     yolov8.cpp
     yolov8.h
+    qdarkstyle/dark/darkstyle.qrc
+    app.rc
     ${TS_FILES}
   )
 endif()
 
 # 添加头文件路径
-target_include_directories(vscodeTest PRIVATE
+target_include_directories(work_process_detect PRIVATE
     "D:/opencv4.7_cuda/include"
     "D:/libmodbus_dll/include"
     "D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/include"
@@ -74,7 +78,7 @@ target_include_directories(vscodeTest PRIVATE
 )
 
 # 添加库文件路径
-target_link_directories(vscodeTest PRIVATE
+target_link_directories(work_process_detect PRIVATE
     "D:/opencv4.7_cuda/x64/vc17/lib"
     "D:/libmodbus_dll/lib"
     "D:/TensorRT-8.6.1.6.Windows10.x86_64.cuda-12.0/TensorRT-8.6.1.6/lib"
@@ -83,7 +87,7 @@ target_link_directories(vscodeTest PRIVATE
 )
 
 # 链接库文件
-target_link_libraries(vscodeTest PRIVATE
+target_link_libraries(work_process_detect PRIVATE
     Qt5::Core Qt5::Widgets
     opencv_world470
     modbus
@@ -145,7 +149,7 @@ target_link_libraries(vscodeTest PRIVATE
 
 # Windows平台特定设置
 if(WIN32)
-    set_target_properties(vscodeTest PROPERTIES
+    set_target_properties(work_process_detect PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
 endif()

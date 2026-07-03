@@ -14,17 +14,12 @@ bool ImageCleaner::cleanupOldImages(const QString &folderPath, int keepDays, int
         emit cleanupError(QString("folder not exist: %1").arg(folderPath));
         return false;
     }
-
     emit cleanupStarted(folderPath);
 
     int deletedCount = cleanupFolder(folderPath, keepDays, maxCount);
 
     qint64 folderSize = getFolderSize(folderPath);
     emit cleanupFinished(folderPath, deletedCount, folderSize);
-
-    qDebug() << "clean image finished:" << folderPath
-             << "clean files number:" << deletedCount
-             << "current folder size:" << folderSize / (1024 * 1024) << "MB";
 
     return true;
 }
@@ -50,10 +45,8 @@ qint64 ImageCleaner::getFolderSize(const QString &folderPath)
 {
     qint64 totalSize = 0;
     QDir dir(folderPath);
-
     // 获取所有文件（包括子目录）
     QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
-
     for (const QFileInfo &fileInfo : files)
     {
         if (fileInfo.isDir())
@@ -78,12 +71,10 @@ int ImageCleaner::getFileCount(const QString &folderPath)
 {
     int count = 0;
     QDir dir(folderPath);
-
     // 获取所有图像文件
     QStringList filters = m_imageExtensions;
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
     count += files.count();
-
     // 递归子目录
     QFileInfoList dirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const QFileInfo &dirInfo : dirs)
@@ -108,78 +99,119 @@ qint64 ImageCleaner::getTotalSpace(const QString &path)
 
 int ImageCleaner::cleanupFolder(const QString &folderPath, int keepDays, int maxCount)
 {
-    QDir dir(folderPath);
-    int deletedCount = 0;
+    qDebug() << "Cleanup started - folderPath:" << folderPath << "keepDays:" << keepDays << "maxCount:" << maxCount;
 
-    // 获取所有图像文件
-    QStringList filters = m_imageExtensions;
-    QFileInfoList files = dir.entryInfoList(filters, QDir::Files, QDir::Time); // 按时间排序
-
-    QDateTime cutoffDate;
-    if (keepDays > 0)
+    if (maxCount <= 0 && keepDays <= 0)
     {
-        cutoffDate = QDateTime::currentDateTime().addDays(-keepDays);
+        qDebug() << "Cleanup skipped: no valid limits (keepDays and maxCount are both <= 0)";
+        return 0;
     }
 
-    // 处理文件数量限制
-    if (maxCount > 0 && files.count() > maxCount)
+    // 递归收集所有图像文件
+    QList<QPair<QString, QDateTime>> allFiles;
+    std::function<void(const QString &)> collectFiles = [&](const QString &path)
     {
-        int filesToDelete = files.count() - maxCount;
-        for (int i = files.count() - 1; i >= maxCount && filesToDelete > 0; --i, --filesToDelete)
+        QDir dir(path);
+
+        // 添加当前目录的图像文件
+        for (const QFileInfo &file : dir.entryInfoList(m_imageExtensions, QDir::Files))
         {
-            const QFileInfo &fileInfo = files[i];
-            if (QFile::remove(fileInfo.absoluteFilePath()))
-            {
-                deletedCount++;
-                emit fileDeleted(fileInfo.absoluteFilePath());
-                qDebug() << "delete old files(number limit):" << fileInfo.fileName();
-            }
+            allFiles.append(qMakePair(file.absoluteFilePath(), file.lastModified()));
+        }
+
+        // 递归子目录
+        for (const QFileInfo &subDir : dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot))
+        {
+            collectFiles(subDir.absoluteFilePath());
+        }
+    };
+
+    collectFiles(folderPath);
+
+    if (allFiles.isEmpty())
+    {
+        qDebug() << "Cleanup skipped: no image files found in" << folderPath;
+        return 0;
+    }
+
+    qDebug() << "Collected" << allFiles.size() << "image files from" << folderPath;
+
+    // 按修改时间排序（最新的在前）
+    std::sort(allFiles.begin(), allFiles.end(), [](const auto &a, const auto &b) { return a.second > b.second; });
+
+    int deletedCount = 0;
+
+    // 标记文件为待删除
+    QSet<QString> filesToDelete;
+
+    // 处理数量限制
+    if (maxCount > 0)
+    {
+        qDebug() << "Count limit: keeping up to" << maxCount << "newest files";
+
+        for (int i = maxCount; i < allFiles.size(); ++i)
+        {
+            filesToDelete.insert(allFiles[i].first);
+            qDebug() << "Marked for deletion (count limit):" << QFileInfo(allFiles[i].first).fileName() << "(#" << i + 1 << "/" << allFiles.size() << ")";
         }
     }
 
     // 处理时间限制
     if (keepDays > 0)
     {
-        for (const QFileInfo &fileInfo : files)
+        QDateTime cutoffDate = QDateTime::currentDateTime().addDays(-keepDays);
+        qDebug() << "Time limit: keeping files modified after" << cutoffDate.toString("yyyy-MM-dd hh:mm:ss");
+
+        for (int i = 0; i < allFiles.size(); ++i)
         {
-            // 如果文件早于截止日期，删除它
-            if (fileInfo.lastModified() < cutoffDate)
+            if (allFiles[i].second < cutoffDate)
             {
-                if (QFile::remove(fileInfo.absoluteFilePath()))
-                {
-                    deletedCount++;
-                    emit fileDeleted(fileInfo.absoluteFilePath());
-                    qDebug() << "delete old files(number limit):" << fileInfo.fileName()
-                             << "modify time:" << fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss");
-                }
-                else
-                {
-                    emit cleanupError(QString("cannot delte files: %1").arg(fileInfo.absoluteFilePath()));
-                }
+                filesToDelete.insert(allFiles[i].first);
+                qDebug() << "Marked for deletion (time limit):" << QFileInfo(allFiles[i].first).fileName() << "modified:" << allFiles[i].second.toString("yyyy-MM-dd hh:mm:ss");
             }
         }
     }
 
-    // 递归清理子目录
-    QFileInfoList dirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo &dirInfo : dirs)
-    {
-        deletedCount += cleanupFolder(dirInfo.absoluteFilePath(), keepDays, maxCount);
-    }
+    qDebug() << "Total files marked for deletion:" << filesToDelete.size();
 
-    // 删除空文件夹
-    dirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo &dirInfo : dirs)
+    // 执行删除
+    for (const QString &filePath : filesToDelete)
     {
-        QDir subDir(dirInfo.absoluteFilePath());
-        if (subDir.isEmpty())
+        if (QFile::remove(filePath))
         {
-            if (dir.rmdir(dirInfo.fileName()))
-            {
-                qDebug() << "delete folder:" << dirInfo.absoluteFilePath();
-            }
+            deletedCount++;
+            emit fileDeleted(filePath);
+        }
+        else
+        {
+            emit cleanupError(QString("Failed to delete file: %1").arg(filePath));
         }
     }
+
+    // 删除空文件夹（递归删除）
+    std::function<void(const QString &)> removeEmptyDirs = [&](const QString &path)
+    {
+        QDir dir(path);
+        // 递归处理子目录
+        for (const QFileInfo &subDir : dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot))
+        {
+            removeEmptyDirs(subDir.absoluteFilePath());
+        }
+        // 删除空目录
+        if (path != folderPath && dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot).isEmpty())
+        {
+            if (dir.rmdir(path))
+            {
+                qDebug() << "Removed empty folder:" << path;
+            }
+        }
+    };
+
+    removeEmptyDirs(folderPath);
+
+    qDebug() << "Cleanup completed for" << folderPath << ": deleted" << deletedCount << "files,"
+             << "original count:" << allFiles.size()
+             << ", remaining:" << (allFiles.size() - deletedCount) << endl;
 
     return deletedCount;
 }

@@ -143,7 +143,7 @@ public:
     //    subVals = {0.5f, 0.5f, 0.5f};
     //    divVals = {0.5f, 0.5f, 0.5f};
     //    normalize = true;
-    bool buildLoadNetwork(std::string onnxModelPath, const std::array<float, 3> &subVals = {0.f, 0.f, 0.f},
+    bool buildLoadNetwork(std::string modelPath, const std::array<float, 3> &subVals = {0.f, 0.f, 0.f},
                           const std::array<float, 3> &divVals = {1.f, 1.f, 1.f}, bool normalize = true);
 
     // Load a TensorRT engine file from disk into memory
@@ -189,10 +189,10 @@ public:
 
 private:
     // Build the network
-    bool build(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize);
+    bool build(std::string modelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize);
 
     // Converts the engine options into a string
-    std::string serializeEngineOptions(const Options &options, const std::string &onnxModelPath);
+    std::string serializeEngineOptions(const Options &options, const std::string &modelPath);
 
     void getDeviceNames(std::vector<std::string> &deviceNames);
 
@@ -243,11 +243,11 @@ void Engine<T>::clearGpuBuffers()
 }
 
 template <typename T>
-bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize)
+bool Engine<T>::buildLoadNetwork(std::string modelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize)
 {
     // Only regenerate the engine file if it has not already been generated for
     // the specified options, otherwise load cached version from disk
-    const auto engineName = serializeEngineOptions(m_options, onnxModelPath);
+    const auto engineName = serializeEngineOptions(m_options, modelPath);
     std::cout << "Searching for engine file with name: " << engineName << std::endl;
 
     if (Util::doesFileExist(engineName))
@@ -256,16 +256,16 @@ bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<flo
     }
     else
     {
-        if (!Util::doesFileExist(onnxModelPath))
+        if (!Util::doesFileExist(modelPath))
         {
-            throw std::runtime_error("Could not find onnx model at path: " + onnxModelPath);
+            throw std::runtime_error("Could not find onnx model at path: " + modelPath);
         }
 
         // Was not able to find the engine file, generate...
         std::cout << "Engine not found, generating. This could take a while..." << std::endl;
 
         // Build the onnx model into a TensorRT engine
-        auto ret = build(onnxModelPath, subVals, divVals, normalize);
+        auto ret = build(modelPath, subVals, divVals, normalize);
         if (!ret)
         {
             return false;
@@ -446,7 +446,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
 }
 
 template <typename T>
-bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize)
+bool Engine<T>::build(std::string modelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize)
 {
     // Create our engine builder.
     auto builder = std::unique_ptr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(m_logger));
@@ -475,7 +475,7 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
     // We are going to first read the onnx file into memory, then pass that buffer
     // to the parser. Had our onnx model file been encrypted, this approach would
     // allow us to first decrypt the buffer.
-    std::ifstream file(onnxModelPath, std::ios::binary | std::ios::ate);
+    std::ifstream file(modelPath, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
 
@@ -563,7 +563,7 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
     config->addOptimizationProfile(optProfile);
 
     // Set the precision level
-    const auto engineName = serializeEngineOptions(m_options, onnxModelPath);
+    const auto engineName = serializeEngineOptions(m_options, modelPath);
     if (m_options.precision == Precision::FP16)
     {
         // Ensure the GPU supports FP16 inference
@@ -809,10 +809,10 @@ cv::cuda::GpuMat Engine<T>::blobFromGpuMats(const std::vector<cv::cuda::GpuMat> 
 }
 
 template <typename T>
-std::string Engine<T>::serializeEngineOptions(const Options &options, const std::string &onnxModelPath)
+std::string Engine<T>::serializeEngineOptions(const Options &options, const std::string &modelPath)
 {
-    const auto filenamePos = onnxModelPath.find_last_of('/') + 1;
-    std::string engineName = onnxModelPath.substr(filenamePos, onnxModelPath.find_last_of('.') - filenamePos) + ".engine";
+    const auto filenamePos = modelPath.find_last_of('/') + 1;
+    std::string engineName = modelPath.substr(filenamePos, modelPath.find_last_of('.') - filenamePos) + ".engine";
 
     // Add the GPU device name to the file to ensure that the model is only used
     // on devices with the exact same GPU

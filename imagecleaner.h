@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QString>
 #include <QDir>
-#include <QFile>
 #include <QDateTime>
 #include <QDebug>
 #include <QStorageInfo>

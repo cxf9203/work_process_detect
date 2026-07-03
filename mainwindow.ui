@@ -199,6 +199,12 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: #1b5e20;
+}
+
+QPushButton:disabled {
+    background-color: #424242;
+    color: #888888;
+    border: 1px solid #555555;
 }</string>
     </property>
     <property name="text">
@@ -272,6 +278,12 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: #b71c1c;
+}
+
+QPushButton:disabled {
+    background-color: #424242;
+    color: #888888;
+    border: 1px solid #555555;
 }</string>
     </property>
     <property name="text">

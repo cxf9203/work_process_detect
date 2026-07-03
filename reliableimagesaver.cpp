@@ -78,7 +78,7 @@ void ReliableImageSaver::setBasePath(const QString &path)
     m_basePath = path;
     // 立即创建目录结构
     ensureDirectoryStructure();
-    qDebug() << "ReliableImageSaver save path is: " << path;
+    qDebug() << "ReliableImageSaver save path is:" << path;
 }
 
 void ReliableImageSaver::saveWorker()
@@ -90,21 +90,19 @@ void ReliableImageSaver::saveWorker()
         SaveTask task;
         {
             std::unique_lock<std::mutex> lock(m_queueMutex);
-            m_condition.wait(lock, [this]()
-                             { return !m_saveQueue.empty() || !m_isRunning; });
-
+            m_condition.wait(lock, [this]() {
+                return !m_saveQueue.empty() || !m_isRunning;
+            });
             // 检查是否应该退出
             if (!m_isRunning && m_saveQueue.empty())
             {
                 break;
             }
-
             // 获取任务
             if (!m_saveQueue.empty())
             {
                 task = m_saveQueue.front();
                 m_saveQueue.pop();
-
                 // 发送队列状态变化信号
                 emit queueStatusChanged(m_saveQueue.size());
             }
@@ -113,7 +111,6 @@ void ReliableImageSaver::saveWorker()
                 continue;
             }
         }
-
         // 执行保存操作（带重试机制）
         if (!task.image.empty())
         {
@@ -146,7 +143,7 @@ bool ReliableImageSaver::saveImageWithRetry(const SaveTask &task, int maxRetries
         }
         if (attempt < maxRetries)
         {
-            qWarning() << "ReliableImageSaver: save failed number now is: " << attempt << "times" << task.filename;
+            qWarning() << "ReliableImageSaver: save failed number now is:" << attempt << "times" << task.filename;
             QThread::msleep(100 * attempt); // 递增延迟
         }
     }
@@ -166,14 +163,12 @@ bool ReliableImageSaver::saveImageToDisk(const SaveTask &task)
             return false;
         }
     }
-
     QString filePath = fullPath + "/" + task.filename;
     std::string savePathStd = filePath.toStdString();
     // 设置压缩参数
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
     compression_params.push_back(m_compressionQuality);
-
     // 尝试保存
     bool success = cv::imwrite(savePathStd, task.image, compression_params);
     if (!success)
@@ -187,10 +182,12 @@ bool ReliableImageSaver::saveImageToDisk(const SaveTask &task)
 void ReliableImageSaver::ensureDirectoryStructure()
 {
     if (m_basePath.isEmpty())
+    {
         return;
+    }
 
     QDir dir;
-    QStringList folders = {"raw_images", "processed_images", "failed_images"};
+    QStringList folders = {"raw_images_OK", "raw_images_NG", "processed_images_OK", "processed_images_NG"};
     for (const QString &folder : folders)
     {
         QString fullPath = m_basePath + "/" + folder;

@@ -30,6 +30,7 @@ public slots:
     void receiveQStringtoMain(QString s);
 
 private slots:
+    void loadROIParametersToUI();
     void on_start_clicked();
     void on_stop_clicked();
     void on_btn_setRoi_clicked();
@@ -38,6 +39,7 @@ private slots:
     void on_pushButton_3_clicked();
     void on_pushButton_4_clicked();
     void on_checkBox_toggled(bool checked);
+    void modifyROIParameter(const QString &parameterName, const QVariant &newValue);
     void on_cb_enableROI_toggled(bool value);
     void on_spinBox_roi_x_valueChanged(int value);
     void on_spinBox_roi_y_valueChanged(int value);
@@ -52,5 +54,7 @@ private:
     QThread *THREAD1_cam1;
     Camera *cam; // camera thread
     bool baojing_flag = true;
+    QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
+    QString currentRoiColor;
 };
 #endif // MAINWINDOW_H

@@ -28,6 +28,7 @@ public:
     void initCamera();
     ~Camera();
     static std::queue<cv::Mat> gImage;
+    void getROIParameters();
     void closeDevice(); // 关闭设备
     void stop_camera();
     bool imageProcess(cv::Mat image);
@@ -41,28 +42,25 @@ public:
     // void ResetM(int value); // 读取M元件
     void setD(int address, int value);       // 设置整型D元件
     void set32D(int address, int32_t value); // 设置整型D元件
-    void aiTest();                           // ai model test
+    void aiTest();                           // AI model test
     void igonoreAction(int index);           // 忽略某个动作
     void enableROIDetection(bool enable);    // 启用或禁用ROI检测
     void setRoiX(int x);
     void setRoiY(int y);
     void setRoiW(int w);
     void setRoiH(int h);
-    void setRoiColor(int r, int g, int b);
+    void setRoiColor(QString color);
     void setRoiOpacity(float opacity);
     void setRoiLineWidth(int lineWidth);
     // ROI参数
-    bool m_enableROIDetection = true; // ROI检测启用状态
-    int roi_x = 1060;
-    int roi_y = 440;
-    int roi_w = 435;
-    int roi_h = 680;
-    // ROI框样式参数
-    int roi_color_r = 0;      // ROI颜色红色分量
-    int roi_color_g = 255;    // ROI颜色绿色分量
-    int roi_color_b = 0;      // ROI颜色蓝色分量
-    float roi_opacity = 0.5f; // ROI透明度
-    int roi_line_width = 5;   // ROI矩形线宽
+    bool m_enableROIDetection; // ROI检测启用状态
+    int roi_x;
+    int roi_y;
+    int roi_w;
+    int roi_h;
+    QString roi_color; // ROI颜色
+    float roi_opacity; // ROI透明度
+    int roi_line_width; // ROI矩形线宽
 
 signals:
     // 给主线程发消息
@@ -78,9 +76,7 @@ signals:
     void send_connectstate(bool state);
 
 private:
-    QString filePath = "D:\\jiance\\process.onnx";
-    std::string onnxModelPath = filePath.toStdString();
-    YoloV8Config config;
+    QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
     bool Camera_thread_flag;
     cv::Mat BGR_image;
     int id;
@@ -93,8 +89,6 @@ private:
     uint32_t query32D[MODBUS_TCP_MAX_ADU_LENGTH];
     uint8_t queryM[MODBUS_TCP_MAX_ADU_LENGTH];
     cv::VideoCapture cap;
-    bool useLocalVideo = false; // true: 使用本地视频, false: 使用真实相机
-    std::string m_videoPath = "D:\\jiance\\video.mp4"; // 视频文件路径
     // 登录
     NET_DVR_USER_LOGIN_INFO lpLoginInfo = {0};
     NET_DVR_DEVICEINFO_V40 lpDeviceInfo = {0}; // NET_DVR_DEVICEINFO_V40

@@ -2,7 +2,7 @@
 #include "yolov8.h"
 #include <opencv2/cudaimgproc.hpp>
 
-YoloV8::YoloV8(const std::string &onnxModelPath, const YoloV8Config &config)
+YoloV8::YoloV8(const std::string &modelPath, const YoloV8Config &config)
     : PROBABILITY_THRESHOLD(config.probabilityThreshold),
       NMS_THRESHOLD(config.nmsThreshold),
       TOP_K(config.topK),
@@ -36,7 +36,7 @@ YoloV8::YoloV8(const std::string &onnxModelPath, const YoloV8Config &config)
     // Build the onnx model into a TensorRT engine file, cache the file to disk, and then load the TensorRT engine file into memory.
     // If the engine file already exists on disk, this function will not rebuild but only load into memory.
     // The engine file is rebuilt any time the above Options are changed.
-    auto succ = m_trtEngine->buildLoadNetwork(onnxModelPath, SUB_VALS, DIV_VALS, NORMALIZE);
+    auto succ = m_trtEngine->buildLoadNetwork(modelPath, SUB_VALS, DIV_VALS, NORMALIZE);
     if (!succ)
     {
         const std::string errMsg = "Error: Unable to build or load the TensorRT engine. "
@@ -128,7 +128,6 @@ std::vector<Object> YoloV8::detectObjects(const cv::cuda::GpuMat &inputImageBGR)
             // Pose estimation
             ret = postProcessPose(featureVector);
         }
-
         else
         {
             // Object detection or classify
@@ -170,9 +169,9 @@ std::vector<Object> YoloV8::postProcessSegmentation(std::vector<std::vector<floa
 {
     const auto &outputDims = m_trtEngine->getOutputDims();
     // 1 116 8400
-    std::cout << outputDims[1].d[0] << "  " << outputDims[1].d[1] << "  " << outputDims[1].d[2] << std::endl;
+    std::cout << outputDims[1].d[0] << " " << outputDims[1].d[1] << " " << outputDims[1].d[2] << std::endl;
     // 1 32 160 160
-    std::cout << outputDims[0].d[1] << " " << outputDims[0].d[2] << outputDims[0].d[3] << std::endl;
+    std::cout << outputDims[0].d[1] << " " << outputDims[0].d[2] << " " << outputDims[0].d[3] << std::endl;
     int numChannels = outputDims[1].d[1]; // 116
     int numAnchors = outputDims[1].d[2];  // 8400
 
@@ -676,9 +675,10 @@ void YoloV8::setDetectionROI(const cv::Rect &roi)
 }
 
 // 设置ROI颜色
-void YoloV8::setRoiColor(const cv::Scalar &color)
+void YoloV8::setRoiColor(const QString color)
 {
-    roiColor = color;
+    QColor qColor(color);
+    roiColor = cv::Scalar(qColor.blue(), qColor.green(), qColor.red());
 }
 
 // 设置ROI透明度

@@ -1,7 +1,7 @@
 @echo off
 REM 快速启动已编译的Qt应用程序
 
-set EXE_PATH=build\Release\vscodeTest.exe
+set EXE_PATH=build\Release\work_process_detect.exe
 
 if exist "%EXE_PATH%" (
     echo start exe...

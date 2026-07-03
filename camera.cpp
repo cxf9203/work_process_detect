@@ -126,6 +126,7 @@ void Camera::initCamera()
 
 void Camera::run()
 {
+    Camera_thread_flag = false;
     // 链接PLC
     ctx = modbus_new_tcp("192.168.1.99", 2001); // 西门子smart 200
     if (ctx == NULL)
@@ -154,33 +155,44 @@ void Camera::run()
         emit sendQStringtoMain("connect to plc success");
     }
 
-    emit sendQStringtoMain("loading ai model...");
-    // fp32精度模型
-    // config.precision = Precision::FP32;
+    emit sendQStringtoMain("loading AI model...");
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    QString modelPath = settings.value("modelPath").toString();
+    qDebug() << "modelPath: " << modelPath;
+    YoloV8Config config;
     YoloV8 *yoloV8 = nullptr;
     try
     {
-        yoloV8 = new YoloV8(onnxModelPath, config); // 加载深度学习模型
-        emit sendQStringtoMain("load ai model success");
+        yoloV8 = new YoloV8(modelPath.toStdString(), config); // 加载深度学习模型
+        emit sendQStringtoMain("load AI model success");
     }
     catch (const std::exception &e)
     {
-        emit sendQStringtoMain(QString::fromStdString("Failed to load AI model: " + std::string(e.what())));
+        emit sendQStringtoMain(QString("Failed to load AI model: %1").arg(e.what()));
         emit finishedthread();
         return;
     }
     catch (...)
     {
-        emit sendQStringtoMain(QString::fromStdString("Failed to load AI model: Unknown error!"));
+        emit sendQStringtoMain("Failed to load AI model: Unknown error!");
         emit finishedthread();
         return;
     }
+    // 获取参数
+    getROIParameters();
+
+    bool useLocalVideo = settings.value("useLocalVideo").toBool();
+    QString videoPath = settings.value("videoPath").toString();
+    QString cameraIp = settings.value("cameraIp").toString();
+    int cameraPort = settings.value("cameraPort").toInt();
+    QString cameraUsername = settings.value("cameraUsername").toString();
+    QString cameraPassword = settings.value("cameraPassword").toString();
 
     if (useLocalVideo)
     {
         // 本地视频模式
         emit sendQStringtoMain("Using local video mode...");
-        if (!cap.open(m_videoPath))
+        if (!cap.open(videoPath.toStdString()))
         {
             emit sendQStringtoMain("Failed to open local video!");
             emit finishedthread();
@@ -203,21 +215,15 @@ void Camera::run()
         lpLoginInfo = {0};
         lpDeviceInfo = {0};
 
+        std::string ip = cameraIp.toStdString();
+        std::string username = cameraUsername.toStdString();
+        std::string password = cameraPassword.toStdString();
+
+        strcpy_s(lpLoginInfo.sDeviceAddress, ip.c_str());
+        strcpy_s(lpLoginInfo.sUserName, username.c_str());
+        strcpy_s(lpLoginInfo.sPassword, password.c_str());
+        lpLoginInfo.wPort = cameraPort;
         lpLoginInfo.bUseAsynLogin = 0; // 同步登录方式
-        char *sDeviceAddress, *sUserName, *sPassword;
-        wPort = 8000;
-        // 修改后
-        // char ip[] = "192.168.31.105"; // 栈上创建可修改副本
-        char ip[] = "192.168.1.64"; // 厂里camera
-        sDeviceAddress = ip;
-        char admin[] = "admin";
-        sUserName = admin;
-        char pwd[] = "CXF643200";
-        sPassword = pwd;
-        strcpy_s(lpLoginInfo.sDeviceAddress, sDeviceAddress);
-        strcpy_s(lpLoginInfo.sUserName, sUserName);
-        strcpy_s(lpLoginInfo.sPassword, sPassword);
-        lpLoginInfo.wPort = wPort;
 
         lUserID = NET_DVR_Login_V40(&lpLoginInfo, &lpDeviceInfo);
         if (lUserID < 0)
@@ -303,18 +309,13 @@ void Camera::run()
 
     try
     {
-        this->Camera_thread_flag = false;
-        // 等待结束
-        int fps;
-
         while (true)
         {
-            QThread::msleep(30);
+            QThread::msleep(30); // 延时
             if (Camera_thread_flag)
             {
                 break;
             }
-
             if (useLocalVideo)
             {
                 // 从本地视频读取帧
@@ -327,7 +328,7 @@ void Camera::run()
 
                     // 重新打开视频文件
                     cap.release();
-                    if (!cap.open(m_videoPath))
+                    if (!cap.open(videoPath.toStdString()))
                     {
                         qDebug() << "Failed to reopen video!";
                         emit sendQStringtoMain("Failed to reopen video!");
@@ -354,7 +355,6 @@ void Camera::run()
                 BGR_image = Camera::gImage.front();
                 Camera::gImage.pop();
             }
-
             // 图像处理
             output = false;
             // 处理检测到的工序
@@ -367,7 +367,7 @@ void Camera::run()
                 yoloV8->enableROIDetection(m_enableROIDetection);
                 cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
                 yoloV8->setDetectionROI(detectionROI);
-                yoloV8->setRoiColor(cv::Scalar(roi_color_b, roi_color_g, roi_color_r));
+                yoloV8->setRoiColor(roi_color);
                 yoloV8->setRoiOpacity(roi_opacity);
                 yoloV8->setRoiLineWidth(roi_line_width);
                 // Draw the bounding boxes on the image
@@ -387,7 +387,7 @@ void Camera::run()
                         actionGroup[i] = true;
                 }
                 emit updateActionState(actionGroup);
-                // "chilun",   "keti" ,"luosi"
+                // "chilun", "keti, "luosi"
                 // std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
 
                 // 将当前帧的壳体检测结果添加到滑动窗口
@@ -513,9 +513,26 @@ void Camera::run()
     // 销毁事件回调指针
 }
 
+void Camera::getROIParameters()
+{
+    // 从 INI 文件读取 ROI 配置
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("ROI");
+    // 读取 ROI 参数
+    m_enableROIDetection = settings.value("EnableROI").toBool();
+    roi_x = settings.value("RoiX").toInt();
+    roi_y = settings.value("RoiY").toInt();
+    roi_w = settings.value("RoiW").toInt();
+    roi_h = settings.value("RoiH").toInt();
+    roi_color = settings.value("RoiColor").toString();
+    roi_opacity = settings.value("RoiOpacity").toInt() / 100.0;
+    roi_line_width = settings.value("RoiLineWidth").toInt();
+    settings.endGroup();
+}
+
 void Camera::stop_camera()
 {
-    this->Camera_thread_flag = true;
+    Camera_thread_flag = true;
 
     // 释放 Modbus 资源
     if (ctx != NULL)
@@ -708,11 +725,9 @@ void Camera::setRoiH(int h)
     roi_h = h;
 }
 
-void Camera::setRoiColor(int r, int g, int b)
+void Camera::setRoiColor(QString color)
 {
-    roi_color_r = r;
-    roi_color_g = g;
-    roi_color_b = b;
+    roi_color = color;
 }
 
 void Camera::setRoiOpacity(float opacity)

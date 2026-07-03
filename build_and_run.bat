@@ -24,7 +24,7 @@ if %errorlevel% neq 0 (
 )
 
 echo 正在启动应用程序...
-start "" Release\vscodeTest.exe
+start "" Release\work_process_detect.exe
 
 cd ..
 echo success!
