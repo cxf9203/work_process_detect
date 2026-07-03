@@ -56,10 +56,6 @@ else()
     camera.h
     engine.cpp
     engine.h
-    imagecleaner.cpp
-    imagecleaner.h
-    reliableimagesaver.cpp
-    reliableimagesaver.h
     yolov8.cpp
     yolov8.h
     qdarkstyle/dark/darkstyle.qrc
