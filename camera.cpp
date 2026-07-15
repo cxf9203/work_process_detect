@@ -2,12 +2,12 @@
 #include <QDebug>
 #include <QImage>
 #include <QImageReader>
-#include <QTimer>
 #include <QThread>
 #include <string>
 #include <QSettings>
-#include <cmath> // For std::atan and std::abs
+#include <cmath>
 #include <QDateTime>
+
 std::queue<cv::Mat> Camera::gImage;
 cv::Mat g_BGRImage;
 LONG g_nPort = -1; // 初始化为-1表示未获取端口
@@ -163,7 +163,7 @@ void Camera::run()
     YoloV8 *yoloV8 = nullptr;
     try
     {
-        yoloV8 = new YoloV8(modelPath.toStdString(), config); // 加载深度学习模型
+        yoloV8 = new YoloV8(modelPath.replace("/", "\\").toStdString(), config); // 加载深度学习模型
         emit sendQStringtoMain("load AI model success");
     }
     catch (const std::exception &e)
@@ -442,9 +442,6 @@ void Camera::run()
 
                     if (!chilun_flag || !luosi_flag)
                         setD(0, 1); // PLC 报警
-
-                    // keti消失，chilun_flag和luosi_flag置0
-                    chilun_flag = luosi_flag = false;
                 }
 
                 if (cur_keti == 0 && last_keti == 0)

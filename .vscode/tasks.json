@@ -2,6 +2,46 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "configure-qt-project-tensorrt",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "build",
+                "-G", "Visual Studio 17 2022",
+                "-A", "x64",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_PREFIX_PATH=D:/Qt/5.14.2/msvc2017_64",
+                "-DCMAKE_CXX_STANDARD=17",
+                "-DINFERENCE_BACKEND=TensorRT"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "configure-qt-project-openvino",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "build",
+                "-G", "Visual Studio 17 2022",
+                "-A", "x64",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_PREFIX_PATH=D:/Qt/5.14.2/msvc2017_64",
+                "-DCMAKE_CXX_STANDARD=17",
+                "-DINFERENCE_BACKEND=OpenVINO"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
             "label": "build-qt-project",
             "type": "shell",
             "command": "cmake",
@@ -19,22 +59,51 @@
             "problemMatcher": ["$msCompile"]
         },
         {
-            "label": "configure-qt-project",
+            "label": "clean-build",
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-S", ".",
-                "-B", "build",
-                "-G", "Visual Studio 17 2022",
-                "-A", "x64",
-                "-DCMAKE_BUILD_TYPE=Release",
-                "-DCMAKE_PREFIX_PATH=D:/Qt/5.14.2/msvc2017_64",
-                "-DCMAKE_CXX_STANDARD=17"
+                "--build", "build",
+                "--config", "Release",
+                "--target", "clean"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "problemMatcher": []
+            "group": "build",
+            "problemMatcher": ["$msCompile"]
+        },
+        {
+            "label": "rebuild-qt-project-tensorrt",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", "build",
+                "--config", "Release",
+                "--clean-first"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": ["$msCompile"],
+            "dependsOn": ["configure-qt-project-tensorrt"]
+        },
+        {
+            "label": "rebuild-qt-project-openvino",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", "build",
+                "--config", "Release",
+                "--clean-first"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": ["$msCompile"],
+            "dependsOn": ["configure-qt-project-openvino"]
         }
     ]
 }

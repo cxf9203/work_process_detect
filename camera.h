@@ -11,7 +11,11 @@
 #include <QSettings>
 #include <cmath>
 #include <queue>
-#include "yolov8.h"
+#ifdef USE_OPENVINO
+    #include "yolov8_openvino.h"
+#else
+    #include "yolov8_tensorrt.h"
+#endif
 #include <vector>
 #include <modbus.h>
 #include <QCoreApplication>

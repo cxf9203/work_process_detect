@@ -1,16 +1,21 @@
 ﻿#pragma once
 
-#include "engine.h"
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
 #include <QColor>
 #include <QString>
-
-// Utility method for checking if a file exists on disk
-inline bool doesFileExist(const std::string &name)
-{
-    std::ifstream f(name.c_str());
-    return f.good();
-}
+#include <random>
+#include <openvino/openvino.hpp> // openvino header file
+#include <opencv2/opencv.hpp> // opencv header file
+#include <opencv2/dnn.hpp> // 添加dnn模块支持
+#include <opencv2/core/cuda.hpp>
+#include <opencv2/cudaarithm.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/cudawarping.hpp>
+#include <opencv2/opencv.hpp>
 
 struct Object
 {
@@ -30,8 +35,6 @@ struct Object
 // Can pass these arguments as command line parameters.
 struct YoloV8Config
 {
-    // The precision to be used for inference
-    Precision precision = Precision::FP16;
     // Calibration data directory. Must be specified when using INT8 precision.
     std::string calibrationDataDirectory;
     // Probability threshold used to filter detected objects
@@ -42,10 +45,8 @@ struct YoloV8Config
     int topK = 100;
     // Segmentation config options
     int segChannels = 32;
-    int segH = 200;
-    int segW = 200;
-    // int segH = 160;
-    // int segW = 160;
+    int segH = 160;
+    int segW = 160;
     float segmentationThreshold = 0.5f;
     // Pose estimation options
     int numKPS = 17;
@@ -73,11 +74,9 @@ class YoloV8
 public:
     // Builds the onnx model into a TensorRT engine, and loads the engine into memory
     YoloV8(const std::string &modelPath, const YoloV8Config &config);
+    cv::Mat resizeKeepAspectRatioPadRightBottom(const cv::Mat &input, size_t height, size_t width, const cv::Scalar &bgcolor);
     // Detect the objects in the image
-    std::vector<Object> detectObjects(const cv::Mat &inputImageBGR);
-    std::vector<Object> detectObjects(const cv::cuda::GpuMat &inputImageBGR);
-    // std::vector<Object> imageClassify(const cv::Mat& inputImageBGR);
-    // std::vector<Object> imageClassify(const cv::cuda::GpuMat& inputImageBGR);
+    std::vector<Object> detectObjects(cv::Mat inputImageBGR);
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
     // Enable or disable ROI-based detection
@@ -92,23 +91,14 @@ public:
     void setRoiLineWidth(int lineWidth);
     std::vector<int> getclassnumer();
     std::vector<bool> getActionFlag();
-    float calculateAveragePixelValue(const cv::Mat &image, const cv::Rect &rect);
-    void setArea_threshold(float area);
-    void setIntensity_threshold(float intensity);
-    int getItemIndex();
-    std::set<std::string> getSet();
 
 private:
+    int numOutputs;
+    int numChannels;
+    int numAnchors;
     // 用于存储每个类别的计数
     std::vector<int> classCount = {0, 0, 0};                            //"chilun",   "keti" ,"luosi"
     std::vector<bool> actionFlag = {false, false, false, false, false}; // "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"
-    float area_threshold;
-    float intensity_threshold;
-    cv::Point2f vertices[4]; // 在图像上绘制最小外接矩形四个点
-    bool result = true;
-    bool cam2_result = true;
-    // 创建一个字符串集合
-    std::set<std::string> stringSet = {"p1"};
     // ROI相关变量
     bool useROI = false; // 是否使用ROI进行检测
     cv::Rect detectionROI; // 检测区域
@@ -116,22 +106,23 @@ private:
     float roiOpacity = 0.0f; // ROI透明度
     int roiLineWidth = 5; // ROI矩形线宽
     // Preprocess the input
-    std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);
+    cv::Mat preprocess(const cv::Mat &gpuImg);
+    ov::InferRequest infer_request;
+    ov::CompiledModel compiled_model;
     // Postprocess the output
-    std::vector<Object> postProcessDetect(std::vector<float> &featureVector);
+    std::vector<Object> postProcessDetect(cv::Mat gpuImg);
     // Postprocess the output for classify
-    int postProcessClassify(std::vector<float> &featureVector);
-    int Itemindex;
+    int postProcessClassify(cv::Mat gpuImg);
     // Postprocess the output for pose model
-    std::vector<Object> postProcessPose(std::vector<float> &featureVector);
+    std::vector<Object> postProcessPose(cv::Mat gpuImg);
     // Postprocess the output for segmentation model
-    std::vector<Object> postProcessSegmentation(std::vector<std::vector<float>> &featureVectors);
-    std::unique_ptr<Engine<float>> m_trtEngine = nullptr;
+    std::vector<Object> postProcessSegmentation(cv::Mat gpuImg);
     // Used for image preprocessing
     // YoloV8 model expects values between [0.f, 1.f] so we use the following params
     const std::array<float, 3> SUB_VALS{0.f, 0.f, 0.f};
     const std::array<float, 3> DIV_VALS{1.f, 1.f, 1.f};
     const bool NORMALIZE = true;
+    short width, height; // 输入层图像要求
     float m_ratio = 1;
     float m_imgWidth = 0;
     float m_imgHeight = 0;
