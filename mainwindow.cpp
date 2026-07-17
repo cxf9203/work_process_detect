@@ -32,12 +32,47 @@ MainWindow::MainWindow(QWidget *parent)
     // connect(cam, &Camera::finished, cam, &QObject::deleteLater); // 在空闲时间删除线程对象，执行后将不能在用start方法启动线程
     connect(cam, &Camera::send_connectstate, this, &MainWindow::receive_connectstate, Qt::QueuedConnection);
     connect(cam, &Camera::updateButtonState, this, &MainWindow::updateButtonState, Qt::QueuedConnection);
+    connect(cam, &Camera::updateStatistics, this, &MainWindow::updateStatistics, Qt::QueuedConnection);
     connect(cam, &Camera::sendQImgToAutoMain, this, &MainWindow::receiveslotQImg, Qt::QueuedConnection);
     connect(cam, &Camera::updateActionState, this, &MainWindow::getActionState, Qt::QueuedConnection);
     connect(cam, &Camera::sendNumber, this, &MainWindow::receiveNumber, Qt::QueuedConnection);
     connect(cam, &Camera::sendQStringtoMain, this, &MainWindow::receiveQStringtoMain, Qt::QueuedConnection);
     connect(cam, &Camera::finishedthread, this, &MainWindow::receivefinish);
     connect(this, &MainWindow::destroyed, cam, &Camera::deleteLater, Qt::QueuedConnection);
+
+    QSettings statSettings(statFilePath, QSettings::IniFormat);
+    // 获取今天的日期（只保留年月日）
+    QString today = QDate::currentDate().toString("yyyy-MM-dd");
+    // 读取上一次保存的日期
+    QString last_date = statSettings.value("last_date").toString();
+    // 如果日期不同，重置计数
+    if (last_date != today)
+    {
+        last_date = today;
+        today_good_number = today_number = today_good_rates = 0;
+        // 将变量写入 QSettings 对象
+        statSettings.setValue("last_date", last_date);
+        statSettings.setValue("today_good_number", today_good_number);
+        statSettings.setValue("today_number", today_number);
+        statSettings.setValue("today_good_rates", today_good_rates);
+    }
+    else
+    {
+        today_good_number = statSettings.value("today_good_number").toInt();
+        today_number = statSettings.value("today_number").toInt();
+        today_good_rates = statSettings.value("today_good_rates").toDouble();
+    }
+
+    history_good_number = statSettings.value("history_good_number").toInt();
+    history_number = statSettings.value("history_number").toInt();
+    history_good_rates = statSettings.value("history_good_rates").toDouble();
+
+    ui->history_good_number->setText(QString::number(history_good_number));
+    ui->history_number->setText(QString::number(history_number));
+    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
+    ui->today_good_number->setText(QString::number(today_good_number));
+    ui->today_number->setText(QString::number(today_number));
+    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 
     // 启动相机1
     on_start_clicked();
@@ -128,6 +163,65 @@ void MainWindow::updateButtonState(bool p1Detected, bool p2Detected, bool p3Dete
     }
 }
 
+void MainWindow::updateStatistics(bool result)
+{
+    QSettings statSettings(statFilePath, QSettings::IniFormat);
+
+    if (result)
+    {
+        history_good_number++;
+        today_good_number++;
+    }
+    history_number++;
+    today_number++;
+    history_good_rates = (static_cast<double>(history_good_number) / history_number) * 100;
+    today_good_rates = (static_cast<double>(today_good_number) / today_number) * 100;
+    // 将变量写入 QSettings 对象
+    statSettings.setValue("history_good_number", history_good_number);
+    statSettings.setValue("history_number", history_number);
+    statSettings.setValue("history_good_rates", history_good_rates);
+    statSettings.setValue("today_good_number", today_good_number);
+    statSettings.setValue("today_number", today_number);
+    statSettings.setValue("today_good_rates", today_good_rates);
+
+    ui->history_good_number->setText(QString::number(history_good_number));
+    ui->history_number->setText(QString::number(history_number));
+    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
+    ui->today_good_number->setText(QString::number(today_good_number));
+    ui->today_number->setText(QString::number(today_number));
+    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
+}
+
+void MainWindow::on_btn_history_rst_clicked()
+{
+    QSettings statSettings(statFilePath, QSettings::IniFormat);
+
+    history_good_number = history_number = history_good_rates = 0;
+
+    // 将变量写入 QSettings 对象
+    statSettings.setValue("history_good_number", history_good_number);
+    statSettings.setValue("history_number", history_number);
+    statSettings.setValue("history_good_rates", history_good_rates);
+    ui->history_good_number->setText(QString::number(history_good_number));
+    ui->history_number->setText(QString::number(history_number));
+    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
+}
+
+void MainWindow::on_btn_today_rst_clicked()
+{
+    QSettings statSettings(statFilePath, QSettings::IniFormat);
+
+    today_good_number = today_number = today_good_rates = 0;
+
+    // 将变量写入 QSettings 对象
+    statSettings.setValue("today_good_number", today_good_number);
+    statSettings.setValue("today_number", today_number);
+    statSettings.setValue("today_good_rates", today_good_rates);
+    ui->today_good_number->setText(QString::number(today_good_number));
+    ui->today_number->setText(QString::number(today_number));
+    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
+}
+
 void MainWindow::receive_connectstate(bool state)
 {
     ui->btn_proc4->setStyleSheet(state ? "background-color: green; color: white;" : "background-color: red; color: white;");
@@ -136,38 +230,10 @@ void MainWindow::receive_connectstate(bool state)
 
 void MainWindow::on_btn_setRoi_clicked()
 {
-    // 设定识别ROI
-    // cam->setRoi();
-
-    if (ui->stackedWidget->currentIndex() == 0)
+    if (ui->stackedWidget->currentIndex() != 1)
         ui->stackedWidget->setCurrentIndex(1);
     else
         ui->stackedWidget->setCurrentIndex(0);
-}
-
-void MainWindow::on_pushButton_clicked()
-{
-    qDebug() << "output1";
-    cam->setD(0, baojing_flag ? 1 : 0);
-    baojing_flag = !baojing_flag;
-}
-
-void MainWindow::on_pushButton_2_clicked()
-{
-    qDebug() << "output2";
-    cam->setD(2, 1);
-}
-
-void MainWindow::on_pushButton_3_clicked()
-{
-    qDebug() << "output3";
-    cam->setD(4, 1);
-}
-
-void MainWindow::on_pushButton_4_clicked()
-{
-    qDebug() << "ai test";
-    cam->aiTest();
 }
 
 void MainWindow::getActionState(std::vector<bool> actionState)

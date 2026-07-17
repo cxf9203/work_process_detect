@@ -12,40 +12,7 @@ std::queue<cv::Mat> Camera::gImage;
 cv::Mat g_BGRImage;
 LONG g_nPort = -1; // 初始化为-1表示未获取端口
 LONG nUser = 1;
-// 全局变量存储ROI坐标
-cv::Rect roi_rect;
-bool roi_selected = false;
-namespace fs = std::filesystem;
 QMutex queueMutex;
-
-// 鼠标回调函数
-void onMouse(int event, int x, int y, int flags, void *param)
-{
-    static cv::Point pt1, pt2;
-    cv::Mat *img = static_cast<cv::Mat *>(param);
-
-    if (event == cv::EVENT_LBUTTONDOWN)
-    {
-        pt1 = cv::Point(x, y);
-    }
-    else if (event == cv::EVENT_LBUTTONUP)
-    {
-        pt2 = cv::Point(x, y);
-        roi_rect = cv::Rect(pt1, pt2);
-        roi_selected = true;
-
-        // 在原图上绘制矩形
-        cv::Mat display_img = img->clone();
-        cv::rectangle(display_img, roi_rect, cv::Scalar(0, 255, 0), 2);
-        cv::imshow("Select ROI", display_img);
-    }
-    else if (event == cv::EVENT_MOUSEMOVE && (flags & cv::EVENT_FLAG_LBUTTON))
-    {
-        cv::Mat display_img = img->clone();
-        cv::rectangle(display_img, pt1, cv::Point(x, y), cv::Scalar(0, 255, 0), 2);
-        cv::imshow("Select ROI", display_img);
-    }
-}
 
 // 数据解码回调函数，
 // 功能：将YV_12格式的视频数据流转码为可供opencv处理的BGR类型的图片数据，并实时显示。
@@ -442,6 +409,8 @@ void Camera::run()
 
                     if (!chilun_flag || !luosi_flag)
                         setD(0, 1); // PLC 报警
+
+                    emit updateStatistics(chilun_flag && luosi_flag);
                 }
 
                 if (cur_keti == 0 && last_keti == 0)
@@ -639,57 +608,6 @@ void Camera::setD(int address, int value)
     {
         emit sendQStringtoMain("setD address: " + QString::number(address) + ", value is: " + QString::number(value));
     }
-}
-
-int Camera::setRoi()
-{
-    // 获取一张BGR_image，显示出来让用户进行手动框选，然后保存框选的坐标保存到roi_x,roi_y,roi_w,roi_h中
-    // 然后根据框选的坐标进行图像处理
-    // test 实际使用时注释
-    cv::Mat BGR_image = cv::imread("C:\\Users\\chenxinfeng\\Desktop\\异物图片 裁剪后\\22.bmp");
-    if (BGR_image.empty())
-    {
-        qDebug() << "cannot load image";
-        return -1;
-    }
-
-    // 显示图像并设置鼠标回调
-    cv::namedWindow("Select ROI", cv::WINDOW_NORMAL);
-    cv::setMouseCallback("Select ROI", onMouse, &BGR_image);
-    cv::imshow("Select ROI", BGR_image);
-
-    qDebug() << "select roi by mouse...";
-    cv::waitKey(0);
-
-    if (roi_selected)
-    {
-        // 保存ROI坐标
-        int roi_x = roi_rect.x;
-        int roi_y = roi_rect.y;
-        int roi_w = roi_rect.width;
-        int roi_h = roi_rect.height;
-
-        qDebug() << "select ROI : x=" << roi_x << ", y=" << roi_y << ", width=" << roi_w << ", height=" << roi_h;
-
-        // 提取ROI区域
-        cv::Mat roi_image = BGR_image(roi_rect);
-
-        // 显示ROI区域
-        cv::imshow("Selected ROI", roi_image);
-        cv::waitKey(0);
-    }
-    else
-    {
-        qDebug() << "not select roi yet";
-    }
-    qDebug() << "get select ROI : x=" << roi_x << ", y=" << roi_y << ", width=" << roi_w << ", height=" << roi_h;
-
-    return 0;
-}
-
-void Camera::aiTest()
-{
-    return;
 }
 
 void Camera::igonoreAction(int index)

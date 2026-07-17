@@ -39,14 +39,11 @@ public:
     QImage cvMat2QImage(const cv::Mat &mat);
     QImage image;
     cv::Mat getOneFrame();
-    // 设定图像处理参数
-    int setRoi();
     // 设定PLC参数
     // void setM(int value); // 设定M元件
     // void ResetM(int value); // 读取M元件
     void setD(int address, int value);       // 设置整型D元件
     void set32D(int address, int32_t value); // 设置整型D元件
-    void aiTest();                           // AI model test
     void igonoreAction(int index);           // 忽略某个动作
     void enableROIDetection(bool enable);    // 启用或禁用ROI检测
     void setRoiX(int x);
@@ -77,6 +74,7 @@ signals:
     void sendNumber(QString str_chilun_num, QString str_luosi_num);
     void finishedthread();
     void updateButtonState(bool p1, bool p2, bool p3);
+    void updateStatistics(bool result);
     void send_connectstate(bool state);
 
 private:

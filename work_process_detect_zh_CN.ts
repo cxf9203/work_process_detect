@@ -140,7 +140,7 @@
     <message>
         <location filename="mainwindow.ui" line="813"/>
         <location filename="build/work_process_detect_autogen/include_Release/ui_mainwindow.h" line="776"/>
-        <source>启用ROI检测</source>
+        <source>启用 ROI 检测</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
