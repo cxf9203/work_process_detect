@@ -94,32 +94,12 @@ void Camera::initCamera()
 void Camera::run()
 {
     Camera_thread_flag = false;
+
     // 链接PLC
-    ctx = modbus_new_tcp("192.168.1.99", 2001); // 西门子smart 200
-    if (ctx == NULL)
+    if (!connectPLC())
     {
-        qDebug() << "cannot create modbus";
-        emit sendQStringtoMain("cannot create modbus");
         // emit finishedthread();
         // return;
-    }
-
-    // 连接到Modbus服务器
-    if (modbus_connect(ctx) == -1)
-    {
-        qDebug() << "connect to server fail";
-        modbus_free(ctx);
-        ctx = NULL; // 将ctx置为NULL，避免后续使用已释放的内存
-
-        emit send_connectstate(false);
-        emit sendQStringtoMain("connect to server fail");
-        // emit finishedthread();
-        // return;
-    }
-    else
-    {
-        emit send_connectstate(true);
-        emit sendQStringtoMain("connect to plc success");
     }
 
     emit sendQStringtoMain("loading AI model...");
@@ -273,6 +253,9 @@ void Camera::run()
             emit sendQStringtoMain("RealPlay started successfully");
         }
     }
+
+    keti_history.clear(); // 清空队列
+    last_keti = 0; // 重置计数器
 
     try
     {
@@ -470,6 +453,16 @@ void Camera::run()
         // 注销采集回调
         // 注销远端设备事件
         // 释放资源
+
+        // 关闭相机
+        if (useLocalVideo)
+        {
+            emit sendQStringtoMain("Local video closed");
+        }
+        else
+        {
+            emit sendQStringtoMain("Camera closed");
+        }
     }
     catch (std::exception &e)
     {
@@ -477,6 +470,73 @@ void Camera::run()
     }
     // 反初始化库
     // 销毁事件回调指针
+}
+
+bool Camera::connectPLC()
+{
+    // 从 INI 文件读取 PLC 配置
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("PLC");
+    QString plcIp = settings.value("plcIp").toString();
+    int plcPort = settings.value("plcPort").toInt();
+    settings.endGroup();
+
+    // 如果已有连接，先断开
+    if (ctx != NULL)
+    {
+        modbus_close(ctx);
+        modbus_free(ctx);
+        ctx = NULL;
+    }
+
+    // 创建 Modbus TCP 上下文
+    ctx = modbus_new_tcp(plcIp.toStdString().c_str(), plcPort); // 西门子smart 200
+    if (ctx == NULL)
+    {
+        QString errorMsg = QString("PLC context creation failed (%1:%2)").arg(plcIp).arg(plcPort);
+        qDebug() << errorMsg;
+        emit sendQStringtoMain(errorMsg);
+        emit send_connectstate(false);
+        return false;
+    }
+
+    // 连接到 Modbus 服务器
+    if (modbus_connect(ctx) == -1)
+    {
+        QString errorMsg = QString("PLC connection failed (%1:%2)").arg(plcIp).arg(plcPort);
+        qDebug() << errorMsg;
+        modbus_free(ctx);
+        ctx = NULL;
+
+        emit sendQStringtoMain(errorMsg);
+        emit send_connectstate(false);
+        return false;
+    }
+    else
+    {
+        emit sendQStringtoMain(QString("PLC connected successfully (%1:%2)").arg(plcIp).arg(plcPort));
+        emit send_connectstate(true);
+        return true;
+    }
+}
+
+void Camera::disconnectPLC()
+{
+    if (ctx != NULL)
+    {
+        modbus_close(ctx);
+        modbus_free(ctx);
+        ctx = NULL;
+
+        emit sendQStringtoMain("disconnect from plc success");
+        qDebug() << "disconnect from plc success";
+    }
+    else
+    {
+        qDebug() << "plc already disconnected";
+        emit sendQStringtoMain("plc already disconnected");
+    }
+    emit send_connectstate(false);
 }
 
 void Camera::getROIParameters()

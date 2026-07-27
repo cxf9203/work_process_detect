@@ -32,9 +32,11 @@ public:
     void initCamera();
     ~Camera();
     static std::queue<cv::Mat> gImage;
+    bool connectPLC();
+    void disconnectPLC();
     void getROIParameters();
-    void closeDevice(); // 关闭设备
     void stop_camera();
+    void closeDevice(); // 关闭设备
     bool imageProcess(cv::Mat image);
     QImage cvMat2QImage(const cv::Mat &mat);
     QImage image;
@@ -85,7 +87,7 @@ private:
     bool cameraOpened = false;
     bool isGrabbingFlag = false;
     // 连接PLC modbustcp
-    modbus_t *ctx;
+    modbus_t *ctx = nullptr;
     int rc;
     uint16_t query[MODBUS_TCP_MAX_ADU_LENGTH];
     uint32_t query32D[MODBUS_TCP_MAX_ADU_LENGTH];

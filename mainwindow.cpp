@@ -192,6 +192,16 @@ void MainWindow::updateStatistics(bool result)
     ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 }
 
+void MainWindow::on_btn_connectPLC_clicked()
+{
+    cam->connectPLC();
+}
+
+void MainWindow::on_btn_disconnectPLC_clicked()
+{
+    cam->disconnectPLC();
+}
+
 void MainWindow::on_btn_history_rst_clicked()
 {
     QSettings statSettings(statFilePath, QSettings::IniFormat);
@@ -224,6 +234,8 @@ void MainWindow::on_btn_today_rst_clicked()
 
 void MainWindow::receive_connectstate(bool state)
 {
+    ui->btn_connectPLC->setEnabled(!state);
+    ui->btn_disconnectPLC->setEnabled(state);
     ui->btn_proc4->setStyleSheet(state ? "background-color: green; color: white;" : "background-color: red; color: white;");
     ui->btn_proc4->setText(QString::fromLocal8Bit(state ? "已连接" : "未连接"));
 }

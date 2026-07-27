@@ -35,6 +35,8 @@ public slots:
 private slots:
     void on_start_clicked();
     void on_stop_clicked();
+    void on_btn_connectPLC_clicked();
+    void on_btn_disconnectPLC_clicked();
     void on_btn_history_rst_clicked();
     void on_btn_today_rst_clicked();
     void on_btn_setRoi_clicked();

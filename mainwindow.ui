@@ -499,7 +499,7 @@ QPushButton[enabled=&quot;false&quot;] {
       <property name="geometry">
        <rect>
         <x>170</x>
-        <y>230</y>
+        <y>240</y>
         <width>111</width>
         <height>31</height>
        </rect>
@@ -1415,6 +1415,48 @@ QSlider::handle:horizontal:hover {
       </layout>
      </widget>
     </widget>
+   </widget>
+   <widget class="QPushButton" name="btn_connectPLC">
+    <property name="geometry">
+     <rect>
+      <x>1530</x>
+      <y>80</y>
+      <width>71</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>连接PLC</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_disconnectPLC">
+    <property name="geometry">
+     <rect>
+      <x>1620</x>
+      <y>80</y>
+      <width>71</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>断开PLC</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
