@@ -7,7 +7,6 @@
 #include <QSettings>
 #include <cmath>
 #include <QDateTime>
-#include <opencv2/tracking.hpp>
 
 std::queue<cv::Mat> Camera::gImage;
 cv::Mat g_BGRImage;
@@ -258,11 +257,6 @@ void Camera::run()
     keti_history.clear(); // 清空队列
     last_keti = 0; // 重置计数器
 
-    // OpenCV keti目标追踪器（KCF: 速度快，适合实时追踪）
-    cv::Ptr<cv::Tracker> keti_tracker = cv::TrackerKCF::create();
-    bool keti_tracker_initialized = false;
-    cv::Rect keti_track_box(0, 0, 0, 0);
-
     try
     {
         while (true)
@@ -302,12 +296,11 @@ void Camera::run()
             else
             {
                 // 从真实相机获取帧
+                QMutexLocker locker(&queueMutex);
                 if (Camera::gImage.empty())
                 {
                     continue;
                 }
-
-                QMutexLocker locker(&queueMutex);
                 BGR_image = Camera::gImage.front();
                 Camera::gImage.pop();
             }
@@ -343,96 +336,17 @@ void Camera::run()
                         actionGroup[i] = true;
                 }
                 emit updateActionState(actionGroup);
-                // "chilun", "keti, "luosi"
-                // std::cout << "class0" << chilun_num << "class1" << keti_num << "class2" << luosi_num << std::endl;
-
-                // ====== YOLO + OpenCV 融合追踪 keti ======
-                bool yolo_keti_found = false;
-                cv::Rect yolo_keti_box;
-                //cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
-
-                for (const auto &obj : objects)
-                {
-                    if (obj.label == 1) // keti
-                    {
-                        cv::Rect obj_box(
-                            static_cast<int>(obj.rect.x),
-                            static_cast<int>(obj.rect.y),
-                            static_cast<int>(obj.rect.width),
-                            static_cast<int>(obj.rect.height));
-                        cv::Point obj_center(obj_box.x + obj_box.width / 2, obj_box.y + obj_box.height / 2);
-                        if (detectionROI.contains(obj_center))
-                        {
-                            yolo_keti_found = true;
-                            yolo_keti_box = obj_box;
-                            break;
-                        }
-                    }
-                }
-
-                bool keti_inside_roi = false;
-
-                if (yolo_keti_found)
-                {
-                    if (!keti_tracker_initialized)
-                    {
-                        keti_tracker = cv::TrackerKCF::create();
-                        keti_tracker->init(BGR_image, cv::Rect2d(yolo_keti_box));
-                        keti_tracker_initialized = true;
-                    }
-                    else
-                    {
-                        keti_tracker = cv::TrackerKCF::create();
-                        keti_tracker->init(BGR_image, cv::Rect2d(yolo_keti_box));
-                    }
-                    keti_inside_roi = true;
-                }
-                else
-                {
-                    if (keti_tracker_initialized)
-                    {
-                        bool track_ok = keti_tracker->update(BGR_image, keti_track_box);
-                        if (track_ok &&
-                            keti_track_box.width > 0 && keti_track_box.height > 0 &&
-                            keti_track_box.x >= 0 && keti_track_box.y >= 0 &&
-                            keti_track_box.x + keti_track_box.width <= BGR_image.cols &&
-                            keti_track_box.y + keti_track_box.height <= BGR_image.rows)
-                        {
-                            // 追踪成功：绘制黄色追踪框（不受ROI限制）
-                            cv::Rect track_rect = keti_track_box;
-                            cv::rectangle(BGR_image, track_rect, cv::Scalar(0, 255, 255), 2);
-                            cv::putText(BGR_image, "Tracking",
-                                cv::Point(track_rect.x, track_rect.y - 5),
-                                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
-
-                            // 只有中心点在ROI内时cur_keti才为1
-                            cv::Point track_center(
-                                keti_track_box.x + keti_track_box.width / 2,
-                                keti_track_box.y + keti_track_box.height / 2);
-                            keti_inside_roi = detectionROI.contains(track_center);
-                        }
-                        else
-                        {
-                            // 追踪失败，重置追踪器
-                            keti_tracker_initialized = false;
-                            keti_inside_roi = false;
-                        }
-                    }
-                    else
-                    {
-                        keti_inside_roi = false;
-                    }
-                }
-
-                cur_keti = keti_inside_roi ? 1 : 0;
-
-                // 更新滑动窗口
-                keti_history.push_back(cur_keti > 0);
+                // 将当前帧的壳体检测结果添加到滑动窗口
+                bool current_keti_detected = keti_num > 0;
+                keti_history.push_back(current_keti_detected);
+                // 保持滑动窗口大小为 KETI_WINDOW_SIZE
                 if (keti_history.size() > KETI_WINDOW_SIZE)
                 {
                     keti_history.pop_front();
                 }
+                // 计算滑动窗口中检测到壳体的帧数
                 int keti_count = std::count(keti_history.begin(), keti_history.end(), true);
+                // 根据阈值确定最终的壳体状态
                 cur_keti = keti_count >= KETI_THRESHOLD ? 1 : 0;
 
                 if (cur_keti > 0)
@@ -488,9 +402,6 @@ void Camera::run()
                     // 复位PLC输出(让PLC自己复位)
                     // setD(0, 0); // 复位报警
                     // setD(2, 0); // 复位绿灯
-                    // 重置OpenCV追踪器
-                    keti_tracker_initialized = false;
-                    keti_tracker = cv::TrackerKCF::create();
                 }
 
                 last_keti = cur_keti;

@@ -57,10 +57,10 @@ public:
     void setRoiLineWidth(int lineWidth);
     // ROI参数
     bool m_enableROIDetection; // ROI检测启用状态
-    int roi_x;// ROI矩形框左上角x坐标
-    int roi_y;// ROI矩形框左上角y坐标
-    int roi_w;// ROI矩形框宽度
-    int roi_h;// ROI矩形框高度
+    int roi_x;
+    int roi_y;
+    int roi_w;
+    int roi_h;
     QString roi_color; // ROI颜色
     float roi_opacity; // ROI透明度
     int roi_line_width; // ROI矩形线宽
@@ -87,7 +87,7 @@ private:
     bool cameraOpened = false;
     bool isGrabbingFlag = false;
     // 连接PLC modbustcp
-    modbus_t *ctx = nullptr; // modbus连接句柄
+    modbus_t *ctx = nullptr;
     int rc;
     uint16_t query[MODBUS_TCP_MAX_ADU_LENGTH];
     uint32_t query32D[MODBUS_TCP_MAX_ADU_LENGTH];
