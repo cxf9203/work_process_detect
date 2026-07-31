@@ -567,7 +567,6 @@ QPushButton[enabled=&quot;false&quot;] {
     border: none;
     border-radius: 5px;
     padding: 8px;
-    min-height: 30px;
 }</string>
            </property>
            <property name="text">
@@ -595,7 +594,6 @@ QPushButton[enabled=&quot;false&quot;] {
     border: none;
     border-radius: 5px;
     padding: 8px;
-    min-height: 30px;
 }</string>
            </property>
            <property name="text">
@@ -623,7 +621,6 @@ QPushButton[enabled=&quot;false&quot;] {
     border: none;
     border-radius: 5px;
     padding: 8px;
-    min-height: 30px;
 }</string>
            </property>
            <property name="text">
@@ -651,7 +648,6 @@ QPushButton[enabled=&quot;false&quot;] {
     border: none;
     border-radius: 5px;
     padding: 8px;
-    min-height: 30px;
 }</string>
            </property>
            <property name="text">
@@ -679,7 +675,6 @@ QPushButton[enabled=&quot;false&quot;] {
     border: none;
     border-radius: 5px;
     padding: 8px;
-    min-height: 30px;
 }</string>
            </property>
            <property name="text">

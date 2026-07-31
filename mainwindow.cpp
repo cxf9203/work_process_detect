@@ -250,10 +250,7 @@ void MainWindow::on_btn_setRoi_clicked()
 
 void MainWindow::getActionState(std::vector<bool> actionState)
 {
-    // qDebug() << "getActionState" << "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun";
-
     QLabel *labels[] = {ui->label_4, ui->label_5, ui->label_6, ui->label_7, ui->label_8};
-
     // 循环更新颜色
     for (int i = 0; i < 5; i++)
     {
@@ -264,10 +261,7 @@ void MainWindow::getActionState(std::vector<bool> actionState)
 void MainWindow::on_checkBox_toggled(bool checked)
 {
     qDebug() << "current state is" << checked;
-    if (checked)
-    {
-        cam->igonoreAction(4);
-    }
+    cam->igonoreAction(4, checked);
 }
 
 void MainWindow::receiveQStringtoMain(QString s)
@@ -277,7 +271,7 @@ void MainWindow::receiveQStringtoMain(QString s)
         "#00ff00", // 绿色
         "#00ffff", // 青色
         "#ffff00", // 黄色
-        "#ff44ff", // 紫色
+        "#ff00ff", // 紫色
         "#ffa500", // 橙色
         "#ffffff", // 白色
     };

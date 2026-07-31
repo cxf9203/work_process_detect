@@ -9,7 +9,6 @@
 #include <QDateTime>
 
 std::queue<cv::Mat> Camera::gImage;
-cv::Mat g_BGRImage;
 LONG g_nPort = -1; // 初始化为-1表示未获取端口
 LONG nUser = 1;
 QMutex queueMutex;
@@ -18,29 +17,20 @@ QMutex queueMutex;
 // 功能：将YV_12格式的视频数据流转码为可供opencv处理的BGR类型的图片数据，并实时显示。
 void CALLBACK DecCBFun(long nPort, char *pBuf, long nSize, FRAME_INFO *pFrameInfo, long nUser, long nReserved2)
 {
-    // std::cout << nUser << std::endl;
-    // if (nUser == 1)
-    // {
-    //     std::cout << "camera" << std::endl;
-    // }
     if (pFrameInfo->nType == T_YV12)
     {
         // std::cout << "the frame infomation is T_YV12" << std::endl;
-        if (g_BGRImage.empty())
-        {
-            g_BGRImage.create(pFrameInfo->nHeight, pFrameInfo->nWidth, CV_8UC3);
-        }
         cv::Mat YUVImage(pFrameInfo->nHeight + pFrameInfo->nHeight / 2, pFrameInfo->nWidth, CV_8UC1, (unsigned char *)pBuf);
-
-        cv::cvtColor(YUVImage, g_BGRImage, cv::COLOR_YUV2BGR_YV12);
-        // cv::imshow("RGBImage1", g_BGRImage);
+        cv::Mat bgrImage;
+        cv::cvtColor(YUVImage, bgrImage, cv::COLOR_YUV2BGR_YV12);
+        // cv::imshow("RGBImage1", bgrImage);
         // cv::waitKey(15);
         QMutexLocker locker(&queueMutex);
         if (Camera::gImage.size() > 1)
         {
             Camera::gImage.pop();
         }
-        Camera::gImage.push(g_BGRImage.clone()); // 使用clone确保深拷贝，避免内存问题
+        Camera::gImage.push(bgrImage);
     }
 }
 
@@ -70,21 +60,6 @@ Camera::Camera(QObject *parent)
 
 Camera::~Camera()
 {
-    // 销毁事件回调指针
-    QMutexLocker locker(&queueMutex);
-    while (!Camera::gImage.empty())
-    {
-        // 释放 cv::Mat 对象占用的内存
-        Camera::gImage.front().release();
-        // 从队列中移除该元素
-        Camera::gImage.pop();
-    }
-
-    // 清理全局Mat
-    if (!g_BGRImage.empty())
-    {
-        g_BGRImage.release();
-    }
 }
 
 void Camera::initCamera()
@@ -332,7 +307,8 @@ void Camera::run()
                 std::vector<bool> tempAction = yoloV8->getActionFlag();
                 for (size_t i = 0; i < tempAction.size(); i++)
                 {
-                    if (tempAction[i])
+                    // 只有未被忽略的动作才更新
+                    if (tempAction[i] && !ignoredActions[i])
                         actionGroup[i] = true;
                 }
                 emit updateActionState(actionGroup);
@@ -571,11 +547,6 @@ void Camera::closeDevice()
     emit finished();
 }
 
-bool Camera::imageProcess(cv::Mat image)
-{
-    return true;
-}
-
 QImage Camera::cvMat2QImage(const cv::Mat &mat)
 {
     // 检查Mat是否为空
@@ -666,9 +637,16 @@ void Camera::setD(int address, int value)
     }
 }
 
-void Camera::igonoreAction(int index)
-{ // 忽略某个动作,todo: (std::vector<bool> index)作为传递参数较好
-    actionGroup[index] = false;
+void Camera::igonoreAction(int index, bool ignore)
+{ // 忽略某个动作
+    if (index < 0 || index >= static_cast<int>(actionGroup.size()))
+        return;
+    ignoredActions[index] = ignore;
+    if (ignore)
+    {
+        actionGroup[index] = false;
+        emit updateActionState(actionGroup);
+    }
 }
 
 void Camera::enableROIDetection(bool enable)
