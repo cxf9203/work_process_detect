@@ -35,6 +35,9 @@ public:
     bool connectPLC();
     void disconnectPLC();
     void getROIParameters();
+    void startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame); // 开始录制
+    void stopRecording(bool save); // 停止录制
+    void saveErrorLog(const QString &message); // 保存错误日志
     void stop_camera();
     void closeDevice(); // 关闭设备
     QImage cvMat2QImage(const cv::Mat &mat);
@@ -115,6 +118,12 @@ private:
     std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
     const int KETI_WINDOW_SIZE = 3; // 滑动窗口大小
     const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
+    // 视频录制
+    cv::VideoWriter originalVideoWriter;
+    cv::VideoWriter resultVideoWriter;
+    bool isRecording = false;
+    QString currentVideoTimestamp;
+    QString baseVideoPath = QCoreApplication::applicationDirPath() + "/saved_videos/";
 
 public slots:
     void run();

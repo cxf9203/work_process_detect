@@ -1,4 +1,5 @@
-﻿#include "camera.h"
+﻿#include <QDir>
+#include "camera.h"
 #include <QDebug>
 #include <QImage>
 #include <QImageReader>
@@ -284,6 +285,8 @@ void Camera::run()
             // 处理检测到的工序
             try
             {
+                cv::Mat original_image = BGR_image.clone();
+
                 // Run inference 推理
                 // qDebug() << "run inference";
                 const auto objects = yoloV8->detectObjects(BGR_image);
@@ -328,24 +331,13 @@ void Camera::run()
                 if (cur_keti > 0)
                 {
                     if (chilun_num == CHILUN_NUM)
-                    {
-                        // 满了 plc res_flag置1
-                        // cv2.putText(image, "OK", (10, 120), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                         chilun_flag = true;
-                    }
 
                     if (luosi_num == LUOSI_NUM)
-                    {
-                        // 满了 plc res_flag置1
-                        // cv2.putText(image, "OK", (10, 130), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                         luosi_flag = true;
-                    }
-                }
 
-                if (chilun_flag || luosi_flag)
-                {
-                    cv::putText(BGR_image, chilun_flag ? "chilun OK" : "chilun not yet", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    cv::putText(BGR_image, luosi_flag ? "luosi OK" : "luosi not yet", cv::Point(10, 240), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    cv::putText(BGR_image, chilun_flag ? "chilun OK" : "chilun miss", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                    cv::putText(BGR_image, luosi_flag ? "luosi OK" : "luosi miss", cv::Point(10, 240), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                     if (chilun_flag && luosi_flag)
                     {
                         cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
@@ -355,17 +347,31 @@ void Camera::run()
                     emit updateButtonState(chilun_flag, luosi_flag, chilun_flag && luosi_flag); // 齿轮/螺丝/总体
                 }
 
+                if (cur_keti == 1 && last_keti == 0)
+                {
+                    startRecording(original_image, BGR_image);
+                }
+
+                if (isRecording)
+                {
+                    originalVideoWriter.write(original_image);
+                    resultVideoWriter.write(BGR_image);
+                }
+
                 if (cur_keti == 0 && last_keti == 1)
                 {
-                    if (!chilun_flag)
-                        cv::putText(BGR_image, "chilun miss", cv::Point(10, 340), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    if (!luosi_flag)
-                        cv::putText(BGR_image, "luosi miss", cv::Point(10, 390), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-
-                    if (!chilun_flag || !luosi_flag)
+                    bool hasError = !chilun_flag || !luosi_flag;
+                    if (hasError)
+                    {
                         setD(0, 1); // PLC 报警
 
-                    emit updateStatistics(chilun_flag && luosi_flag);
+                        // 保存错误日志
+                        QString logMsg = QString("ERROR | chilun_flag=%1, luosi_flag=%2").arg(chilun_flag ? "OK" : "MISS").arg(luosi_flag ? "OK" : "MISS");
+                        saveErrorLog(logMsg);
+                    }
+
+                    stopRecording(hasError);
+                    emit updateStatistics(!hasError);
                 }
 
                 if (cur_keti == 0 && last_keti == 0)
@@ -422,9 +428,7 @@ void Camera::run()
         }
 
         emit finishedthread();
-        // 注销采集回调
-        // 注销远端设备事件
-        // 释放资源
+        stopRecording(false);
 
         // 关闭相机
         if (useLocalVideo)
@@ -526,6 +530,93 @@ void Camera::getROIParameters()
     roi_opacity = settings.value("RoiOpacity").toInt() / 100.0;
     roi_line_width = settings.value("RoiLineWidth").toInt();
     settings.endGroup();
+}
+
+void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame)
+{
+    if (isRecording)
+        return;
+
+    currentVideoTimestamp = QDateTime::currentDateTime().toString("yyyyMMddhhmmss_zzz");
+
+    QString tempDir = baseVideoPath + "temp/";
+    QDir(tempDir).mkpath(".");
+
+    // 原图视频
+    QString originalPath = tempDir + "original.avi";
+    originalVideoWriter.open(originalPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, originalFrame.size());
+
+    // 结果图视频
+    QString resultPath = tempDir + "result.avi";
+    resultVideoWriter.open(resultPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, resultFrame.size());
+
+    if (originalVideoWriter.isOpened() && resultVideoWriter.isOpened())
+    {
+        isRecording = true;
+        qDebug() << "Started recording:" << originalPath << "and" << resultPath;
+    }
+    else
+    {
+        if (originalVideoWriter.isOpened())
+            originalVideoWriter.release();
+        if (resultVideoWriter.isOpened())
+            resultVideoWriter.release();
+    }
+}
+
+void Camera::stopRecording(bool save)
+{
+    if (!isRecording)
+        return;
+
+    // 关闭视频写入
+    if (originalVideoWriter.isOpened())
+        originalVideoWriter.release();
+    if (resultVideoWriter.isOpened())
+        resultVideoWriter.release();
+
+    QString tempDir = baseVideoPath + "temp/";
+
+    if (save)
+    {
+        QString saveDir = baseVideoPath + QDateTime::currentDateTime().toString("yyyyMMdd");
+        QString originalErrorDir = saveDir + "/original_error/";
+        QString resultErrorDir = saveDir + "/result_error/";
+        QDir(originalErrorDir).mkpath(".");
+        QDir(resultErrorDir).mkpath(".");
+
+        // 原图视频
+        QString originalPath = tempDir + "original.avi";
+        QString finalOriginalPath = originalErrorDir + currentVideoTimestamp + ".avi";
+        QFile::rename(originalPath, finalOriginalPath);
+
+        // 结果图视频
+        QString resultPath = tempDir + "result.avi";
+        QString finalResultPath = resultErrorDir + currentVideoTimestamp + ".avi";
+        QFile::rename(resultPath, finalResultPath);
+
+        emit sendQStringtoMain("Error videos saved: " + currentVideoTimestamp);
+    }
+
+    // 删除临时目录
+    QDir(tempDir).removeRecursively();
+
+    isRecording = false;
+}
+
+void Camera::saveErrorLog(const QString &message)
+{
+    QFile file(baseVideoPath + "/error_log.txt");
+    if (file.open(QIODevice::Append | QIODevice::Text))
+    {
+        QTextStream out(&file);
+
+        QString ts = currentVideoTimestamp;
+        QString formattedTime = ts.mid(0, 4) + "-" + ts.mid(4, 2) + "-" + ts.mid(6, 2) + " " + ts.mid(8, 2) + ":" + ts.mid(10, 2) + ":" + ts.mid(12, 2) + "." + ts.mid(15, 3);
+
+        out << formattedTime << " | " << message << "\n";
+        file.close();
+    }
 }
 
 void Camera::stop_camera()

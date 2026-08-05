@@ -692,7 +692,7 @@ QPushButton[enabled=&quot;false&quot;] {
      <widget class="QPushButton" name="btn_today_rst">
       <property name="geometry">
        <rect>
-        <x>430</x>
+        <x>170</x>
         <y>530</y>
         <width>111</width>
         <height>51</height>
@@ -708,6 +708,27 @@ QPushButton[enabled=&quot;false&quot;] {
       </property>
       <property name="text">
        <string>今日清零</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btn_history">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>530</y>
+        <width>111</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>历史记录</string>
       </property>
      </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_2">

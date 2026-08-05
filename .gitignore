@@ -1,6 +1,6 @@
 # Build directories
 build*/
-video/
+videos/
 saved_img/
 runs/
 YOLO__model_test/

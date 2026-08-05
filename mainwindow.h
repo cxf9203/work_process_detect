@@ -3,6 +3,10 @@
 
 #include <QMainWindow>
 #include <QDateTime>
+#include <QListWidget>
+#include <QPushButton>
+#include <QMediaPlayer>
+#include <QLabel>
 #include "camera.h"
 
 QT_BEGIN_NAMESPACE
@@ -21,16 +25,27 @@ public:
 
 public slots:
     void loadROIParametersToUI();
-    // camera1 receive
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateButtonState(bool p1Detected, bool p2Detected, bool p3Detected);
     void updateStatistics(bool result);
-    void receiveNumber(QString str_chilun_num, QString str_luosi_num);
-    void modifyROIParameter(const QString &parameterName, const QVariant &newValue);
+    void loadHistoryList();
+    void showEmptyLabel();
+    void loadPage(int page);
+    void updatePaginationControls();
+    QWidget *createHistoryItem(int recordNumber, QString logLine, QString originalPath, QString resultPath);
+    void showVideo(int recordNumber, QString type, QString logInfo, QString path);
+    void updateVideoPosition(qint64 position);
+    void onSliderPressed();
+    void onSliderReleased();
+    void onSliderMoved(int value);
+    QString formatTime(qint64 ms);
+    void showHistoryList();
     void receive_connectstate(bool state);
     void getActionState(std::vector<bool> actionState);
     void receiveQStringtoMain(QString s);
+    void receiveNumber(QString str_chilun_num, QString str_luosi_num);
+    void modifyROIParameter(QString parameterName, QVariant newValue);
 
 private slots:
     void on_start_clicked();
@@ -39,6 +54,7 @@ private slots:
     void on_btn_disconnectPLC_clicked();
     void on_btn_history_rst_clicked();
     void on_btn_today_rst_clicked();
+    void on_btn_history_clicked();
     void on_btn_setRoi_clicked();
     void on_checkBox_toggled(bool checked);
     void on_cb_enableROI_toggled(bool value);
@@ -63,5 +79,27 @@ private:
     long long int today_good_number;
     long long int today_number;
     double today_good_rates;
+    // 历史记录窗口
+    QWidget *historyWindow = nullptr;
+    QWidget *listContainer = nullptr;
+    QListWidget *listWidget = nullptr;
+    // 分页相关
+    const int PAGE_SIZE = 100;
+    int currentPage = 0;
+    int totalPages = 1;
+    QVector<QString> allLogLines;
+    QLabel *currentPageRecordLabel = nullptr;
+    QPushButton *prevPageBtn = nullptr;
+    QLabel *pageInfoLabel = nullptr;
+    QPushButton *nextPageBtn = nullptr;
+    QLineEdit *jumpLineEdit = nullptr;
+    QLabel *recordCountLabel = nullptr;
+    QString logDirPath = QCoreApplication::applicationDirPath() + "/saved_videos/";
+    QWidget *videoContainer = nullptr;
+    QLabel *videoTitleLabel = nullptr;
+    QMediaPlayer *player = nullptr;
+    QLabel *timeLabel = nullptr;
+    QSlider *videoSlider = nullptr;
+    bool isSliderPressed = false;
 };
 #endif // MAINWINDOW_H

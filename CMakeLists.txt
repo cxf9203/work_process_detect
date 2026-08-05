@@ -42,7 +42,7 @@ set(CMAKE_PREFIX_PATH "D:/Qt/5.14.2/msvc2017_64" ${CMAKE_PREFIX_PATH})
 #     endif ()
 # endif ()
 
-find_package(Qt5 COMPONENTS Core Widgets LinguistTools REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets Multimedia MultimediaWidgets LinguistTools REQUIRED)
 
 # 根据后端设置翻译文件
 if (INFERENCE_BACKEND STREQUAL "TensorRT")
@@ -116,7 +116,10 @@ target_link_directories(${PROJECT_NAME} PRIVATE
 
 # 通用库
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt5::Core Qt5::Widgets
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::Multimedia
+    Qt5::MultimediaWidgets
     opencv_world470
     modbus
     OpenCL
