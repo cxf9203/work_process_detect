@@ -6,7 +6,6 @@
 #include <string>
 #include <QDebug>
 #include <QImage>
-#include <QMutex>
 #include <QObject>
 #include <QSettings>
 #include <cmath>
@@ -34,20 +33,9 @@ public:
     static std::queue<cv::Mat> gImage;
     bool connectPLC();
     void disconnectPLC();
+    // ROI 检测控制
     void getROIParameters();
-    void startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame); // 开始录制
-    void stopRecording(bool save); // 停止录制
-    void saveErrorLog(const QString &message); // 保存错误日志
-    void stop_camera();
-    void closeDevice(); // 关闭设备
-    QImage cvMat2QImage(const cv::Mat &mat);
-    QImage image;
-    cv::Mat getOneFrame();
-    // 设定PLC参数
-    void setD(int address, int value);          // 设置整型D元件
-    void set32D(int address, int32_t value);    // 设置整型D元件
-    void igonoreAction(int index, bool ignore); // 忽略某个动作
-    void enableROIDetection(bool enable);       // 启用或禁用ROI检测
+    void enableROIDetection(bool enable); // 启用或禁用ROI检测
     void setRoiX(int x);
     void setRoiY(int y);
     void setRoiW(int w);
@@ -55,15 +43,20 @@ public:
     void setRoiColor(QString color);
     void setRoiOpacity(float opacity);
     void setRoiLineWidth(int lineWidth);
-    // ROI参数
-    bool m_enableROIDetection; // ROI检测启用状态
-    int roi_x;
-    int roi_y;
-    int roi_w;
-    int roi_h;
-    QString roi_color; // ROI颜色
-    float roi_opacity; // ROI透明度
-    int roi_line_width; // ROI矩形线宽
+    // 动作检测控制
+    void processActionDetection(const std::vector<bool> &actions);
+    void setActionConfig(bool enable, const QVector<int> &enabled, bool affectsResult, const QVector<int> &ordered);
+    bool isActionsCompleted();
+    // 视频录制控制
+    void startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame); // 开始录制
+    void stopRecording(bool save); // 停止录制
+    void saveErrorLog(const QString &message); // 保存错误日志
+    // 设定PLC参数
+    void setD(int address, int value); // 设置整型D元件
+    void set32D(int address, int32_t value); // 设置整型D元件
+    QImage cvMat2QImage(const cv::Mat &mat);
+    void stop_camera();
+    void closeDevice(); // 关闭设备
 
 signals:
     // 给主线程发消息
@@ -75,7 +68,7 @@ signals:
     void sendResult(QString left_tuoshuizhou, QString right_tuoshuizhou, QString left_dashuifeng, QString right_dashuifeng, QString theta_t, QString theta_d, QString result);
     void sendNumber(QString str_chilun_num, QString str_luosi_num);
     void finishedthread();
-    void updateButtonState(bool p1, bool p2, bool p3);
+    void updateLabelState(bool p1, bool p2, bool p3);
     void updateStatistics(bool result);
     void send_connectstate(bool state);
 
@@ -105,7 +98,6 @@ private:
     ProcessState currentState = WAIT_P1;
     std::vector<std::string> classes = {"process1", "process2", "process3"};
     std::vector<bool> actionGroup = {false, false, false, false, false}; // "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"; //动作序列
-    std::vector<bool> ignoredActions = {false, false, false, false, false}; // 忽略的动作
     // 用于存储每个类别的计数
     int CHILUN_NUM = 1; // 标准齿轮数
     int LUOSI_NUM = 4; // 标准螺丝数
@@ -114,10 +106,24 @@ private:
     int luosi_flag = 0; // 螺丝标志位
     int cur_keti = 0; // 当前keti计数
     int last_keti = 0; // 上次keti计数
+    // ROI参数
+    bool m_enableROIDetection; // ROI检测启用状态
+    int roi_x;
+    int roi_y;
+    int roi_w;
+    int roi_h;
+    QString roi_color; // ROI颜色
+    float roi_opacity; // ROI透明度
+    int roi_line_width; // ROI矩形线宽
     // 滑动窗口相关变量，用于平滑壳体检测结果
     std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
     const int KETI_WINDOW_SIZE = 3; // 滑动窗口大小
     const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
+    // 动作检测配置
+    bool enableAction = false; // 动作检测启用状态
+    QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
+    bool actionAffectsResult = false; // 动作是否影响结果
+    QVector<int> orderedActions; // 顺序检测的动作索引列表（按用户指定的顺序）
     // 视频录制
     cv::VideoWriter originalVideoWriter;
     cv::VideoWriter resultVideoWriter;

@@ -1,6 +1,7 @@
 ﻿#include <QDir>
 #include "camera.h"
 #include <QDebug>
+#include <QMutex>
 #include <QImage>
 #include <QImageReader>
 #include <QThread>
@@ -64,7 +65,7 @@ Camera::~Camera()
 }
 
 void Camera::initCamera()
-{ // 初始化相机参数
+{
 }
 
 void Camera::run()
@@ -152,7 +153,7 @@ void Camera::run()
         if (lUserID < 0)
         {
             DWORD dwErr = NET_DVR_GetLastError(); // 获取错误码
-            std::cout << "注册失败！错误码: " << dwErr << "\n";
+            std::cout << "注册失败！错误码: " << dwErr << std::endl;
             emit sendQStringtoMain(QString("register fail with camera! Error code: %1").arg(dwErr));
             emit finishedthread();
             return;
@@ -164,41 +165,21 @@ void Camera::run()
         }
 
         if (PlayM4_GetPort(&g_nPort)) // 获取播放库通道号
-        {
             if (PlayM4_SetStreamOpenMode(g_nPort, STREAME_REALTIME)) // 设置流模式
-            {
                 if (PlayM4_OpenStream(g_nPort, NULL, 0, 1024 * 1024)) // 打开流
-                {
                     if (PlayM4_SetDecCallBackExMend(g_nPort, DecCBFun, NULL, 0, nUser))
-                    {
                         if (PlayM4_Play(g_nPort, NULL))
-                        {
                             std::cout << "success to set play mode" << std::endl;
-                        }
                         else
-                        {
                             std::cout << "fail to set play mode" << std::endl;
-                        }
-                    }
                     else
-                    {
                         std::cout << "fail to set dec callback " << std::endl;
-                    }
-                }
                 else
-                {
                     std::cout << "fail to open stream" << std::endl;
-                }
-            }
             else
-            {
                 std::cout << "fail to set stream open mode" << std::endl;
-            }
-        }
         else
-        {
             std::cout << "fail to get port" << std::endl;
-        }
         Sleep(1000); // 显示播放端口打开情况
 
         // 启动预览并设置回调数据流
@@ -218,7 +199,7 @@ void Camera::run()
         if (lRealHandle < 0)
         {
             DWORD dwErr = NET_DVR_GetLastError(); // 获取错误码
-            std::cout << "预览失败！错误码: " << dwErr << "\n";
+            std::cout << "预览失败！错误码: " << dwErr << std::endl;
             emit sendQStringtoMain(QString("RealPlay failed! Error code: %1").arg(dwErr));
             emit finishedthread();
             return;
@@ -239,9 +220,7 @@ void Camera::run()
         {
             QThread::msleep(30); // 延时
             if (Camera_thread_flag)
-            {
                 break;
-            }
             if (useLocalVideo)
             {
                 // 从本地视频读取帧
@@ -274,10 +253,8 @@ void Camera::run()
                 // 从真实相机获取帧
                 QMutexLocker locker(&queueMutex);
                 if (Camera::gImage.empty())
-                {
                     continue;
-                }
-                BGR_image = Camera::gImage.front();
+                BGR_image = Camera::gImage.front().clone();
                 Camera::gImage.pop();
             }
             // 图像处理
@@ -285,8 +262,8 @@ void Camera::run()
             // 处理检测到的工序
             try
             {
+                // 创建原图的副本进行处理，避免后续处理修改原图数据
                 cv::Mat original_image = BGR_image.clone();
-
                 // Run inference 推理
                 // qDebug() << "run inference";
                 const auto objects = yoloV8->detectObjects(BGR_image);
@@ -307,22 +284,15 @@ void Camera::run()
                 QString str_luosi_num = QString::number(luosi_num);
                 emit sendNumber(str_chilun_num, str_luosi_num);
                 // 检查动作是否有做到了（瞬时动作可以消失）
-                std::vector<bool> tempAction = yoloV8->getActionFlag();
-                for (size_t i = 0; i < tempAction.size(); i++)
-                {
-                    // 只有未被忽略的动作才更新
-                    if (tempAction[i] && !ignoredActions[i])
-                        actionGroup[i] = true;
-                }
+                if (enableAction)
+                    processActionDetection(yoloV8->getActionFlag());
                 emit updateActionState(actionGroup);
                 // 将当前帧的壳体检测结果添加到滑动窗口
                 bool current_keti_detected = keti_num > 0;
                 keti_history.push_back(current_keti_detected);
                 // 保持滑动窗口大小为 KETI_WINDOW_SIZE
                 if (keti_history.size() > KETI_WINDOW_SIZE)
-                {
                     keti_history.pop_front();
-                }
                 // 计算滑动窗口中检测到壳体的帧数
                 int keti_count = std::count(keti_history.begin(), keti_history.end(), true);
                 // 根据阈值确定最终的壳体状态
@@ -336,15 +306,30 @@ void Camera::run()
                     if (luosi_num == LUOSI_NUM)
                         luosi_flag = true;
 
-                    cv::putText(BGR_image, chilun_flag ? "chilun OK" : "chilun miss", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    cv::putText(BGR_image, luosi_flag ? "luosi OK" : "luosi miss", cv::Point(10, 240), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
-                    if (chilun_flag && luosi_flag)
+                    cv::putText(BGR_image, chilun_flag ? "chilun OK" : "chilun miss", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, chilun_flag ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255), 2);
+                    cv::putText(BGR_image, luosi_flag ? "luosi OK" : "luosi miss", cv::Point(10, 240), cv::FONT_HERSHEY_SIMPLEX, 1, luosi_flag ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255), 2);
+                    int yPos = 290;
+                    // 显示动作检测状态
+                    if (enableAction && !enabledActions.isEmpty())
                     {
-                        cv::putText(BGR_image, "ALL OK", cv::Point(10, 290), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                        for (int i : enabledActions)
+                        {
+                            if (i < static_cast<int>(actionGroup.size()))
+                            {
+                                cv::putText(BGR_image, QString("A%1:%2").arg(i + 1).arg(actionGroup[i] ? "OK" : "NO").toStdString(),
+                                            cv::Point(10, yPos), cv::FONT_HERSHEY_SIMPLEX, 1,
+                                            actionGroup[i] ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255), 2);
+                                yPos += 30;
+                            }
+                        }
+                    }
+                    if (chilun_flag && luosi_flag && isActionsCompleted())
+                    {
+                        cv::putText(BGR_image, "ALL OK", cv::Point(10, yPos + 20), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                         // setD(2, 1); // 绿灯
                     }
 
-                    emit updateButtonState(chilun_flag, luosi_flag, chilun_flag && luosi_flag); // 齿轮/螺丝/总体
+                    emit updateLabelState(chilun_flag, luosi_flag, chilun_flag && luosi_flag); // 齿轮/螺丝/总体
                 }
 
                 if (cur_keti == 1 && last_keti == 0)
@@ -360,13 +345,20 @@ void Camera::run()
 
                 if (cur_keti == 0 && last_keti == 1)
                 {
-                    bool hasError = !chilun_flag || !luosi_flag;
+                    bool hasError = !chilun_flag || !luosi_flag || !isActionsCompleted();
                     if (hasError)
                     {
                         setD(0, 1); // PLC 报警
 
                         // 保存错误日志
-                        QString logMsg = QString("ERROR | chilun_flag=%1, luosi_flag=%2").arg(chilun_flag ? "OK" : "MISS").arg(luosi_flag ? "OK" : "MISS");
+                        QStringList errorDetails;
+                        if (!chilun_flag)
+                            errorDetails.append("chilun MISS");
+                        if (!luosi_flag)
+                            errorDetails.append("luosi MISS");
+                        if (!isActionsCompleted())
+                            errorDetails.append("actions NG");
+                        QString logMsg = QString("ERROR | %1").arg(errorDetails.join(", "));
                         saveErrorLog(logMsg);
                     }
 
@@ -380,7 +372,7 @@ void Camera::run()
                     chilun_flag = luosi_flag = false;
                     // reset actionGroup and buttonState
                     actionGroup = {false, false, false, false, false};
-                    emit updateButtonState(false, false, false); // 齿轮/螺丝/总体
+                    emit updateLabelState(false, false, false); // 齿轮/螺丝/总体
                     // 复位PLC输出(让PLC自己复位)
                     // setD(0, 0); // 复位报警
                     // setD(2, 0); // 复位绿灯
@@ -430,15 +422,10 @@ void Camera::run()
         emit finishedthread();
         stopRecording(false);
 
-        // 关闭相机
         if (useLocalVideo)
-        {
             emit sendQStringtoMain("Local video closed");
-        }
         else
-        {
             emit sendQStringtoMain("Camera closed");
-        }
     }
     catch (std::exception &e)
     {
@@ -532,6 +519,122 @@ void Camera::getROIParameters()
     settings.endGroup();
 }
 
+void Camera::enableROIDetection(bool enable)
+{
+    m_enableROIDetection = enable;
+}
+
+void Camera::setRoiX(int x)
+{
+    roi_x = x;
+}
+
+void Camera::setRoiY(int y)
+{
+    roi_y = y;
+}
+
+void Camera::setRoiW(int w)
+{
+    roi_w = w;
+}
+
+void Camera::setRoiH(int h)
+{
+    roi_h = h;
+}
+
+void Camera::setRoiColor(QString color)
+{
+    roi_color = color;
+}
+
+void Camera::setRoiOpacity(float opacity)
+{
+    roi_opacity = opacity;
+}
+
+void Camera::setRoiLineWidth(int lineWidth)
+{
+    roi_line_width = lineWidth;
+}
+
+void Camera::processActionDetection(const std::vector<bool> &actions)
+{
+    if (!enabledActions.isEmpty() && !orderedActions.isEmpty())
+    {
+        // ===== 顺序检测模式 =====
+        // 收集所有检测到的动作
+        QVector<int> detected;
+        for (int i = 0; i < static_cast<int>(actions.size()); i++)
+        {
+            if (actions[i])
+                detected.append(i);
+        }
+
+        if (!detected.isEmpty())
+        {
+            // 1. 处理顺序列表中的动作（取最靠前的位置）
+            int bestPos = -1, bestAction = -1;
+            for (int action : detected)
+            {
+                int pos = orderedActions.indexOf(action);
+                if (pos >= 0 && (bestPos == -1 || pos < bestPos))
+                {
+                    bestPos = pos;
+                    bestAction = action;
+                }
+            }
+            if (bestAction >= 0 && (bestPos == 0 || actionGroup[orderedActions[bestPos - 1]]))
+            {
+                actionGroup[bestAction] = true;
+            }
+
+            // 2. 处理其他启用的动作（不在顺序列表中，无顺序要求）
+            for (int action : detected)
+            {
+                if (!orderedActions.contains(action) && enabledActions.contains(action))
+                {
+                    actionGroup[action] = true;
+                }
+            }
+        }
+    }
+    else
+    {
+        // ===== 非顺序检测模式 =====
+        // 检测所有启用的动作
+        for (int i : enabledActions)
+        {
+            if (i < static_cast<int>(actions.size()) && actions[i])
+            {
+                actionGroup[i] = true;
+            }
+        }
+    }
+}
+
+void Camera::setActionConfig(bool enable, const QVector<int> &enabled, bool affectsResult, const QVector<int> &ordered)
+{
+    enableAction = enable;
+    enabledActions = enabled;
+    actionAffectsResult = affectsResult;
+    orderedActions = ordered;
+}
+
+bool Camera::isActionsCompleted()
+{
+    if (enableAction && !enabledActions.isEmpty() && actionAffectsResult)
+    {
+        for (int i : enabledActions)
+        {
+            if (i < static_cast<int>(actionGroup.size()) && !actionGroup[i])
+                return false;
+        }
+    }
+    return true;
+}
+
 void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame)
 {
     if (isRecording)
@@ -610,32 +713,48 @@ void Camera::saveErrorLog(const QString &message)
     if (file.open(QIODevice::Append | QIODevice::Text))
     {
         QTextStream out(&file);
-
         QString ts = currentVideoTimestamp;
         QString formattedTime = ts.mid(0, 4) + "-" + ts.mid(4, 2) + "-" + ts.mid(6, 2) + " " + ts.mid(8, 2) + ":" + ts.mid(10, 2) + ":" + ts.mid(12, 2) + "." + ts.mid(15, 3);
-
         out << formattedTime << " | " << message << "\n";
         file.close();
     }
 }
 
-void Camera::stop_camera()
-{
-    Camera_thread_flag = true;
-
-    // 释放 Modbus 资源
-    if (ctx != NULL)
+void Camera::setD(int address, int value)
+{ // 设置16位D
+    if (ctx == NULL)
     {
-        modbus_close(ctx);
-        modbus_free(ctx);
-        ctx = NULL;
+        emit sendQStringtoMain("Modbus context is NULL, skip write");
+        return;
+    }
+    if (modbus_write_register(ctx, address, value) == -1)
+    {
+        emit sendQStringtoMain("Failed to write register: " + QString::number(address));
+    }
+    else
+    {
+        emit sendQStringtoMain("setD address: " + QString::number(address) + ", value is: " + QString::number(value));
     }
 }
 
-void Camera::closeDevice()
-{ // 关闭设备
-    qDebug("Closed");
-    emit finished();
+void Camera::set32D(int address, int32_t value)
+{ // 设置32位D
+    if (ctx == NULL)
+    {
+        emit sendQStringtoMain("Modbus context is NULL, skip write");
+        return;
+    }
+    // 确保value在int32_t的范围内
+    if (value < INT32_MIN || value > INT32_MAX)
+    {
+        std::cerr << "Value out of range for int32_t" << std::endl;
+    }
+
+    // 将32位整数分割为两个16位部分
+    uint16_t high = static_cast<uint16_t>((value >> 16) & 0xFFFF); // 取高16位
+    uint16_t low = static_cast<uint16_t>(value & 0xFFFF);          // 取低16位
+    rc = modbus_write_register(ctx, address, low);
+    rc = modbus_write_register(ctx, address + 1, high);
 }
 
 QImage Camera::cvMat2QImage(const cv::Mat &mat)
@@ -691,91 +810,21 @@ QImage Camera::cvMat2QImage(const cv::Mat &mat)
     }
 }
 
-void Camera::set32D(int address, int32_t value)
-{ // 设置32位D
-    if (ctx == NULL)
-    {
-        emit sendQStringtoMain("Modbus context is NULL, skip write");
-        return;
-    }
-    // 确保value在int32_t的范围内
-    if (value < INT32_MIN || value > INT32_MAX)
-    {
-        std::cerr << "Value out of range for int32_t" << std::endl;
-    }
+void Camera::stop_camera()
+{
+    Camera_thread_flag = true;
 
-    // 将32位整数分割为两个16位部分
-    uint16_t high = static_cast<uint16_t>((value >> 16) & 0xFFFF); // 取高16位
-    uint16_t low = static_cast<uint16_t>(value & 0xFFFF);          // 取低16位
-    rc = modbus_write_register(ctx, address, low);
-    rc = modbus_write_register(ctx, address + 1, high);
-}
-
-void Camera::setD(int address, int value)
-{ // 设置16位D
-    if (ctx == NULL)
+    // 释放 Modbus 资源
+    if (ctx != NULL)
     {
-        emit sendQStringtoMain("Modbus context is NULL, skip write");
-        return;
-    }
-    if (modbus_write_register(ctx, address, value) == -1)
-    {
-        emit sendQStringtoMain("Failed to write register: " + QString::number(address));
-    }
-    else
-    {
-        emit sendQStringtoMain("setD address: " + QString::number(address) + ", value is: " + QString::number(value));
+        modbus_close(ctx);
+        modbus_free(ctx);
+        ctx = NULL;
     }
 }
 
-void Camera::igonoreAction(int index, bool ignore)
-{ // 忽略某个动作
-    if (index < 0 || index >= static_cast<int>(actionGroup.size()))
-        return;
-    ignoredActions[index] = ignore;
-    if (ignore)
-    {
-        actionGroup[index] = false;
-        emit updateActionState(actionGroup);
-    }
-}
-
-void Camera::enableROIDetection(bool enable)
+void Camera::closeDevice()
 {
-    m_enableROIDetection = enable;
-}
-
-void Camera::setRoiX(int x)
-{
-    roi_x = x;
-}
-
-void Camera::setRoiY(int y)
-{
-    roi_y = y;
-}
-
-void Camera::setRoiW(int w)
-{
-    roi_w = w;
-}
-
-void Camera::setRoiH(int h)
-{
-    roi_h = h;
-}
-
-void Camera::setRoiColor(QString color)
-{
-    roi_color = color;
-}
-
-void Camera::setRoiOpacity(float opacity)
-{
-    roi_opacity = opacity;
-}
-
-void Camera::setRoiLineWidth(int lineWidth)
-{
-    roi_line_width = lineWidth;
+    qDebug("Closed");
+    emit finished();
 }

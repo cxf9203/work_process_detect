@@ -6,7 +6,9 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QMediaPlayer>
+#include <QCheckBox>
 #include <QLabel>
+#include <QComboBox>
 #include "camera.h"
 
 QT_BEGIN_NAMESPACE
@@ -24,10 +26,17 @@ public:
     ~MainWindow();
 
 public slots:
+    void modifyActionParameter(); // 修改动作参数
+    QVector<int> getEnabledActions(); // 获取启用的动作
+    QVector<int> getOrderedActions(); // 获取顺序检测的动作
+    void updateOrderStatusLabels(QVector<int> &orderedActions); // 更新顺序状态标签
+    void updateActionConfig(); // 更新动作配置
+    void loadActionConfig(); // 加载动作配置
+    void initActionControls(); // 初始化动作控件
     void loadROIParametersToUI();
     void receiveslotQImg(QImage img);
     void receivefinish();
-    void updateButtonState(bool p1Detected, bool p2Detected, bool p3Detected);
+    void updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected);
     void updateStatistics(bool result);
     void loadHistoryList();
     void showEmptyLabel();
@@ -55,8 +64,7 @@ private slots:
     void on_btn_history_rst_clicked();
     void on_btn_today_rst_clicked();
     void on_btn_history_clicked();
-    void on_btn_setRoi_clicked();
-    void on_checkBox_toggled(bool checked);
+    void on_btn_settings_clicked();
     void on_cb_enableROI_toggled(bool value);
     void on_spinBox_roi_x_valueChanged(int value);
     void on_spinBox_roi_y_valueChanged(int value);
@@ -79,6 +87,7 @@ private:
     long long int today_good_number;
     long long int today_number;
     double today_good_rates;
+    QVector<QPair<QString, QCheckBox *>> actionItems;
     // 历史记录窗口
     QWidget *historyWindow = nullptr;
     QWidget *listContainer = nullptr;
@@ -100,6 +109,7 @@ private:
     QMediaPlayer *player = nullptr;
     QLabel *timeLabel = nullptr;
     QSlider *videoSlider = nullptr;
+    QComboBox *speedCombo = nullptr;
     bool isSliderPressed = false;
 };
 #endif // MAINWINDOW_H

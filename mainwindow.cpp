@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建相机1
     THREAD1_cam1 = new QThread();
     cam = new Camera;
+
+    initActionControls();
     loadROIParametersToUI();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
@@ -35,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam, &Camera::finished, THREAD1_cam1, &QThread::quit); // 停止线程，线程那边触发会停止（finished），可以再次用start启动
     // connect(cam, &Camera::finished, cam, &QObject::deleteLater); // 在空闲时间删除线程对象，执行后将不能在用start方法启动线程
     connect(cam, &Camera::send_connectstate, this, &MainWindow::receive_connectstate, Qt::QueuedConnection);
-    connect(cam, &Camera::updateButtonState, this, &MainWindow::updateButtonState, Qt::QueuedConnection);
+    connect(cam, &Camera::updateLabelState, this, &MainWindow::updateLabelState, Qt::QueuedConnection);
     connect(cam, &Camera::updateStatistics, this, &MainWindow::updateStatistics, Qt::QueuedConnection);
     connect(cam, &Camera::sendQImgToAutoMain, this, &MainWindow::receiveslotQImg, Qt::QueuedConnection);
     connect(cam, &Camera::updateActionState, this, &MainWindow::getActionState, Qt::QueuedConnection);
@@ -86,6 +88,227 @@ MainWindow::~MainWindow()
 {
     cam->closeDevice();
     delete ui;
+}
+
+void MainWindow::modifyActionParameter()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("Action");
+    settings.setValue("EnableAction", ui->checkBox_enableAction->isChecked());
+    settings.setValue("ActionAffectsResult", ui->checkBox_actionAffectsResult->isChecked());
+    settings.setValue("EnableOrder", ui->checkBox_enableOrder->isChecked());
+    // 保存每个动作的勾选状态
+    for (int i = 0; i < actionItems.size(); i++)
+    {
+        settings.setValue(QString("Action%1").arg(i + 1), actionItems[i].second->isChecked());
+    }
+    // 保存顺序列表
+    QStringList orderList;
+    for (int i = 0; i < ui->listWidget_order->count(); i++)
+    {
+        orderList.append(ui->listWidget_order->item(i)->text());
+    }
+    settings.setValue("OrderList", orderList);
+    settings.endGroup();
+}
+
+QVector<int> MainWindow::getEnabledActions()
+{
+    QVector<int> enabledActions;
+    if (!ui->checkBox_enableAction->isChecked())
+        return enabledActions;
+    for (int i = 0; i < actionItems.size(); i++)
+    {
+        if (actionItems[i].second->isChecked())
+        {
+            enabledActions.append(i);
+        }
+    }
+    return enabledActions;
+}
+
+QVector<int> MainWindow::getOrderedActions()
+{
+    QVector<int> orderedActions;
+    if (!ui->checkBox_enableAction->isChecked() || !ui->checkBox_enableOrder->isChecked())
+        return orderedActions;
+    for (int i = 0; i < ui->listWidget_order->count(); i++)
+    {
+        for (int j = 0; j < actionItems.size(); j++)
+        {
+            if (actionItems[j].first == ui->listWidget_order->item(i)->text())
+            {
+                orderedActions.append(j);
+                break;
+            }
+        }
+    }
+    return orderedActions;
+}
+
+void MainWindow::updateOrderStatusLabels(QVector<int> &orderedActions)
+{
+    QVector<QLabel *> statusLabels = {
+        ui->label_OrderStatus_1,
+        ui->label_OrderStatus_2,
+        ui->label_OrderStatus_3,
+        ui->label_OrderStatus_4,
+        ui->label_OrderStatus_5};
+    for (int i = 0; i < statusLabels.size(); i++)
+    {
+        int orderIndex = orderedActions.indexOf(i);
+        bool isInOrder = orderIndex >= 0;
+        statusLabels[i]->setText(isInOrder ? QString::number(orderIndex + 1) : "x");
+        statusLabels[i]->setStyleSheet(QString("QLabel {"
+                                               "    background-color: #1e1e1e;"
+                                               "    color: %1;"
+                                               "    border: 1px solid %2;"
+                                               "    border-radius: 4px;"
+                                               "    padding: 8px;"
+                                               "}")
+                                           .arg(isInOrder ? "#00ff00" : "#888888")
+                                           .arg(isInOrder ? "#2e7d32" : "#333"));
+    }
+}
+
+void MainWindow::updateActionConfig()
+{
+    modifyActionParameter();
+    QVector<int> orderedActions = getOrderedActions();
+    updateOrderStatusLabels(orderedActions);
+    cam->setActionConfig(ui->checkBox_enableAction->isChecked(), getEnabledActions(), ui->checkBox_actionAffectsResult->isChecked(), orderedActions);
+}
+
+void MainWindow::loadActionConfig()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("Action");
+    bool enableAction = settings.value("EnableAction").toBool();
+    bool enableOrder = settings.value("EnableOrder").toBool();
+    // 更新控件状态
+    ui->checkBox_enableAction->setChecked(enableAction);
+    // 加载每个动作的勾选状态
+    for (int i = 0; i < actionItems.size(); i++)
+    {
+        actionItems[i].second->setChecked(settings.value(QString("Action%1").arg(i + 1)).toBool());
+        actionItems[i].second->setEnabled(enableAction);
+    }
+    ui->checkBox_actionAffectsResult->setChecked(settings.value("ActionAffectsResult").toBool());
+    ui->checkBox_actionAffectsResult->setEnabled(enableAction);
+    ui->checkBox_enableOrder->setChecked(enableOrder);
+    ui->checkBox_enableOrder->setEnabled(enableAction);
+    bool orderEnabled = enableAction && enableOrder;
+    ui->listWidget_order->setEnabled(orderEnabled);
+    ui->btn_addToOrder->setEnabled(orderEnabled);
+    ui->btn_removeFromOrder->setEnabled(orderEnabled);
+    ui->btn_clearOrder->setEnabled(orderEnabled);
+    // 加载顺序列表
+    ui->listWidget_order->clear();
+    ui->listWidget_order->addItems(settings.value("OrderList").toStringList());
+    settings.endGroup();
+
+    updateActionConfig();
+}
+
+void MainWindow::initActionControls()
+{
+    // 动作配置
+    actionItems = {
+        {QString::fromLocal8Bit("1.左上螺丝"), ui->checkBox_action1},
+        {QString::fromLocal8Bit("2.右上螺丝"), ui->checkBox_action2},
+        {QString::fromLocal8Bit("3.左下螺丝"), ui->checkBox_action3},
+        {QString::fromLocal8Bit("4.右下螺丝"), ui->checkBox_action4},
+        {QString::fromLocal8Bit("5.放齿轮"), ui->checkBox_action5}};
+
+    // 加载动作配置
+    loadActionConfig();
+
+    // 启用动作检测
+    connect(ui->checkBox_enableAction, &QCheckBox::toggled, [this](bool checked)
+    {
+        // 启用/禁用动作复选框
+        for (const auto& pair : actionItems) pair.second->setEnabled(checked);
+        ui->checkBox_actionAffectsResult->setEnabled(checked);
+        ui->checkBox_enableOrder->setEnabled(checked);
+        bool orderChecked = checked && ui->checkBox_enableOrder->isChecked();
+        ui->listWidget_order->setEnabled(orderChecked);
+        ui->btn_addToOrder->setEnabled(orderChecked);
+        ui->btn_removeFromOrder->setEnabled(orderChecked);
+        ui->btn_clearOrder->setEnabled(orderChecked);
+        updateActionConfig();
+    });
+
+    // 取消勾选时自动从顺序列表移除
+    for (const auto &pair : actionItems)
+    {
+        connect(pair.second, &QCheckBox::toggled, [this, pair](bool checked)
+        {
+            if (!checked) {
+                // 取消勾选时，从顺序列表中移除
+                for (int j = 0; j < ui->listWidget_order->count(); j++) {
+                    if (ui->listWidget_order->item(j)->text() == pair.first) {
+                        delete ui->listWidget_order->takeItem(j);
+                        break;
+                    }
+                }
+            }
+            updateActionConfig();
+        });
+    }
+
+    // 动作检测影响结果
+    connect(ui->checkBox_actionAffectsResult, &QCheckBox::toggled, [this](bool checked) { updateActionConfig(); });
+
+    // 启用顺序检测
+    connect(ui->checkBox_enableOrder, &QCheckBox::toggled, [this](bool checked)
+    {
+        ui->listWidget_order->setEnabled(checked);
+        ui->btn_addToOrder->setEnabled(checked);
+        ui->btn_removeFromOrder->setEnabled(checked);
+        ui->btn_clearOrder->setEnabled(checked);
+        updateActionConfig();
+    });
+
+    // 添加选中到顺序列表
+    connect(ui->btn_addToOrder, &QPushButton::clicked, [this]()
+    {
+        // 收集所有勾选的动作
+        QStringList selectedActions;
+        for (const auto& pair : actionItems) {
+            if (pair.second->isChecked()) selectedActions.append(pair.first);
+        }
+        if (selectedActions.isEmpty()) {
+            QMessageBox::information(this, QString::fromLocal8Bit("提示"), QString::fromLocal8Bit("请先勾选需要检测的动作"));
+            return;
+        }
+        // 添加到顺序列表（去重）
+        for (const QString& action : selectedActions) {
+            if (ui->listWidget_order->findItems(action, Qt::MatchExactly).isEmpty()) {
+                ui->listWidget_order->addItem(action);
+            }
+        }
+        updateActionConfig();
+    });
+
+    // 移除选中的动作
+    connect(ui->btn_removeFromOrder, &QPushButton::clicked, [this]()
+    {
+        int row = ui->listWidget_order->currentRow();
+        if (row >= 0) {
+            delete ui->listWidget_order->takeItem(row);
+            updateActionConfig();
+        }
+    });
+
+    // 清空顺序列表
+    connect(ui->btn_clearOrder, &QPushButton::clicked, [this]()
+    {
+        ui->listWidget_order->clear();
+        updateActionConfig();
+    });
+
+    // 拖拽排序时更新
+    connect(ui->listWidget_order->model(), &QAbstractItemModel::rowsMoved, [this]() { updateActionConfig(); });
 }
 
 void MainWindow::loadROIParametersToUI()
@@ -154,16 +377,21 @@ void MainWindow::receivefinish()
     cam->closeDevice(); // 关闭相机线程
 }
 
-void MainWindow::updateButtonState(bool p1Detected, bool p2Detected, bool p3Detected)
+void MainWindow::updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected)
 {
-    QPushButton *buttons[] = {ui->btn_proc1, ui->btn_proc2, ui->btn_proc3};
+    QLabel *labels[] = {ui->lb_proc1, ui->lb_proc2, ui->lb_proc3};
     bool states[] = {p1Detected, p2Detected, p3Detected};
 
     for (int i = 0; i < 3; ++i)
     {
-        buttons[i]->setEnabled(states[i]);
         // 如果ok显示绿色，ng显示红色
-        buttons[i]->setStyleSheet(states[i] ? "background-color: green;" : "background-color: red;");
+        labels[i]->setStyleSheet(QString("QLabel {"
+                                         "    background-color: %1;"
+                                         "    color: #ffffff;"
+                                         "    border: 1px solid #555;"
+                                         "    border-radius: 6px;"
+                                         "}")
+                                     .arg(states[i] ? "#2e7d32" : "#c62828"));
     }
 }
 
@@ -247,10 +475,9 @@ void MainWindow::on_btn_history_clicked()
     // 创建独立窗口
     historyWindow = new QWidget(this);
     historyWindow->setObjectName("historyWindow");
-    historyWindow->setMinimumSize(700, height());
-    historyWindow->setStyleSheet(
-        "QWidget { background-color: #1e1e1e; }"
-        "QWidget#historyWindow { border: 2px solid #444; border-radius: 8px; }");
+    historyWindow->setMinimumSize(680, height());
+    historyWindow->setStyleSheet("QWidget { background-color: #1e1e1e; }"
+                                 "QWidget#historyWindow { border: 2px solid #444; border-radius: 8px; }");
     historyWindow->setAttribute(Qt::WA_DeleteOnClose);
 
     // 设置窗口位置
@@ -279,6 +506,7 @@ void MainWindow::on_btn_history_clicked()
         videoTitleLabel = nullptr;
         timeLabel = nullptr;
         videoSlider = nullptr;
+        speedCombo = nullptr;
     });
 
     QVBoxLayout *mainLayout = new QVBoxLayout(historyWindow);
@@ -310,11 +538,10 @@ void MainWindow::on_btn_history_clicked()
     auto createBtn = [&](const QString &text, std::function<void()> onClick)
     {
         QPushButton *btn = new QPushButton(text, listContainer);
-        btn->setStyleSheet(
-            "QPushButton { background-color: #424242; color: white; border-radius: 4px; padding: 4px 16px; }"
-            "QPushButton:hover { background-color: #616161; }"
-            "QPushButton:pressed { background-color: #1a1a1a; }"
-            "QPushButton:disabled { background-color: #2d2d2d; color: #666; }");
+        btn->setStyleSheet("QPushButton { background-color: #424242; color: white; border-radius: 4px; padding: 4px 16px; }"
+                           "QPushButton:hover { background-color: #616161; }"
+                           "QPushButton:pressed { background-color: #1a1a1a; }"
+                           "QPushButton:disabled { background-color: #2d2d2d; color: #666; }");
         connect(btn, &QPushButton::clicked, onClick);
         return btn;
     };
@@ -341,15 +568,13 @@ void MainWindow::on_btn_history_clicked()
 
     jumpLineEdit = new QLineEdit(listContainer);
     jumpLineEdit->setPlaceholderText(QString::fromLocal8Bit("页数"));
-    jumpLineEdit->setStyleSheet(
-        "QLineEdit { background-color: #333; color: white; border: 1px solid #555; border-radius: 3px; padding: 3px 5px; width: 60px; }"
-        "QLineEdit:focus { border: 1px solid #2e7d32; }");
+    jumpLineEdit->setStyleSheet("QLineEdit { background-color: #333; color: white; border: 1px solid #555; border-radius: 3px; padding: 3px 5px; width: 60px; }"
+                                "QLineEdit:focus { border: 1px solid #2e7d32; }");
 
     QPushButton *jumpBtn = new QPushButton(QString::fromLocal8Bit("跳转"), listContainer);
-    jumpBtn->setStyleSheet(
-        "QPushButton { background-color: #2e7d32; color: white; border-radius: 3px; padding: 3px 6px; width: 35px; }"
-        "QPushButton:hover { background-color: #388e3c; }"
-        "QPushButton:pressed { background-color: #1b5e20; }");
+    jumpBtn->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 3px; padding: 3px 6px; width: 35px; }"
+                           "QPushButton:hover { background-color: #388e3c; }"
+                           "QPushButton:pressed { background-color: #1b5e20; }");
     connect(jumpBtn, &QPushButton::clicked, [this]()
     {
         if (!jumpLineEdit) return;
@@ -404,15 +629,14 @@ void MainWindow::on_btn_history_clicked()
     // 视频标题
     videoTitleLabel = new QLabel(videoContainer);
     videoTitleLabel->setFixedHeight(40);
-    videoTitleLabel->setStyleSheet(
-        "QLabel {"
-        "    color: #00ff00;"
-        "    font-size: 14px;"
-        "    font-weight: bold;"
-        "    padding: 8px 12px;"
-        "    background-color: #2d2d2d;"
-        "    border-radius: 4px;"
-        "}");
+    videoTitleLabel->setStyleSheet("QLabel {"
+                                   "    color: #00ff00;"
+                                   "    font-size: 14px;"
+                                   "    font-weight: bold;"
+                                   "    padding: 8px 12px;"
+                                   "    background-color: #2d2d2d;"
+                                   "    border-radius: 4px;"
+                                   "}");
     videoTitleLabel->setAlignment(Qt::AlignCenter);
     videoTitleLabel->setText(QString::fromLocal8Bit("请选择视频查看"));
     videoLayout->addWidget(videoTitleLabel);
@@ -442,19 +666,55 @@ void MainWindow::on_btn_history_clicked()
     videoSlider->setRange(0, 1000);
     videoSlider->setValue(0);
     videoSlider->setPageStep(0);
-    videoSlider->setStyleSheet(
-        "QSlider::groove:horizontal { height: 6px; background: #555; border-radius: 3px; }"
-        "QSlider::handle:horizontal { background: #2e7d32; width: 14px; margin: -4px 0; border-radius: 7px; }"
-        "QSlider::handle:horizontal:hover { background: #388e3c; }"
-        "QSlider::sub-page:horizontal { background: #2e7d32; border-radius: 3px; }");
+    videoSlider->setStyleSheet("QSlider::groove:horizontal { height: 6px; background: #555; border-radius: 3px; }"
+                               "QSlider::handle:horizontal { background: #2e7d32; width: 14px; margin: -4px 0; border-radius: 7px; }"
+                               "QSlider::handle:horizontal:hover { background: #388e3c; }"
+                               "QSlider::sub-page:horizontal { background: #2e7d32; border-radius: 3px; }");
 
     connect(player, &QMediaPlayer::positionChanged, this, &MainWindow::updateVideoPosition);
     connect(videoSlider, &QSlider::sliderPressed, this, &MainWindow::onSliderPressed);
     connect(videoSlider, &QSlider::sliderReleased, this, &MainWindow::onSliderReleased);
     connect(videoSlider, &QSlider::sliderMoved, this, &MainWindow::onSliderMoved);
 
+    // 速度控制
+    QLabel *speedLabel = new QLabel(QString::fromLocal8Bit("速度:"), videoContainer);
+    speedLabel->setStyleSheet("color: #ffffff; font-size: 12px;");
+
+    speedCombo = new QComboBox(videoContainer);
+    // 速度列表 0.1 ~ 2.0 步进 0.1
+    for (int i = 1; i <= 20; i++)
+    {
+        qreal speed = i / 10.0;
+        speedCombo->addItem(QString::number(speed, 'f', 1) + "x", speed);
+    }
+    int index = speedCombo->findData(0.5);
+    speedCombo->setCurrentIndex(index >= 0 ? index : 0);
+    speedCombo->setStyleSheet("QComboBox {"
+                              "    background-color: #333;"
+                              "    color: #ffffff;"
+                              "    border: 1px solid #555;"
+                              "    border-radius: 4px;"
+                              "    padding: 4px 8px;"
+                              "    min-width: 60px;"
+                              "}"
+                              "QComboBox:hover { border: 1px solid #777; }"
+                              "QComboBox::drop-down { border: none; }"
+                              "QComboBox QAbstractItemView {"
+                              "    background-color: #333;"
+                              "    color: #ffffff;"
+                              "    selection-background-color: #2e7d32;"
+                              "}");
+
+    connect(speedCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index)
+    {
+        if (player)
+            player->setPlaybackRate(speedCombo->itemData(index).toReal());
+    });
+
     progressLayout->addWidget(timeLabel);
     progressLayout->addWidget(videoSlider, 1);
+    progressLayout->addWidget(speedLabel);
+    progressLayout->addWidget(speedCombo);
     videoLayout->addLayout(progressLayout);
 
     // 视频控制栏
@@ -665,11 +925,6 @@ void MainWindow::showVideo(int recordNumber, QString type, QString logInfo, QStr
             player->setMedia(QUrl::fromLocalFile(path));
             player->pause();
         }
-        // 重置进度条
-        if (timeLabel)
-            timeLabel->setText("00:00 / 00:00");
-        if (videoSlider)
-            videoSlider->setValue(0);
     }
 }
 
@@ -744,7 +999,21 @@ void MainWindow::showHistoryList()
     {
         videoContainer->setVisible(false);
         if (player)
+        {
             player->stop();
+            player->setMedia(QUrl()); // 清空媒体
+        }
+        // 重置进度条
+        if (timeLabel)
+            timeLabel->setText("00:00 / 00:00");
+        if (videoSlider)
+            videoSlider->setValue(0);
+        // 重置速度
+        if (speedCombo)
+        {
+            int index = speedCombo->findData(0.5);
+            speedCombo->setCurrentIndex(index >= 0 ? index : 0);
+        }
     }
 }
 
@@ -752,11 +1021,17 @@ void MainWindow::receive_connectstate(bool state)
 {
     ui->btn_connectPLC->setEnabled(!state);
     ui->btn_disconnectPLC->setEnabled(state);
-    ui->btn_proc4->setStyleSheet(state ? "background-color: green; color: white;" : "background-color: red; color: white;");
-    ui->btn_proc4->setText(QString::fromLocal8Bit(state ? "已连接" : "未连接"));
+    ui->lb_proc4->setStyleSheet(QString("QLabel {"
+                                        "    background-color: %1;"
+                                        "    color: #ffffff;"
+                                        "    border: 1px solid #555;"
+                                        "    border-radius: 6px;"
+                                        "}")
+                                    .arg(state ? "#2e7d32" : "#c62828"));
+    ui->lb_proc4->setText(QString::fromLocal8Bit(state ? "已连接" : "未连接"));
 }
 
-void MainWindow::on_btn_setRoi_clicked()
+void MainWindow::on_btn_settings_clicked()
 {
     if (ui->stackedWidget->currentIndex() != 1)
         ui->stackedWidget->setCurrentIndex(1);
@@ -767,17 +1042,24 @@ void MainWindow::on_btn_setRoi_clicked()
 void MainWindow::getActionState(std::vector<bool> actionState)
 {
     QLabel *labels[] = {ui->label_4, ui->label_5, ui->label_6, ui->label_7, ui->label_8};
-    // 循环更新颜色
+    QVector<int> enabledActions = getEnabledActions();
+    bool enableAction = ui->checkBox_enableAction->isChecked();
     for (int i = 0; i < 5; i++)
     {
-        labels[i]->setStyleSheet(actionState[i] ? "background-color: green;" : "background-color: red;");
+        QString color;
+        if (!enableAction || !enabledActions.contains(i))
+            color = "#424242"; // 未启用
+        else if (actionState[i])
+            color = "#2e7d32"; // 已完成
+        else
+            color = "#c62828"; // 未完成
+        labels[i]->setStyleSheet(QString("QLabel {"
+                                         "    background-color: %1;"
+                                         "    color: #ffffff;"
+                                         "    border-radius: 5px;"
+                                         "}")
+                                     .arg(color));
     }
-}
-
-void MainWindow::on_checkBox_toggled(bool checked)
-{
-    qDebug() << "current state is" << checked;
-    cam->igonoreAction(4, checked);
 }
 
 void MainWindow::receiveQStringtoMain(QString s)
