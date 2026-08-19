@@ -1050,7 +1050,7 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>876</height>
+           <height>920</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
@@ -1718,6 +1718,25 @@ QPushButton:hover {
             </widget>
            </item>
           </layout>
+         </widget>
+         <widget class="QCheckBox" name="checkBox_saveAllVideos">
+          <property name="geometry">
+           <rect>
+            <x>50</x>
+            <y>846</y>
+            <width>251</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>保存全部视频</string>
+          </property>
          </widget>
         </widget>
        </widget>

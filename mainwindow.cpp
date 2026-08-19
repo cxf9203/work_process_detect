@@ -1,5 +1,5 @@
 ﻿#include "mainwindow.h"
-#include "./ui_mainwindow.h"
+#include "ui_mainwindow.h"
 #include <QDebug>
 #include <iostream>
 #include <QColorDialog>
@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initActionControls();
     loadROIParametersToUI();
+    initSaveAllVideosControl();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
@@ -342,6 +343,24 @@ void MainWindow::loadROIParametersToUI()
     // 初始化线宽滑块
     ui->slider_line_width->setValue(roi_line_width);
     ui->label_line_width_display->setText(QString("%1").arg(roi_line_width));
+
+    // 更新 Camera 参数
+    cam->enableROIDetection(enableROI);
+    cam->setRoiX(roi_x);
+    cam->setRoiY(roi_y);
+    cam->setRoiW(roi_w);
+    cam->setRoiH(roi_h);
+    cam->setRoiColor(roiColorStr);
+    cam->setRoiOpacity(roi_opacity / 100.0f);
+    cam->setRoiLineWidth(roi_line_width);
+}
+
+void MainWindow::initSaveAllVideosControl()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    bool saveAllVideos = settings.value("saveAllVideos").toBool();
+    ui->checkBox_saveAllVideos->setChecked(saveAllVideos);
+    cam->setSaveAllVideos(saveAllVideos);
 }
 
 void MainWindow::on_start_clicked()
@@ -1155,4 +1174,11 @@ void MainWindow::on_slider_line_width_valueChanged(int value)
     modifyROIParameter("RoiLineWidth", value);
     ui->label_line_width_display->setText(QString("%1").arg(value));
     cam->setRoiLineWidth(value);
+}
+
+void MainWindow::on_checkBox_saveAllVideos_toggled(bool value)
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.setValue("saveAllVideos", value);
+    cam->setSaveAllVideos(value);
 }

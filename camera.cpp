@@ -102,8 +102,6 @@ void Camera::run()
         emit finishedthread();
         return;
     }
-    // 获取参数
-    getROIParameters();
 
     bool useLocalVideo = settings.value("useLocalVideo").toBool();
     QString videoPath = settings.value("videoPath").toString();
@@ -502,23 +500,6 @@ void Camera::disconnectPLC()
     emit send_connectstate(false);
 }
 
-void Camera::getROIParameters()
-{
-    // 从 INI 文件读取 ROI 配置
-    QSettings settings(iniFilePath, QSettings::IniFormat);
-    settings.beginGroup("ROI");
-    // 读取 ROI 参数
-    m_enableROIDetection = settings.value("EnableROI").toBool();
-    roi_x = settings.value("RoiX").toInt();
-    roi_y = settings.value("RoiY").toInt();
-    roi_w = settings.value("RoiW").toInt();
-    roi_h = settings.value("RoiH").toInt();
-    roi_color = settings.value("RoiColor").toString();
-    roi_opacity = settings.value("RoiOpacity").toInt() / 100.0;
-    roi_line_width = settings.value("RoiLineWidth").toInt();
-    settings.endGroup();
-}
-
 void Camera::enableROIDetection(bool enable)
 {
     m_enableROIDetection = enable;
@@ -635,6 +616,11 @@ bool Camera::isActionsCompleted()
     return true;
 }
 
+void Camera::setSaveAllVideos(bool enable)
+{
+    saveAllVideos = enable;
+}
+
 void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame)
 {
     if (isRecording)
@@ -679,6 +665,22 @@ void Camera::stopRecording(bool save)
         resultVideoWriter.release();
 
     QString tempDir = baseVideoPath + "temp/";
+    QString originalPath = tempDir + "original.avi";
+    QString resultPath = tempDir + "result.avi";
+
+    if (saveAllVideos)
+    {
+        QString saveDir = baseVideoPath + "/all_videos/";
+        QString originalAllDir = saveDir + "/original_all/";
+        QString resultAllDir = saveDir + "/result_all/";
+        QDir(originalAllDir).mkpath(".");
+        QDir(resultAllDir).mkpath(".");
+
+        QFile::copy(originalPath, originalAllDir + currentVideoTimestamp + ".avi");
+        QFile::copy(resultPath, resultAllDir + currentVideoTimestamp + ".avi");
+
+        emit sendQStringtoMain("All videos saved: " + currentVideoTimestamp);
+    }
 
     if (save)
     {
@@ -688,15 +690,8 @@ void Camera::stopRecording(bool save)
         QDir(originalErrorDir).mkpath(".");
         QDir(resultErrorDir).mkpath(".");
 
-        // 原图视频
-        QString originalPath = tempDir + "original.avi";
-        QString finalOriginalPath = originalErrorDir + currentVideoTimestamp + ".avi";
-        QFile::rename(originalPath, finalOriginalPath);
-
-        // 结果图视频
-        QString resultPath = tempDir + "result.avi";
-        QString finalResultPath = resultErrorDir + currentVideoTimestamp + ".avi";
-        QFile::rename(resultPath, finalResultPath);
+        QFile::rename(originalPath, originalErrorDir + currentVideoTimestamp + ".avi");
+        QFile::rename(resultPath, resultErrorDir + currentVideoTimestamp + ".avi");
 
         emit sendQStringtoMain("Error videos saved: " + currentVideoTimestamp);
     }

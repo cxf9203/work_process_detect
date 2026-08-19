@@ -34,7 +34,6 @@ public:
     bool connectPLC();
     void disconnectPLC();
     // ROI 检测控制
-    void getROIParameters();
     void enableROIDetection(bool enable); // 启用或禁用ROI检测
     void setRoiX(int x);
     void setRoiY(int y);
@@ -47,6 +46,7 @@ public:
     void processActionDetection(const std::vector<bool> &actions);
     void setActionConfig(bool enable, const QVector<int> &enabled, bool affectsResult, const QVector<int> &ordered);
     bool isActionsCompleted();
+    void setSaveAllVideos(bool enable);
     // 视频录制控制
     void startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame); // 开始录制
     void stopRecording(bool save); // 停止录制
@@ -124,6 +124,7 @@ private:
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
     bool actionAffectsResult = false; // 动作是否影响结果
     QVector<int> orderedActions; // 顺序检测的动作索引列表（按用户指定的顺序）
+    bool saveAllVideos = false; // 是否保存全部视频
     // 视频录制
     cv::VideoWriter originalVideoWriter;
     cv::VideoWriter resultVideoWriter;
