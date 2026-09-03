@@ -117,8 +117,8 @@ private:
     int roi_line_width; // ROI矩形线宽
     // 滑动窗口相关变量，用于平滑壳体检测结果
     std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
-    const int KETI_WINDOW_SIZE = 3; // 滑动窗口大小
-    const int KETI_THRESHOLD = 1; // 判定壳体存在的阈值
+    const int KETI_WINDOW_SIZE = 4; // 滑动窗口大小
+    const int KETI_THRESHOLD = 2; // 判定壳体存在的阈值
     // 动作检测配置
     bool enableAction = false; // 动作检测启用状态
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）

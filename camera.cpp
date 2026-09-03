@@ -378,6 +378,11 @@ void Camera::run()
 
                 last_keti = cur_keti;
             }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Image processing exception: " << e.what() << std::endl;
+                emit sendQStringtoMain(QString("Image processing exception: %1").arg(e.what()));
+            }
             catch (...)
             {
                 // 处理所有异常的逻辑
@@ -676,8 +681,10 @@ void Camera::stopRecording(bool save)
         QDir(originalAllDir).mkpath(".");
         QDir(resultAllDir).mkpath(".");
 
-        QFile::copy(originalPath, originalAllDir + currentVideoTimestamp + ".avi");
-        QFile::copy(resultPath, resultAllDir + currentVideoTimestamp + ".avi");
+        if (QFile::exists(originalPath))
+            QFile::copy(originalPath, originalAllDir + currentVideoTimestamp + ".avi");
+        if (QFile::exists(resultPath))
+            QFile::copy(resultPath, resultAllDir + currentVideoTimestamp + ".avi");
 
         emit sendQStringtoMain("All videos saved: " + currentVideoTimestamp);
     }
@@ -690,8 +697,10 @@ void Camera::stopRecording(bool save)
         QDir(originalErrorDir).mkpath(".");
         QDir(resultErrorDir).mkpath(".");
 
-        QFile::rename(originalPath, originalErrorDir + currentVideoTimestamp + ".avi");
-        QFile::rename(resultPath, resultErrorDir + currentVideoTimestamp + ".avi");
+        if (QFile::exists(originalPath))
+            QFile::rename(originalPath, originalErrorDir + currentVideoTimestamp + ".avi");
+        if (QFile::exists(resultPath))
+            QFile::rename(resultPath, resultErrorDir + currentVideoTimestamp + ".avi");
 
         emit sendQStringtoMain("Error videos saved: " + currentVideoTimestamp);
     }
@@ -700,6 +709,7 @@ void Camera::stopRecording(bool save)
     QDir(tempDir).removeRecursively();
 
     isRecording = false;
+    qDebug() << "Stopped recording:" << originalPath << "and" << resultPath;
 }
 
 void Camera::saveErrorLog(const QString &message)
