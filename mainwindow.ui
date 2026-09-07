@@ -1488,7 +1488,7 @@ QSlider::handle:horizontal:hover {
               </widget>
              </item>
              <item>
-              <widget class="QCheckBox" name="checkBox_actionAffectsResult">
+              <widget class="QCheckBox" name="checkBox_includeActionInResult">
                <property name="font">
                 <font>
                  <family>Arial</family>
@@ -1496,7 +1496,7 @@ QSlider::handle:horizontal:hover {
                 </font>
                </property>
                <property name="text">
-                <string>动作检测影响结果</string>
+                <string>计入结果判定</string>
                </property>
               </widget>
              </item>

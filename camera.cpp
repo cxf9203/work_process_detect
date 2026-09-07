@@ -600,17 +600,17 @@ void Camera::processActionDetection(const std::vector<bool> &actions)
     }
 }
 
-void Camera::setActionConfig(bool enable, const QVector<int> &enabled, bool affectsResult, const QVector<int> &ordered)
+void Camera::setActionConfig(bool pEnableAction, const QVector<int> &pEnabledActions, bool pIncludeActionInResult, const QVector<int> &pOrderedActions)
 {
-    enableAction = enable;
-    enabledActions = enabled;
-    actionAffectsResult = affectsResult;
-    orderedActions = ordered;
+    enableAction = pEnableAction;
+    enabledActions = pEnabledActions;
+    includeActionInResult = pIncludeActionInResult;
+    orderedActions = pOrderedActions;
 }
 
 bool Camera::isActionsCompleted()
 {
-    if (enableAction && !enabledActions.isEmpty() && actionAffectsResult)
+    if (enableAction && !enabledActions.isEmpty() && includeActionInResult)
     {
         for (int i : enabledActions)
         {

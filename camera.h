@@ -44,7 +44,7 @@ public:
     void setRoiLineWidth(int lineWidth);
     // 动作检测控制
     void processActionDetection(const std::vector<bool> &actions);
-    void setActionConfig(bool enable, const QVector<int> &enabled, bool affectsResult, const QVector<int> &ordered);
+    void setActionConfig(bool pEnableAction, const QVector<int> &pEnabledActions, bool pIncludeActionInResult, const QVector<int> &pOrderedActions);
     bool isActionsCompleted();
     void setSaveAllVideos(bool enable);
     // 视频录制控制
@@ -122,7 +122,7 @@ private:
     // 动作检测配置
     bool enableAction = false; // 动作检测启用状态
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
-    bool actionAffectsResult = false; // 动作是否影响结果
+    bool includeActionInResult = false; // 动作检测是否计入结果判定
     QVector<int> orderedActions; // 顺序检测的动作索引列表（按用户指定的顺序）
     bool saveAllVideos = false; // 是否保存全部视频
     // 视频录制

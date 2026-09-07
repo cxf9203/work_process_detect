@@ -102,7 +102,7 @@ void MainWindow::modifyActionParameter()
     QSettings settings(iniFilePath, QSettings::IniFormat);
     settings.beginGroup("Action");
     settings.setValue("EnableAction", ui->checkBox_enableAction->isChecked());
-    settings.setValue("ActionAffectsResult", ui->checkBox_actionAffectsResult->isChecked());
+    settings.setValue("IncludeActionInResult", ui->checkBox_includeActionInResult->isChecked());
     settings.setValue("EnableOrder", ui->checkBox_enableOrder->isChecked());
     // 保存每个动作的勾选状态
     for (int i = 0; i < actionItems.size(); i++)
@@ -183,7 +183,7 @@ void MainWindow::updateActionConfig()
     modifyActionParameter();
     QVector<int> orderedActions = getOrderedActions();
     updateOrderStatusLabels(orderedActions);
-    cam->setActionConfig(ui->checkBox_enableAction->isChecked(), getEnabledActions(), ui->checkBox_actionAffectsResult->isChecked(), orderedActions);
+    cam->setActionConfig(ui->checkBox_enableAction->isChecked(), getEnabledActions(), ui->checkBox_includeActionInResult->isChecked(), orderedActions);
 }
 
 void MainWindow::loadActionConfig()
@@ -200,8 +200,8 @@ void MainWindow::loadActionConfig()
         actionItems[i].second->setChecked(settings.value(QString("Action%1").arg(i + 1)).toBool());
         actionItems[i].second->setEnabled(enableAction);
     }
-    ui->checkBox_actionAffectsResult->setChecked(settings.value("ActionAffectsResult").toBool());
-    ui->checkBox_actionAffectsResult->setEnabled(enableAction);
+    ui->checkBox_includeActionInResult->setChecked(settings.value("IncludeActionInResult").toBool());
+    ui->checkBox_includeActionInResult->setEnabled(enableAction);
     ui->checkBox_enableOrder->setChecked(enableOrder);
     ui->checkBox_enableOrder->setEnabled(enableAction);
     bool orderEnabled = enableAction && enableOrder;
@@ -235,7 +235,7 @@ void MainWindow::initActionControls()
     {
         // 启用/禁用动作复选框
         for (const auto& pair : actionItems) pair.second->setEnabled(checked);
-        ui->checkBox_actionAffectsResult->setEnabled(checked);
+        ui->checkBox_includeActionInResult->setEnabled(checked);
         ui->checkBox_enableOrder->setEnabled(checked);
         bool orderChecked = checked && ui->checkBox_enableOrder->isChecked();
         ui->listWidget_order->setEnabled(orderChecked);
@@ -264,7 +264,7 @@ void MainWindow::initActionControls()
     }
 
     // 动作检测影响结果
-    connect(ui->checkBox_actionAffectsResult, &QCheckBox::toggled, [this](bool checked) { updateActionConfig(); });
+    connect(ui->checkBox_includeActionInResult, &QCheckBox::toggled, [this](bool checked) { updateActionConfig(); });
 
     // 启用顺序检测
     connect(ui->checkBox_enableOrder, &QCheckBox::toggled, [this](bool checked)
