@@ -24,6 +24,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void showEvent(QShowEvent *event);
 
 public slots:
     void modifyActionParameter(); // 修改动作参数

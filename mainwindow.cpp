@@ -14,15 +14,6 @@ MainWindow::MainWindow(QWidget *parent)
       ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    // 设置窗口居中（带边界限制）
-    QRect screenRect = QApplication::primaryScreen()->availableGeometry();
-    // 计算居中位置
-    int x = screenRect.center().x() - width() / 2;
-    int y = screenRect.center().y() - height() / 2;
-    // 限制边界，确保窗口不超出屏幕
-    x = qMax(screenRect.left(), qMin(x, screenRect.right() - width()));
-    y = qMax(screenRect.top(), qMin(y, screenRect.bottom() - height()));
-    move(x, y);
 
     // 创建相机1
     THREAD1_cam1 = new QThread();
@@ -89,6 +80,21 @@ MainWindow::~MainWindow()
 {
     cam->closeDevice();
     delete ui;
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    // 设置窗口居中（带边界限制）
+    QRect screenRect = QApplication::primaryScreen()->availableGeometry();
+    QRect frameRect = frameGeometry();
+    // 计算居中位置
+    int x = screenRect.center().x() - frameRect.width() / 2;
+    int y = screenRect.center().y() - frameRect.height() / 2;
+    // 限制边界，确保窗口不超出屏幕
+    x = qMax(screenRect.left(), qMin(x, screenRect.right() - frameRect.width()));
+    y = qMax(screenRect.top(), qMin(y, screenRect.bottom() - frameRect.height()));
+    move(x, y);
 }
 
 void MainWindow::modifyActionParameter()
