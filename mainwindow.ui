@@ -1719,7 +1719,7 @@ QPushButton:hover {
            </item>
           </layout>
          </widget>
-         <widget class="QCheckBox" name="checkBox_saveAllVideos">
+         <widget class="QCheckBox" name="checkBox_forceSaveVideo">
           <property name="geometry">
            <rect>
             <x>50</x>
@@ -1735,7 +1735,7 @@ QPushButton:hover {
            </font>
           </property>
           <property name="text">
-           <string>保存全部视频</string>
+           <string>强制保存视频</string>
           </property>
          </widget>
         </widget>

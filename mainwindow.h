@@ -35,7 +35,7 @@ public slots:
     void loadActionConfig(); // 加载动作配置
     void initActionControls(); // 初始化动作控件
     void loadROIParametersToUI();
-    void initSaveAllVideosControl();
+    void initForceSaveVideoControl();
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected);
@@ -75,7 +75,7 @@ private slots:
     void on_btn_colorPicker_clicked();
     void on_slider_opacity_valueChanged(int value);
     void on_slider_line_width_valueChanged(int value);
-    void on_checkBox_saveAllVideos_toggled(bool value);
+    void on_checkBox_forceSaveVideo_toggled(bool value);
 
 private:
     Ui::MainWindow *ui;

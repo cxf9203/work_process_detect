@@ -621,9 +621,9 @@ bool Camera::isActionsCompleted()
     return true;
 }
 
-void Camera::setSaveAllVideos(bool enable)
+void Camera::setForceSaveVideo(bool enable)
 {
-    saveAllVideos = enable;
+    forceSaveVideo = enable;
 }
 
 void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame)
@@ -673,20 +673,20 @@ void Camera::stopRecording(bool save)
     QString originalPath = tempDir + "original.avi";
     QString resultPath = tempDir + "result.avi";
 
-    if (saveAllVideos)
+    if (forceSaveVideo)
     {
-        QString saveDir = baseVideoPath + "/all_videos/";
-        QString originalAllDir = saveDir + "/original_all/";
-        QString resultAllDir = saveDir + "/result_all/";
-        QDir(originalAllDir).mkpath(".");
-        QDir(resultAllDir).mkpath(".");
+        QString saveDir = baseVideoPath + "/force_save/";
+        QString originalForceDir = saveDir + "/original_force/";
+        QString resultForceDir = saveDir + "/result_force/";
+        QDir(originalForceDir).mkpath(".");
+        QDir(resultForceDir).mkpath(".");
 
         if (QFile::exists(originalPath))
-            QFile::copy(originalPath, originalAllDir + currentVideoTimestamp + ".avi");
+            QFile::copy(originalPath, originalForceDir + currentVideoTimestamp + ".avi");
         if (QFile::exists(resultPath))
-            QFile::copy(resultPath, resultAllDir + currentVideoTimestamp + ".avi");
+            QFile::copy(resultPath, resultForceDir + currentVideoTimestamp + ".avi");
 
-        emit sendQStringtoMain("All videos saved: " + currentVideoTimestamp);
+        emit sendQStringtoMain("Force saved videos: " + currentVideoTimestamp);
     }
 
     if (save)

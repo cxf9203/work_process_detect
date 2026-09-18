@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initActionControls();
     loadROIParametersToUI();
-    initSaveAllVideosControl();
+    initForceSaveVideoControl();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
@@ -361,12 +361,12 @@ void MainWindow::loadROIParametersToUI()
     cam->setRoiLineWidth(roi_line_width);
 }
 
-void MainWindow::initSaveAllVideosControl()
+void MainWindow::initForceSaveVideoControl()
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
-    bool saveAllVideos = settings.value("saveAllVideos").toBool();
-    ui->checkBox_saveAllVideos->setChecked(saveAllVideos);
-    cam->setSaveAllVideos(saveAllVideos);
+    bool forceSaveVideo = settings.value("forceSaveVideo").toBool();
+    ui->checkBox_forceSaveVideo->setChecked(forceSaveVideo);
+    cam->setForceSaveVideo(forceSaveVideo);
 }
 
 void MainWindow::on_start_clicked()
@@ -1182,9 +1182,9 @@ void MainWindow::on_slider_line_width_valueChanged(int value)
     cam->setRoiLineWidth(value);
 }
 
-void MainWindow::on_checkBox_saveAllVideos_toggled(bool value)
+void MainWindow::on_checkBox_forceSaveVideo_toggled(bool value)
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
-    settings.setValue("saveAllVideos", value);
-    cam->setSaveAllVideos(value);
+    settings.setValue("forceSaveVideo", value);
+    cam->setForceSaveVideo(value);
 }

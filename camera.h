@@ -46,7 +46,7 @@ public:
     void processActionDetection(const std::vector<bool> &actions);
     void setActionConfig(bool pEnableAction, const QVector<int> &pEnabledActions, bool pIncludeActionInResult, const QVector<int> &pOrderedActions);
     bool isActionsCompleted();
-    void setSaveAllVideos(bool enable);
+    void setForceSaveVideo(bool enable);
     // 视频录制控制
     void startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame); // 开始录制
     void stopRecording(bool save); // 停止录制
@@ -124,7 +124,7 @@ private:
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
     bool includeActionInResult = false; // 动作检测是否计入结果判定
     QVector<int> orderedActions; // 顺序检测的动作索引列表（按用户指定的顺序）
-    bool saveAllVideos = false; // 是否保存全部视频
+    bool forceSaveVideo = false; // 是否强制保存视频
     // 视频录制
     cv::VideoWriter originalVideoWriter;
     cv::VideoWriter resultVideoWriter;
