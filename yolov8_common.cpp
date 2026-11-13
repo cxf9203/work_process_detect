@@ -162,3 +162,9 @@ void YoloV8::setRoiLineWidth(int lineWidth)
 {
     roiLineWidth = lineWidth;
 }
+
+// 设置置信度阈值
+void YoloV8::setProbabilityThreshold(float threshold)
+{
+    probabilityThreshold = threshold;
+}

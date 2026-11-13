@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QMediaPlayer>
 #include <QCheckBox>
+#include <QToolButton>
 #include <QLabel>
 #include <QComboBox>
 #include "camera.h"
@@ -25,8 +26,15 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void showEvent(QShowEvent *event);
+    void resizeEvent(QResizeEvent *event);
 
 public slots:
+    void applyTopMost(bool checked);
+    void initTopMostButton();
+    void ensureStatCsvExists();
+    void fillCsvTable();
+    void saveTodayRowToCsv();
+    void loadStatsFromCsv();
     void modifyActionParameter(); // 修改动作参数
     QVector<int> getEnabledActions(); // 获取启用的动作
     QVector<int> getOrderedActions(); // 获取顺序检测的动作
@@ -35,10 +43,12 @@ public slots:
     void loadActionConfig(); // 加载动作配置
     void initActionControls(); // 初始化动作控件
     void loadROIParametersToUI();
+    void initProbabilityThresholdControl();
     void initForceSaveVideoControl();
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected);
+    void onLogFileChanged();
     void updateStatistics(bool result);
     void loadHistoryList();
     void showEmptyLabel();
@@ -65,6 +75,7 @@ private slots:
     void on_btn_disconnectPLC_clicked();
     void on_btn_history_rst_clicked();
     void on_btn_today_rst_clicked();
+    void on_btn_csv_detail_clicked();
     void on_btn_history_clicked();
     void on_btn_settings_clicked();
     void on_cb_enableROI_toggled(bool value);
@@ -75,15 +86,18 @@ private slots:
     void on_btn_colorPicker_clicked();
     void on_slider_opacity_valueChanged(int value);
     void on_slider_line_width_valueChanged(int value);
+    void on_slider_prob_threshold_valueChanged(int value);
     void on_checkBox_forceSaveVideo_toggled(bool value);
 
 private:
     Ui::MainWindow *ui;
     QThread *THREAD1_cam1;
     Camera *cam; // camera thread
+    bool initialCentered = false;
     QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
-    QString statFilePath = "D:\\jiance\\work_process_statistics.ini"; // 统计数据配置
+    QString statFilePath = "D:\\jiance\\work_process_statistics.csv"; // 统计数据配置
     QString currentRoiColor;
+    QString lastStatDate = QDate::currentDate().toString("yyyy-MM-dd");
     long long int history_good_number;
     long long int history_number;
     double history_good_rates;
@@ -91,6 +105,8 @@ private:
     long long int today_number;
     double today_good_rates;
     QVector<QPair<QString, QCheckBox *>> actionItems;
+    QToolButton *pinBtn = nullptr;
+    QDialog *csvDialog = nullptr;
     // 历史记录窗口
     QWidget *historyWindow = nullptr;
     QWidget *listContainer = nullptr;

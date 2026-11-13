@@ -20,7 +20,6 @@
     border: 1px solid #555;
     border-radius: 5px;
     padding: 8px;
-    font-family: Arial;
     font-weight: bold;
 }
 
@@ -29,7 +28,7 @@ QPushButton:hover {
 }
 
 QPushButton:pressed {
-    background-color: #5d5d5d;
+    background-color: #2a2a2a;
 }
 
 QPushButton:disabled {
@@ -38,7 +37,6 @@ QPushButton:disabled {
 }
 
 QCheckBox {
-    color: #ffffff;
     spacing: 8px;
 }
 
@@ -60,7 +58,6 @@ QCheckBox::indicator:unchecked {
 }
 
 QGroupBox {
-    color: #ffffff;
     border: 1px solid #555;
     border-radius: 5px;
     margin-top: 10px;
@@ -72,6 +69,28 @@ QGroupBox::title {
     subcontrol-origin: margin;
     left: 10px;
     padding: 0 5px 0 5px;
+}
+
+QSlider::groove:horizontal {
+    height: 8px;
+    background: #424242;
+    border-radius: 4px;
+}
+
+QSlider::handle:horizontal {
+    background: #2e7d32;
+    width: 18px;
+    margin: -5px 0;
+    border-radius: 9px;
+}
+
+QSlider::handle:horizontal:hover {
+    background: #388e3c;
+}
+
+QSlider::sub-page:horizontal {
+    background: #2e7d32;
+    border-radius: 4px;
 }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -97,7 +116,6 @@ QGroupBox::title {
        </property>
        <property name="styleSheet">
         <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
        </property>
@@ -118,7 +136,6 @@ QGroupBox::title {
        </property>
        <property name="styleSheet">
         <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
        </property>
@@ -700,6 +717,20 @@ QPushButton:pressed {
         <bold>true</bold>
        </font>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #1565c0;
+    border-radius: 6px;
+}
+
+QPushButton:hover {
+    background-color: #1976d2;
+}
+
+QPushButton:pressed {
+    background-color: #0d47a1;
+}</string>
+      </property>
       <property name="text">
        <string>历史记录</string>
       </property>
@@ -755,7 +786,6 @@ QPushButton:pressed {
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
            </property>
@@ -776,7 +806,6 @@ QPushButton:pressed {
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
            </property>
@@ -824,7 +853,6 @@ QPushButton:pressed {
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
            </property>
@@ -930,7 +958,6 @@ QPushButton:pressed {
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
            </property>
@@ -951,7 +978,6 @@ QPushButton:pressed {
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
            </property>
@@ -972,7 +998,6 @@ QPushButton:pressed {
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
            </property>
@@ -1033,6 +1058,41 @@ QPushButton:pressed {
        <string>历史清零</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="btn_csv_detail">
+      <property name="geometry">
+       <rect>
+        <x>315</x>
+        <y>530</y>
+        <width>111</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #6a1b9a;
+    border-radius: 6px;
+}
+
+QPushButton:hover {
+    background-color: #7b1fa2;
+}
+
+QPushButton:pressed {
+    background-color: #4a148c;
+}</string>
+      </property>
+      <property name="text">
+       <string>统计数据</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="page_2">
      <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -1050,7 +1110,7 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>920</height>
+           <height>1045</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
@@ -1094,7 +1154,6 @@ QPushButton:pressed {
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1111,14 +1170,8 @@ QPushButton:pressed {
                     <pointsize>18</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>0</number>
-                  </property>
                   <property name="maximum">
-                   <number>1920</number>
-                  </property>
-                  <property name="value">
-                   <number>0</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1132,7 +1185,6 @@ QPushButton:pressed {
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1149,14 +1201,8 @@ QPushButton:pressed {
                     <pointsize>18</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>0</number>
-                  </property>
                   <property name="maximum">
-                   <number>1080</number>
-                  </property>
-                  <property name="value">
-                   <number>0</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1170,7 +1216,6 @@ QPushButton:pressed {
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1187,14 +1232,8 @@ QPushButton:pressed {
                     <pointsize>18</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
                   <property name="maximum">
-                   <number>1920</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1208,7 +1247,6 @@ QPushButton:pressed {
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1225,14 +1263,8 @@ QPushButton:pressed {
                     <pointsize>18</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
                   <property name="maximum">
-                   <number>1080</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1348,24 +1380,6 @@ QPushButton:pressed {
                 </item>
                 <item row="0" column="2">
                  <widget class="QSlider" name="slider_opacity">
-                  <property name="styleSheet">
-                   <string notr="true">QSlider::groove:horizontal {
-    height: 8px;
-    background: #424242;
-    border-radius: 4px;
-}
-
-QSlider::handle:horizontal {
-    background: #2e7d32;
-    width: 18px;
-    margin: -5px 0;
-    border-radius: 9px;
-}
-
-QSlider::handle:horizontal:hover {
-    background: #388e3c;
-}</string>
-                  </property>
                   <property name="maximum">
                    <number>100</number>
                   </property>
@@ -1392,24 +1406,6 @@ QSlider::handle:horizontal:hover {
                 </item>
                 <item row="1" column="2">
                  <widget class="QSlider" name="slider_line_width">
-                  <property name="styleSheet">
-                   <string notr="true">QSlider::groove:horizontal {
-    height: 8px;
-    background: #424242;
-    border-radius: 4px;
-}
-
-QSlider::handle:horizontal {
-    background: #2e7d32;
-    width: 18px;
-    margin: -5px 0;
-    border-radius: 9px;
-}
-
-QSlider::handle:horizontal:hover {
-    background: #388e3c;
-}</string>
-                  </property>
                   <property name="minimum">
                    <number>-1</number>
                   </property>
@@ -1710,7 +1706,9 @@ QPushButton:hover {
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: #888888;</string>
+              <string notr="true">QLabel {
+    color: #888888;
+}</string>
              </property>
              <property name="text">
               <string>提示：勾选需要检测的动作 → 点击&quot;添加选中&quot; → 拖拽调整顺序</string>
@@ -1719,11 +1717,89 @@ QPushButton:hover {
            </item>
           </layout>
          </widget>
+         <widget class="QGroupBox" name="groupBox_modelSetting">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>852</y>
+            <width>471</width>
+            <height>101</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>模型设置</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_model">
+           <item>
+            <layout class="QGridLayout" name="gridLayout_model">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_prob_threshold">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>18</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>置信度阈值:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSlider" name="slider_prob_threshold">
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>25</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_prob_threshold_display">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>18</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    color: #00ff00;
+    background-color: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px;
+    min-width: 70px;
+}</string>
+               </property>
+               <property name="text">
+                <string>0.25</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
          <widget class="QCheckBox" name="checkBox_forceSaveVideo">
           <property name="geometry">
            <rect>
             <x>50</x>
-            <y>846</y>
+            <y>982</y>
             <width>251</width>
             <height>41</height>
            </rect>

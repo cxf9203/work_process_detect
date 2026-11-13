@@ -2,11 +2,14 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <iostream>
+#include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QColorDialog>
 #include <QScreen>
 #include <QLineEdit>
 #include <QVideoWidget>
 #include <QFile>
+#include <QHeaderView>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -15,12 +18,16 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    initTopMostButton();
+
     // 创建相机1
     THREAD1_cam1 = new QThread();
     cam = new Camera;
 
+    loadStatsFromCsv();
     initActionControls();
     loadROIParametersToUI();
+    initProbabilityThresholdControl();
     initForceSaveVideoControl();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
@@ -30,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     // connect(cam, &Camera::finished, cam, &QObject::deleteLater); // 在空闲时间删除线程对象，执行后将不能在用start方法启动线程
     connect(cam, &Camera::send_connectstate, this, &MainWindow::receive_connectstate, Qt::QueuedConnection);
     connect(cam, &Camera::updateLabelState, this, &MainWindow::updateLabelState, Qt::QueuedConnection);
+    connect(cam, &Camera::logFileChanged, this, &MainWindow::onLogFileChanged, Qt::QueuedConnection);
     connect(cam, &Camera::updateStatistics, this, &MainWindow::updateStatistics, Qt::QueuedConnection);
     connect(cam, &Camera::sendQImgToAutoMain, this, &MainWindow::receiveslotQImg, Qt::QueuedConnection);
     connect(cam, &Camera::updateActionState, this, &MainWindow::getActionState, Qt::QueuedConnection);
@@ -37,40 +45,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam, &Camera::sendQStringtoMain, this, &MainWindow::receiveQStringtoMain, Qt::QueuedConnection);
     connect(cam, &Camera::finishedthread, this, &MainWindow::receivefinish);
     connect(this, &MainWindow::destroyed, cam, &Camera::deleteLater, Qt::QueuedConnection);
-
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
-    // 获取今天的日期（只保留年月日）
-    QString today = QDate::currentDate().toString("yyyy-MM-dd");
-    // 读取上一次保存的日期
-    QString last_date = statSettings.value("last_date").toString();
-    // 如果日期不同，重置计数
-    if (last_date != today)
-    {
-        last_date = today;
-        today_good_number = today_number = today_good_rates = 0;
-        // 将变量写入 QSettings 对象
-        statSettings.setValue("last_date", last_date);
-        statSettings.setValue("today_good_number", today_good_number);
-        statSettings.setValue("today_number", today_number);
-        statSettings.setValue("today_good_rates", today_good_rates);
-    }
-    else
-    {
-        today_good_number = statSettings.value("today_good_number").toInt();
-        today_number = statSettings.value("today_number").toInt();
-        today_good_rates = statSettings.value("today_good_rates").toDouble();
-    }
-
-    history_good_number = statSettings.value("history_good_number").toInt();
-    history_number = statSettings.value("history_number").toInt();
-    history_good_rates = statSettings.value("history_good_rates").toDouble();
-
-    ui->history_good_number->setText(QString::number(history_good_number));
-    ui->history_number->setText(QString::number(history_number));
-    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
-    ui->today_good_number->setText(QString::number(today_good_number));
-    ui->today_number->setText(QString::number(today_number));
-    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 
     // 启动相机1
     on_start_clicked();
@@ -85,6 +59,9 @@ MainWindow::~MainWindow()
 void MainWindow::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
+    if (initialCentered)
+        return;
+    initialCentered = true;
     // 设置窗口居中（带边界限制）
     QRect screenRect = QApplication::primaryScreen()->availableGeometry();
     QRect frameRect = frameGeometry();
@@ -95,6 +72,314 @@ void MainWindow::showEvent(QShowEvent *event)
     x = qMax(screenRect.left(), qMin(x, screenRect.right() - frameRect.width()));
     y = qMax(screenRect.top(), qMin(y, screenRect.bottom() - frameRect.height()));
     move(x, y);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    if (historyWindow)
+        historyWindow->move(qMax(0, width() - historyWindow->width()), 0);
+    if (pinBtn)
+        pinBtn->move(width() - pinBtn->width() - 6, 4);
+}
+
+void MainWindow::applyTopMost(bool checked)
+{
+    if (!pinBtn)
+        return;
+
+    bool wasVisible = isVisible();
+    QRect geo = geometry();
+    setWindowFlag(Qt::WindowStaysOnTopHint, checked);
+    setGeometry(geo);
+    if (wasVisible)
+        show();
+
+    pinBtn->setStyleSheet(checked
+                              ? "QToolButton { background-color: #2e7d32; color: white; border: 1px solid #4caf50;"
+                                "border-radius: 4px; font-weight: bold; }"
+                                "QToolButton:hover { background-color: #388e3c; }"
+                                "QToolButton:pressed { background-color: #1b5e20; }"
+                              : "QToolButton { background-color: #555; color: #aaa; border: 1px solid #666;"
+                                "border-radius: 4px; }"
+                                "QToolButton:hover { background-color: #666; color: #fff; }"
+                                "QToolButton:pressed { background-color: #444; }");
+}
+
+void MainWindow::initTopMostButton()
+{
+    pinBtn = new QToolButton(this);
+    pinBtn->setObjectName("pinBtn");
+    pinBtn->setText(QStringLiteral("置顶"));
+    pinBtn->setCheckable(true);
+    pinBtn->setAutoRaise(true);
+    pinBtn->setFixedSize(50, 28);
+    pinBtn->move(width() - pinBtn->width() - 6, 4);
+
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    bool topMost = settings.value("topMost").toBool();
+
+    applyTopMost(topMost);
+    pinBtn->setChecked(topMost);
+
+    connect(pinBtn, &QToolButton::toggled, this, [this](bool checked)
+    {
+        applyTopMost(checked);
+
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.setValue("topMost", checked);
+    });
+}
+
+void MainWindow::ensureStatCsvExists()
+{
+    QFile file(statFilePath);
+    if (file.exists())
+    {
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QTextStream in(&file);
+            QString firstLine = in.readLine().trimmed();
+            file.close();
+            if (firstLine == "date,good_number,total_number,good_rates")
+                return;
+        }
+    }
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qDebug() << "ensureStatCsvExists: cannot create" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream out(&file);
+    out << "date,good_number,total_number,good_rates\n";
+    file.close();
+}
+
+void MainWindow::fillCsvTable()
+{
+    if (!csvDialog)
+        return;
+    QTableWidget *table = csvDialog->findChild<QTableWidget *>("csvTableWidget");
+    if (!table)
+        return;
+
+    table->setRowCount(0);
+
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+    QTextStream in(&file);
+    in.readLine();
+
+    int row = 0;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty())
+            continue;
+        QStringList parts = line.split(',');
+
+        table->insertRow(row);
+
+        if (parts[0] == "__RESET__")
+        {
+            for (int c = 0; c < 4; c++)
+            {
+                QTableWidgetItem *it = new QTableWidgetItem(c == 0 ? QStringLiteral("--- 历史重置 ---") : "");
+                it->setBackground(QColor(60, 30, 30));
+                it->setForeground(QColor(255, 150, 80));
+                table->setItem(row, c, it);
+            }
+        }
+        else if (parts[0] == "__HISTORY__")
+        {
+            QStringList disp = {QStringLiteral("历史累计"), parts.value(1), parts.value(2), parts.value(3)};
+            for (int c = 0; c < 4; c++)
+            {
+                QTableWidgetItem *it = new QTableWidgetItem(disp[c]);
+                it->setBackground(QColor(20, 60, 30));
+                it->setForeground(QColor(0, 255, 100));
+                table->setItem(row, c, it);
+            }
+        }
+        else
+        {
+            for (int c = 0; c < 4; c++)
+                table->setItem(row, c, new QTableWidgetItem(parts.value(c)));
+        }
+        row++;
+    }
+    file.close();
+}
+
+void MainWindow::saveTodayRowToCsv()
+{
+    ensureStatCsvExists();
+
+    QString todayStr = QDate::currentDate().toString("yyyy-MM-dd");
+    double todayRate = today_number > 0 ? static_cast<double>(today_good_number) / today_number * 100.0 : 0.0;
+    QString todayRowStr = QString("%1,%2,%3,%4").arg(todayStr).arg(today_good_number).arg(today_number).arg(todayRate, 0, 'f', 2);
+
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "saveTodayRowToCsv: cannot read" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream in(&file);
+    QString header = in.readLine();
+    QStringList rows;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith("__HISTORY__"))
+            continue;
+        rows << line;
+    }
+    file.close();
+
+    bool foundToday = false;
+    for (auto &r : rows)
+    {
+        QStringList p = r.split(',');
+        if (p.size() >= 4 && p[0] == todayStr)
+        {
+            r = todayRowStr;
+            foundToday = true;
+            break;
+        }
+    }
+    if (!foundToday)
+        rows << todayRowStr;
+
+    long long sumGood = 0, sumTotal = 0;
+    bool hasReset = false;
+    for (const QString &r : rows)
+        if (r.startsWith("__RESET__"))
+        {
+            hasReset = true;
+            break;
+        }
+    bool passedReset = !hasReset;
+    for (const QString &row : rows)
+    {
+        QStringList parts = row.split(',');
+        if (parts[0] == "__RESET__")
+        {
+            passedReset = true;
+            continue;
+        }
+        if (!passedReset)
+            continue;
+        if (parts.size() >= 4)
+        {
+            sumGood += parts[1].toLongLong();
+            sumTotal += parts[2].toLongLong();
+        }
+    }
+    double sumRate = sumTotal > 0 ? static_cast<double>(sumGood) / sumTotal * 100.0 : 0.0;
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qDebug() << "saveTodayRowToCsv: cannot write" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream out(&file);
+    out << header << "\n";
+    for (const QString &row : rows)
+        out << row << "\n";
+    out << QString("__HISTORY__,%1,%2,%3\n").arg(sumGood).arg(sumTotal).arg(sumRate, 0, 'f', 2);
+    file.close();
+
+    if (csvDialog && csvDialog->isVisible())
+        fillCsvTable();
+}
+
+void MainWindow::loadStatsFromCsv()
+{
+    ensureStatCsvExists();
+    QString todayStr = QDate::currentDate().toString("yyyy-MM-dd");
+
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "loadStatsFromCsv: cannot open" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream in(&file);
+    in.readLine();
+
+    QStringList allLines;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty())
+            continue;
+        if (line.startsWith("__HISTORY__"))
+            continue;
+        allLines << line;
+    }
+    file.close();
+
+    bool hasReset = false;
+    for (const QString &l : allLines)
+        if (l.startsWith("__RESET__"))
+        {
+            hasReset = true;
+            break;
+        }
+
+    history_good_number = 0;
+    history_number = 0;
+    bool passedReset = !hasReset;
+    bool foundToday = false;
+
+    for (const QString &line : allLines)
+    {
+        QStringList parts = line.split(',');
+
+        if (parts[0] == "__RESET__")
+        {
+            passedReset = true;
+            continue;
+        }
+        if (parts.size() < 4)
+            continue;
+
+        if (passedReset)
+        {
+            long long good = parts[1].toLongLong();
+            long long total = parts[2].toLongLong();
+            history_good_number += good;
+            history_number += total;
+        }
+
+        if (parts[0] == todayStr)
+        {
+            foundToday = true;
+            today_good_number = parts[1].toLongLong();
+            today_number = parts[2].toLongLong();
+            today_good_rates = parts[3].toDouble();
+        }
+    }
+
+    if (!foundToday)
+    {
+        today_good_number = today_number = today_good_rates = 0;
+        saveTodayRowToCsv();
+    }
+
+    if (history_number > 0)
+        history_good_rates = static_cast<double>(history_good_number) / history_number * 100.0;
+    else
+        history_good_rates = 0.0;
+
+    ui->history_good_number->setText(QString::number(history_good_number));
+    ui->history_number->setText(QString::number(history_number));
+    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
+    ui->today_good_number->setText(QString::number(today_good_number));
+    ui->today_number->setText(QString::number(today_number));
+    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 }
 
 void MainWindow::modifyActionParameter()
@@ -221,11 +506,11 @@ void MainWindow::initActionControls()
 {
     // 动作配置
     actionItems = {
-        {QString::fromLocal8Bit("1.左上螺丝"), ui->checkBox_action1},
-        {QString::fromLocal8Bit("2.右上螺丝"), ui->checkBox_action2},
-        {QString::fromLocal8Bit("3.左下螺丝"), ui->checkBox_action3},
-        {QString::fromLocal8Bit("4.右下螺丝"), ui->checkBox_action4},
-        {QString::fromLocal8Bit("5.放齿轮"), ui->checkBox_action5}};
+        {QStringLiteral("1.左上螺丝"), ui->checkBox_action1},
+        {QStringLiteral("2.右上螺丝"), ui->checkBox_action2},
+        {QStringLiteral("3.左下螺丝"), ui->checkBox_action3},
+        {QStringLiteral("4.右下螺丝"), ui->checkBox_action4},
+        {QStringLiteral("5.放齿轮"), ui->checkBox_action5}};
 
     // 加载动作配置
     loadActionConfig();
@@ -285,7 +570,7 @@ void MainWindow::initActionControls()
             if (pair.second->isChecked()) selectedActions.append(pair.first);
         }
         if (selectedActions.isEmpty()) {
-            QMessageBox::information(this, QString::fromLocal8Bit("提示"), QString::fromLocal8Bit("请先勾选需要检测的动作"));
+            QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("请先勾选需要检测的动作"));
             return;
         }
         // 添加到顺序列表（去重）
@@ -361,6 +646,20 @@ void MainWindow::loadROIParametersToUI()
     cam->setRoiLineWidth(roi_line_width);
 }
 
+void MainWindow::initProbabilityThresholdControl()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("Model");
+    int sliderValue = settings.value("probabilityThreshold", 25).toInt();
+    settings.endGroup();
+    float threshold = sliderValue / 100.0f;
+
+    ui->slider_prob_threshold->setValue(sliderValue);
+    ui->label_prob_threshold_display->setText(QString("%1").arg(threshold, 0, 'f', 2));
+
+    cam->setProbabilityThreshold(threshold);
+}
+
 void MainWindow::initForceSaveVideoControl()
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
@@ -420,9 +719,20 @@ void MainWindow::updateLabelState(bool p1Detected, bool p2Detected, bool p3Detec
     }
 }
 
+void MainWindow::onLogFileChanged()
+{
+    if (historyWindow)
+        loadHistoryList();
+}
+
 void MainWindow::updateStatistics(bool result)
 {
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
+    QString todayStr = QDate::currentDate().toString("yyyy-MM-dd");
+    if (todayStr != lastStatDate)
+    {
+        today_good_number = today_number = today_good_rates = 0;
+        lastStatDate = todayStr;
+    }
 
     if (result)
     {
@@ -433,13 +743,8 @@ void MainWindow::updateStatistics(bool result)
     today_number++;
     history_good_rates = (static_cast<double>(history_good_number) / history_number) * 100;
     today_good_rates = (static_cast<double>(today_good_number) / today_number) * 100;
-    // 将变量写入 QSettings 对象
-    statSettings.setValue("history_good_number", history_good_number);
-    statSettings.setValue("history_number", history_number);
-    statSettings.setValue("history_good_rates", history_good_rates);
-    statSettings.setValue("today_good_number", today_good_number);
-    statSettings.setValue("today_number", today_number);
-    statSettings.setValue("today_good_rates", today_good_rates);
+
+    saveTodayRowToCsv();
 
     ui->history_good_number->setText(QString::number(history_good_number));
     ui->history_number->setText(QString::number(history_number));
@@ -461,32 +766,113 @@ void MainWindow::on_btn_disconnectPLC_clicked()
 
 void MainWindow::on_btn_history_rst_clicked()
 {
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
+    QString todayStr = QDate::currentDate().toString("yyyy-MM-dd");
 
-    history_good_number = history_number = history_good_rates = 0;
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "on_btn_history_rst_clicked: cannot read" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream in(&file);
 
-    // 将变量写入 QSettings 对象
-    statSettings.setValue("history_good_number", history_good_number);
-    statSettings.setValue("history_number", history_number);
-    statSettings.setValue("history_good_rates", history_good_rates);
-    ui->history_good_number->setText(QString::number(history_good_number));
-    ui->history_number->setText(QString::number(history_number));
-    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
+    QString header = in.readLine();
+    QStringList rows;
+
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty())
+            continue;
+        QStringList parts = line.split(',');
+        if (parts[0].startsWith("__HISTORY__"))
+            continue;
+        if (parts[0] == "__RESET__")
+            continue;
+        rows << line;
+    }
+    file.close();
+
+    QStringList newRows;
+    bool inserted = false;
+    for (const QString &row : rows)
+    {
+        QStringList parts = row.split(',');
+        if (!inserted && parts[0] == todayStr)
+        {
+            newRows << "__RESET__,,,,";
+            inserted = true;
+        }
+        newRows << row;
+    }
+    if (!inserted)
+    {
+        newRows << "__RESET__,,,,";
+        newRows << todayStr + ",0,0,0.00";
+    }
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qDebug() << "on_btn_history_rst_clicked: cannot write" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream out(&file);
+    out << header << "\n";
+    for (const QString &row : newRows)
+        out << row << "\n";
+    file.close();
+
+    saveTodayRowToCsv();
+    loadStatsFromCsv();
 }
 
 void MainWindow::on_btn_today_rst_clicked()
 {
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
-
     today_good_number = today_number = today_good_rates = 0;
+    saveTodayRowToCsv();
+    loadStatsFromCsv();
+}
 
-    // 将变量写入 QSettings 对象
-    statSettings.setValue("today_good_number", today_good_number);
-    statSettings.setValue("today_number", today_number);
-    statSettings.setValue("today_good_rates", today_good_rates);
-    ui->today_good_number->setText(QString::number(today_good_number));
-    ui->today_number->setText(QString::number(today_number));
-    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
+void MainWindow::on_btn_csv_detail_clicked()
+{
+    if (!csvDialog)
+    {
+        csvDialog = new QDialog(this);
+        csvDialog->setWindowTitle(QStringLiteral("统计数据详情"));
+        csvDialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+        csvDialog->resize(560, 380);
+        csvDialog->setMinimumSize(560, 380);
+        QVBoxLayout *layout = new QVBoxLayout(csvDialog);
+
+        QTableWidget *table = new QTableWidget(csvDialog);
+        table->setColumnCount(4);
+        table->setHorizontalHeaderLabels({QStringLiteral("日期"), QStringLiteral("合格数"), QStringLiteral("检测数"), QStringLiteral("合格率")});
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->verticalHeader()->setVisible(false);
+        table->setStyleSheet("QTableWidget { background-color: #1e1e1e; color: #ffffff; border: 1px solid #555;"
+                             "border-radius: 4px; gridline-color: #444; font-family: Consolas, monospace; font-size: 12px; }"
+                             "QHeaderView::section { background-color: #2d2d2d; color: #00ff00; border: 1px solid #555; padding: 4px; font-weight: bold; }");
+        table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+        table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
+        table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);
+        table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+        table->setColumnWidth(0, 140);
+        table->setColumnWidth(1, 80);
+        table->setColumnWidth(2, 80);
+        table->setObjectName("csvTableWidget");
+        layout->addWidget(table);
+
+        QLabel *pathLabel = new QLabel(QStringLiteral("文件: ") + statFilePath, csvDialog);
+        pathLabel->setStyleSheet("QLabel { color: #888; font-size: 11px; padding: 4px; }");
+        layout->addWidget(pathLabel);
+    }
+
+    csvDialog->show();
+    csvDialog->raise();
+    csvDialog->activateWindow();
+
+    fillCsvTable();
 }
 
 void MainWindow::on_btn_history_clicked()
@@ -502,7 +888,11 @@ void MainWindow::on_btn_history_clicked()
     historyWindow->setObjectName("historyWindow");
     historyWindow->setMinimumSize(680, height());
     historyWindow->setStyleSheet("QWidget { background-color: #1e1e1e; }"
-                                 "QWidget#historyWindow { border: 2px solid #444; border-radius: 8px; }");
+                                 "QWidget#historyWindow { border: 2px solid #444; border-radius: 8px; }"
+                                 "QPushButton { background-color: #3d3d3d; color: #ffffff; border: 1px solid #555; border-radius: 5px; padding: 8px; font-weight: bold; }"
+                                 "QPushButton:hover { background-color: #4d4d4d; }"
+                                 "QPushButton:pressed { background-color: #2a2a2a; }"
+                                 "QPushButton:disabled { background-color: #2d2d2d; color: #888; }");
     historyWindow->setAttribute(Qt::WA_DeleteOnClose);
 
     // 设置窗口位置
@@ -537,7 +927,7 @@ void MainWindow::on_btn_history_clicked()
     QVBoxLayout *mainLayout = new QVBoxLayout(historyWindow);
 
     // 标题
-    QLabel *titleLabel = new QLabel(QString::fromLocal8Bit("历史记录"), historyWindow);
+    QLabel *titleLabel = new QLabel(QStringLiteral("历史记录"), historyWindow);
     titleLabel->setStyleSheet("color: #ffffff; font-size: 18px; font-weight: bold; padding: 10px;");
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
@@ -550,7 +940,7 @@ void MainWindow::on_btn_history_clicked()
 
     // 列表
     listWidget = new QListWidget(listContainer);
-    listWidget->setStyleSheet("QListWidget { background-color: #1e1e1e; border: 1px solid #444; border-radius: 5px; }"
+    listWidget->setStyleSheet("QListWidget { border: 1px solid #444; border-radius: 5px; }"
                               "QListWidget::item { padding: 5px; border-bottom: 1px solid #333; }"
                               "QListWidget::item:selected { background-color: #2d2d2d; }");
     listWidget->setSelectionMode(QAbstractItemView::NoSelection);
@@ -572,12 +962,12 @@ void MainWindow::on_btn_history_clicked()
     };
 
     // 当前页记录数
-    currentPageRecordLabel = new QLabel(QString::fromLocal8Bit("本页 0 条 (每页最多 %1 条)").arg(PAGE_SIZE), listContainer);
+    currentPageRecordLabel = new QLabel(QStringLiteral("本页 0 条 (每页最多 %1 条)").arg(PAGE_SIZE), listContainer);
     currentPageRecordLabel->setStyleSheet("color: #00ff00; font-size: 12px; min-width: 200px;");
     currentPageRecordLabel->setAlignment(Qt::AlignCenter);
 
     // 上一页按钮
-    prevPageBtn = createBtn(QString::fromLocal8Bit("上一页"), [this]() { if (currentPage > 0) { loadPage(--currentPage); } });
+    prevPageBtn = createBtn(QStringLiteral("上一页"), [this]() { if (currentPage > 0) { loadPage(--currentPage); } });
 
     // 页码信息
     pageInfoLabel = new QLabel("1 / 1", listContainer);
@@ -585,18 +975,18 @@ void MainWindow::on_btn_history_clicked()
     pageInfoLabel->setAlignment(Qt::AlignCenter);
 
     // 下一页按钮
-    nextPageBtn = createBtn(QString::fromLocal8Bit("下一页"), [this]() { if (currentPage < totalPages - 1) { loadPage(++currentPage); } });
+    nextPageBtn = createBtn(QStringLiteral("下一页"), [this]() { if (currentPage < totalPages - 1) { loadPage(++currentPage); } });
 
     // 跳转功能
     QHBoxLayout *jumpLayout = new QHBoxLayout();
     jumpLayout->setSpacing(4);
 
     jumpLineEdit = new QLineEdit(listContainer);
-    jumpLineEdit->setPlaceholderText(QString::fromLocal8Bit("页数"));
+    jumpLineEdit->setPlaceholderText(QStringLiteral("页数"));
     jumpLineEdit->setStyleSheet("QLineEdit { background-color: #333; color: white; border: 1px solid #555; border-radius: 3px; padding: 3px 5px; width: 60px; }"
                                 "QLineEdit:focus { border: 1px solid #2e7d32; }");
 
-    QPushButton *jumpBtn = new QPushButton(QString::fromLocal8Bit("跳转"), listContainer);
+    QPushButton *jumpBtn = new QPushButton(QStringLiteral("跳转"), listContainer);
     jumpBtn->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 3px; padding: 3px 6px; width: 35px; }"
                            "QPushButton:hover { background-color: #388e3c; }"
                            "QPushButton:pressed { background-color: #1b5e20; }");
@@ -625,7 +1015,7 @@ void MainWindow::on_btn_history_clicked()
     jumpLayout->addWidget(jumpBtn);
 
     // 总记录数信息
-    recordCountLabel = new QLabel(QString::fromLocal8Bit("共 0 条"), listContainer);
+    recordCountLabel = new QLabel(QStringLiteral("共 0 条"), listContainer);
     recordCountLabel->setStyleSheet("color: #00ff00; font-size: 12px; min-width: 70px;");
     recordCountLabel->setAlignment(Qt::AlignCenter);
 
@@ -663,7 +1053,7 @@ void MainWindow::on_btn_history_clicked()
                                    "    border-radius: 4px;"
                                    "}");
     videoTitleLabel->setAlignment(Qt::AlignCenter);
-    videoTitleLabel->setText(QString::fromLocal8Bit("请选择视频查看"));
+    videoTitleLabel->setText(QStringLiteral("请选择视频查看"));
     videoLayout->addWidget(videoTitleLabel);
 
     // 视频播放器
@@ -691,10 +1081,6 @@ void MainWindow::on_btn_history_clicked()
     videoSlider->setRange(0, 1000);
     videoSlider->setValue(0);
     videoSlider->setPageStep(0);
-    videoSlider->setStyleSheet("QSlider::groove:horizontal { height: 6px; background: #555; border-radius: 3px; }"
-                               "QSlider::handle:horizontal { background: #2e7d32; width: 14px; margin: -4px 0; border-radius: 7px; }"
-                               "QSlider::handle:horizontal:hover { background: #388e3c; }"
-                               "QSlider::sub-page:horizontal { background: #2e7d32; border-radius: 3px; }");
 
     connect(player, &QMediaPlayer::positionChanged, this, &MainWindow::updateVideoPosition);
     connect(videoSlider, &QSlider::sliderPressed, this, &MainWindow::onSliderPressed);
@@ -702,7 +1088,7 @@ void MainWindow::on_btn_history_clicked()
     connect(videoSlider, &QSlider::sliderMoved, this, &MainWindow::onSliderMoved);
 
     // 速度控制
-    QLabel *speedLabel = new QLabel(QString::fromLocal8Bit("速度:"), videoContainer);
+    QLabel *speedLabel = new QLabel(QStringLiteral("速度:"), videoContainer);
     speedLabel->setStyleSheet("color: #ffffff; font-size: 12px;");
 
     speedCombo = new QComboBox(videoContainer);
@@ -744,10 +1130,10 @@ void MainWindow::on_btn_history_clicked()
 
     // 视频控制栏
     QHBoxLayout *videoControlLayout = new QHBoxLayout();
-    QPushButton *videoPlayBtn = new QPushButton(QString::fromLocal8Bit("播放"), videoContainer);
-    QPushButton *videoPauseBtn = new QPushButton(QString::fromLocal8Bit("暂停"), videoContainer);
-    QPushButton *videoStopBtn = new QPushButton(QString::fromLocal8Bit("停止"), videoContainer);
-    QPushButton *videoCloseBtn = new QPushButton(QString::fromLocal8Bit("返回列表"), videoContainer);
+    QPushButton *videoPlayBtn = new QPushButton(QStringLiteral("播放"), videoContainer);
+    QPushButton *videoPauseBtn = new QPushButton(QStringLiteral("暂停"), videoContainer);
+    QPushButton *videoStopBtn = new QPushButton(QStringLiteral("停止"), videoContainer);
+    QPushButton *videoCloseBtn = new QPushButton(QStringLiteral("返回列表"), videoContainer);
 
     videoPlayBtn->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 4px; padding: 6px 16px; }"
                                 "QPushButton:hover { background-color: #66bb6a; }"
@@ -777,7 +1163,7 @@ void MainWindow::on_btn_history_clicked()
     mainLayout->addWidget(videoContainer, 1);
 
     // 关闭按钮
-    QPushButton *closeBtn = new QPushButton(QString::fromLocal8Bit("关闭"), historyWindow);
+    QPushButton *closeBtn = new QPushButton(QStringLiteral("关闭"), historyWindow);
     closeBtn->setStyleSheet("QPushButton { background-color: #c62828; color: white; border-radius: 5px; padding: 8px 20px; }"
                             "QPushButton:hover { background-color: #ef5350; }"
                             "QPushButton:pressed { background-color: #b71c1c; }");
@@ -826,7 +1212,7 @@ void MainWindow::loadHistoryList()
 
 void MainWindow::showEmptyLabel()
 {
-    QLabel *emptyLabel = new QLabel(QString::fromLocal8Bit("暂无历史记录"), historyWindow);
+    QLabel *emptyLabel = new QLabel(QStringLiteral("暂无历史记录"), historyWindow);
     emptyLabel->setStyleSheet("color: #888; font-size: 16px;");
     emptyLabel->setAlignment(Qt::AlignCenter);
     QListWidgetItem *item = new QListWidgetItem(listWidget);
@@ -875,12 +1261,12 @@ void MainWindow::updatePaginationControls()
     int endIndex = qMax(0, startIndex - PAGE_SIZE + 1);
     int currentPageRecords = qMax(0, startIndex - endIndex + 1);
 
-    currentPageRecordLabel->setText(QString::fromLocal8Bit("本页 %1 条 (每页最多 %2 条)").arg(currentPageRecords).arg(PAGE_SIZE));
+    currentPageRecordLabel->setText(QStringLiteral("本页 %1 条 (每页最多 %2 条)").arg(currentPageRecords).arg(PAGE_SIZE));
     prevPageBtn->setEnabled(currentPage > 0);
     pageInfoLabel->setText(QString("%1 / %2").arg(currentPage + 1).arg(totalPages));
     nextPageBtn->setEnabled(currentPage < totalPages - 1);
     jumpLineEdit->setPlaceholderText("1-" + QString::number(totalPages));
-    recordCountLabel->setText(QString::fromLocal8Bit("共 %1 条").arg(totalRecords));
+    recordCountLabel->setText(QStringLiteral("共 %1 条").arg(totalRecords));
 }
 
 QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QString originalPath, QString resultPath)
@@ -900,7 +1286,7 @@ QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QStrin
     logLabel->setWordWrap(true);
 
     // 原视频按钮
-    QString originalVideoText = QString::fromLocal8Bit("原视频");
+    QString originalVideoText = QStringLiteral("原视频");
     QPushButton *btnOriginal = new QPushButton(originalVideoText, itemWidget);
     btnOriginal->setStyleSheet("QPushButton { background-color: #1976d2; color: white; border-radius: 4px; padding: 4px 12px; }"
                                "QPushButton:hover { background-color: #42a5f5; }"
@@ -910,7 +1296,7 @@ QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QStrin
     connect(btnOriginal, &QPushButton::clicked, [this, recordNumber, originalVideoText, logLine, originalPath]() { showVideo(recordNumber, originalVideoText, logLine, originalPath); });
 
     // 结果视频按钮
-    QString resultVideoText = QString::fromLocal8Bit("结果视频");
+    QString resultVideoText = QStringLiteral("结果视频");
     QPushButton *btnResult = new QPushButton(resultVideoText, itemWidget);
     btnResult->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 4px; padding: 4px 12px; }"
                              "QPushButton:hover { background-color: #66bb6a; }"
@@ -931,7 +1317,7 @@ void MainWindow::showVideo(int recordNumber, QString type, QString logInfo, QStr
 {
     if (path.isEmpty() || !QFile::exists(path))
     {
-        QMessageBox::warning(historyWindow, QString::fromLocal8Bit("警告"), QString::fromLocal8Bit("视频文件不存在:\n%1").arg(path));
+        QMessageBox::warning(historyWindow, QStringLiteral("警告"), QStringLiteral("视频文件不存在:\n%1").arg(path));
         return;
     }
 
@@ -943,7 +1329,7 @@ void MainWindow::showVideo(int recordNumber, QString type, QString logInfo, QStr
         videoContainer->setVisible(true);
         // 更新视频标题（显示编号 + 类型 + 日志信息）
         if (videoTitleLabel)
-            videoTitleLabel->setText(QString::fromLocal8Bit("#%1 %2 —— %3").arg(recordNumber).arg(type).arg(logInfo));
+            videoTitleLabel->setText(QStringLiteral("#%1 %2 —— %3").arg(recordNumber).arg(type).arg(logInfo));
         if (player)
         {
             // 设置视频
@@ -1053,7 +1439,7 @@ void MainWindow::receive_connectstate(bool state)
                                         "    border-radius: 6px;"
                                         "}")
                                     .arg(state ? "#2e7d32" : "#c62828"));
-    ui->lb_proc4->setText(QString::fromLocal8Bit(state ? "已连接" : "未连接"));
+    ui->lb_proc4->setText(state ? QStringLiteral("已连接") : QStringLiteral("未连接"));
 }
 
 void MainWindow::on_btn_settings_clicked()
@@ -1157,7 +1543,7 @@ void MainWindow::on_spinBox_roi_h_valueChanged(int value)
 
 void MainWindow::on_btn_colorPicker_clicked()
 {
-    QColor color = QColorDialog::getColor(QColor(currentRoiColor), this, QString::fromLocal8Bit("选择检测框颜色"));
+    QColor color = QColorDialog::getColor(QColor(currentRoiColor), this, QStringLiteral("选择检测框颜色"));
     if (color.isValid())
     {
         QString colorName = color.name();
@@ -1180,6 +1566,19 @@ void MainWindow::on_slider_line_width_valueChanged(int value)
     modifyROIParameter("RoiLineWidth", value);
     ui->label_line_width_display->setText(QString("%1").arg(value));
     cam->setRoiLineWidth(value);
+}
+
+void MainWindow::on_slider_prob_threshold_valueChanged(int value)
+{
+    float t = value / 100.0f;
+    ui->label_prob_threshold_display->setText(QString("%1").arg(t, 0, 'f', 2));
+
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("Model");
+    settings.setValue("probabilityThreshold", value);
+    settings.endGroup();
+
+    cam->setProbabilityThreshold(t);
 }
 
 void MainWindow::on_checkBox_forceSaveVideo_toggled(bool value)

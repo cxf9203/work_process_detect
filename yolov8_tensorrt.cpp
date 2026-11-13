@@ -3,7 +3,7 @@
 #include <opencv2/cudaimgproc.hpp>
 
 YoloV8::YoloV8(const std::string &modelPath, const YoloV8Config &config)
-    : PROBABILITY_THRESHOLD(config.probabilityThreshold),
+    : probabilityThreshold(config.probabilityThreshold),
       NMS_THRESHOLD(config.nmsThreshold),
       TOP_K(config.topK),
       SEG_CHANNELS(config.segChannels),
@@ -183,7 +183,7 @@ std::vector<Object> YoloV8::postProcessDetect(std::vector<float> &featureVector)
         auto scoresPtr = rowPtr + 4;
         auto maxSPtr = std::max_element(scoresPtr, scoresPtr + numClasses);
         float score = *maxSPtr;
-        if (score > PROBABILITY_THRESHOLD)
+        if (score > probabilityThreshold)
         {
             float x = *bboxesPtr++;
             float y = *bboxesPtr++;
@@ -209,7 +209,7 @@ std::vector<Object> YoloV8::postProcessDetect(std::vector<float> &featureVector)
     }
 
     // Run NMS
-    cv::dnn::NMSBoxesBatched(bboxes, scores, labels, PROBABILITY_THRESHOLD, NMS_THRESHOLD, indices);
+    cv::dnn::NMSBoxesBatched(bboxes, scores, labels, probabilityThreshold, NMS_THRESHOLD, indices);
 
     // Choose the top k detections
     std::vector<Object> objs;
@@ -274,7 +274,7 @@ std::vector<Object> YoloV8::postProcessSegmentation(std::vector<std::vector<floa
         auto maskConfsPtr = rowPtr + 4 + numClasses;
         auto maxSPtr = std::max_element(scoresPtr, scoresPtr + numClasses);
         float score = *maxSPtr;
-        if (score > PROBABILITY_THRESHOLD)
+        if (score > probabilityThreshold)
         {
             float x = *bboxesPtr++;
             float y = *bboxesPtr++;
@@ -303,7 +303,7 @@ std::vector<Object> YoloV8::postProcessSegmentation(std::vector<std::vector<floa
     }
     std::cout << "finish Object the bounding boxes and class labels " << std::endl;
     // Require OpenCV 4.7 for this function
-    cv::dnn::NMSBoxesBatched(bboxes, scores, labels, PROBABILITY_THRESHOLD, NMS_THRESHOLD, indices);
+    cv::dnn::NMSBoxesBatched(bboxes, scores, labels, probabilityThreshold, NMS_THRESHOLD, indices);
 
     // Obtain the segmentation masks
     cv::Mat masks;
@@ -426,7 +426,7 @@ std::vector<Object> YoloV8::postProcessPose(std::vector<float> &featureVector)
         auto scoresPtr = rowPtr + 4;
         auto kps_ptr = rowPtr + 5;
         float score = *scoresPtr;
-        if (score > PROBABILITY_THRESHOLD)
+        if (score > probabilityThreshold)
         {
             float x = *bboxesPtr++;
             float y = *bboxesPtr++;
@@ -465,7 +465,7 @@ std::vector<Object> YoloV8::postProcessPose(std::vector<float> &featureVector)
     }
 
     // Run NMS
-    cv::dnn::NMSBoxesBatched(bboxes, scores, labels, PROBABILITY_THRESHOLD, NMS_THRESHOLD, indices);
+    cv::dnn::NMSBoxesBatched(bboxes, scores, labels, probabilityThreshold, NMS_THRESHOLD, indices);
 
     // Choose the top k detections
     std::vector<Object> objs;

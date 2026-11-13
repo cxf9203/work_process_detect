@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <fstream>
 #include <iostream>
@@ -89,6 +89,8 @@ public:
     void setRoiOpacity(float opacity);
     // Set the line width of the detection ROI
     void setRoiLineWidth(int lineWidth);
+    // Set the probability threshold for filtering detected objects
+    void setProbabilityThreshold(float threshold);
     std::vector<int> getclassnumer();
     std::vector<bool> getActionFlag();
 
@@ -127,7 +129,7 @@ private:
     float m_imgWidth = 0;
     float m_imgHeight = 0;
     // Filter thresholds
-    const float PROBABILITY_THRESHOLD;
+    float probabilityThreshold;
     const float NMS_THRESHOLD;
     const int TOP_K;
     // Segmentation constants

@@ -7,7 +7,6 @@
 #include <QThread>
 #include <string>
 #include <QSettings>
-#include <cmath>
 #include <QDateTime>
 
 std::queue<cv::Mat> Camera::gImage;
@@ -57,20 +56,18 @@ void CALLBACK g_RealDataCallBack_V30(LONG lPlayHandle, DWORD dwDataType, BYTE *p
 
 Camera::Camera(QObject *parent)
 {
-    initCamera();
 }
 
 Camera::~Camera()
 {
 }
 
-void Camera::initCamera()
-{
-}
-
 void Camera::run()
 {
     Camera_thread_flag = false;
+
+    // 清理上次运行残留的临时录制目录
+    QDir(baseVideoPath + "temp/").removeRecursively();
 
     // 链接PLC
     if (!connectPLC())
@@ -84,7 +81,7 @@ void Camera::run()
     QString modelPath = settings.value("modelPath").toString();
     qDebug() << "modelPath: " << modelPath;
     YoloV8Config config;
-    YoloV8 *yoloV8 = nullptr;
+    config.probabilityThreshold = m_probabilityThreshold;
     try
     {
         yoloV8 = new YoloV8(modelPath.replace("/", "\\").toStdString(), config); // 加载深度学习模型
@@ -102,6 +99,13 @@ void Camera::run()
         emit finishedthread();
         return;
     }
+
+    // 设置检测区域ROI
+    yoloV8->enableROIDetection(m_enableROIDetection);
+    yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
+    yoloV8->setRoiColor(roi_color);
+    yoloV8->setRoiOpacity(roi_opacity);
+    yoloV8->setRoiLineWidth(roi_line_width);
 
     bool useLocalVideo = settings.value("useLocalVideo").toBool();
     QString videoPath = settings.value("videoPath").toString();
@@ -126,6 +130,12 @@ void Camera::run()
     {
         // 真实相机模式
         emit sendQStringtoMain("Using real camera mode...");
+
+        // 清空图像队列（清除上次运行残留帧）
+        {
+            QMutexLocker locker(&queueMutex);
+            std::queue<cv::Mat>().swap(Camera::gImage);
+        }
 
         // 初始化
         NET_DVR_Init();
@@ -162,6 +172,33 @@ void Camera::run()
             emit sendQStringtoMain("register success with camera!");
         }
 
+        // 登录成功后，先校准设备时间
+        NET_DVR_TIME struTimeCfg = {0};
+        time_t now = time(NULL);
+        struct tm localTime;
+        localtime_s(&localTime, &now);
+
+        struTimeCfg.dwYear = localTime.tm_year + 1900;
+        struTimeCfg.dwMonth = localTime.tm_mon + 1;
+        struTimeCfg.dwDay = localTime.tm_mday;
+        struTimeCfg.dwHour = localTime.tm_hour;
+        struTimeCfg.dwMinute = localTime.tm_min;
+        struTimeCfg.dwSecond = localTime.tm_sec;
+
+        BOOL bTimeRet = NET_DVR_SetDVRConfig(lUserID, NET_DVR_SET_TIMECORRECT, 0xFFFFFFFF, &struTimeCfg, sizeof(NET_DVR_TIME));
+
+        if (!bTimeRet)
+        {
+            DWORD dwTimeErr = NET_DVR_GetLastError();
+            std::cout << "校时失败！错误码: " << dwTimeErr << std::endl;
+            emit sendQStringtoMain(QString("Time correction failed! Error code: %1").arg(dwTimeErr));
+        }
+        else
+        {
+            std::cout << "校时成功！" << std::endl;
+            emit sendQStringtoMain("Time correction success!");
+        }
+
         if (PlayM4_GetPort(&g_nPort)) // 获取播放库通道号
             if (PlayM4_SetStreamOpenMode(g_nPort, STREAME_REALTIME)) // 设置流模式
                 if (PlayM4_OpenStream(g_nPort, NULL, 0, 1024 * 1024)) // 打开流
@@ -190,9 +227,6 @@ void Camera::run()
 
         qDebug() << "Camera" << id << "opened successfully";
         emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
-        setD(0, 0);
-        setD(1, 0);
-        setD(2, 0);
         LONG lRealHandle = NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL); // 开始取流
         if (lRealHandle < 0)
         {
@@ -211,6 +245,7 @@ void Camera::run()
 
     keti_history.clear(); // 清空队列
     last_keti = 0; // 重置计数器
+    resetDetectionState(); // 复位检测状态
 
     try
     {
@@ -265,13 +300,6 @@ void Camera::run()
                 // Run inference 推理
                 // qDebug() << "run inference";
                 const auto objects = yoloV8->detectObjects(BGR_image);
-                // 设置检测区域ROI
-                yoloV8->enableROIDetection(m_enableROIDetection);
-                cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
-                yoloV8->setDetectionROI(detectionROI);
-                yoloV8->setRoiColor(roi_color);
-                yoloV8->setRoiOpacity(roi_opacity);
-                yoloV8->setRoiLineWidth(roi_line_width);
                 // Draw the bounding boxes on the image
                 yoloV8->drawObjectLabels(BGR_image, objects);
                 std::vector<int> classCount = yoloV8->getclassnumer();
@@ -357,23 +385,20 @@ void Camera::run()
                         if (!isActionsCompleted())
                             errorDetails.append("actions NG");
                         QString logMsg = QString("ERROR | %1").arg(errorDetails.join(", "));
+                        stopRecording(hasError);
                         saveErrorLog(logMsg);
                     }
-
-                    stopRecording(hasError);
+                    else
+                    {
+                        stopRecording(hasError);
+                    }
                     emit updateStatistics(!hasError);
                 }
 
                 if (cur_keti == 0 && last_keti == 0)
                 {
-                    // keti消失，chilun_flag和luosi_flag置0
-                    chilun_flag = luosi_flag = false;
-                    // reset actionGroup and buttonState
-                    actionGroup = {false, false, false, false, false};
-                    emit updateLabelState(false, false, false); // 齿轮/螺丝/总体
-                    // 复位PLC输出(让PLC自己复位)
-                    // setD(0, 0); // 复位报警
-                    // setD(2, 0); // 复位绿灯
+                    // keti消失，复位检测状态
+                    resetDetectionState();
                 }
 
                 last_keti = cur_keti;
@@ -505,44 +530,77 @@ void Camera::disconnectPLC()
     emit send_connectstate(false);
 }
 
+void Camera::resetDetectionState()
+{
+    chilun_flag = luosi_flag = false;
+    actionGroup = {false, false, false, false, false};
+    emit updateLabelState(false, false, false); // 齿轮/螺丝/总体
+    // 复位PLC输出(让PLC自己复位)
+    // setD(0, 0); // 复位报警
+    // setD(2, 0); // 复位绿灯
+}
+
 void Camera::enableROIDetection(bool enable)
 {
     m_enableROIDetection = enable;
+    if (yoloV8)
+        yoloV8->enableROIDetection(enable);
 }
 
 void Camera::setRoiX(int x)
 {
     roi_x = x;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiY(int y)
 {
     roi_y = y;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiW(int w)
 {
     roi_w = w;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiH(int h)
 {
     roi_h = h;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiColor(QString color)
 {
     roi_color = color;
+    if (yoloV8)
+        yoloV8->setRoiColor(color);
 }
 
 void Camera::setRoiOpacity(float opacity)
 {
     roi_opacity = opacity;
+    if (yoloV8)
+        yoloV8->setRoiOpacity(opacity);
 }
 
 void Camera::setRoiLineWidth(int lineWidth)
 {
     roi_line_width = lineWidth;
+    if (yoloV8)
+        yoloV8->setRoiLineWidth(lineWidth);
+}
+
+void Camera::setProbabilityThreshold(float threshold)
+{
+    m_probabilityThreshold = threshold;
+    if (yoloV8)
+        yoloV8->setProbabilityThreshold(threshold);
 }
 
 void Camera::processActionDetection(const std::vector<bool> &actions)
@@ -633,15 +691,15 @@ void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultF
 
     currentVideoTimestamp = QDateTime::currentDateTime().toString("yyyyMMddhhmmss_zzz");
 
-    QString tempDir = baseVideoPath + "temp/";
-    QDir(tempDir).mkpath(".");
+    currentTempDir = baseVideoPath + "temp/" + currentVideoTimestamp + "/";
+    QDir().mkpath(currentTempDir);
 
     // 原图视频
-    QString originalPath = tempDir + "original.avi";
+    QString originalPath = currentTempDir + "original.avi";
     originalVideoWriter.open(originalPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, originalFrame.size());
 
     // 结果图视频
-    QString resultPath = tempDir + "result.avi";
+    QString resultPath = currentTempDir + "result.avi";
     resultVideoWriter.open(resultPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, resultFrame.size());
 
     if (originalVideoWriter.isOpened() && resultVideoWriter.isOpened())
@@ -655,6 +713,10 @@ void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultF
             originalVideoWriter.release();
         if (resultVideoWriter.isOpened())
             resultVideoWriter.release();
+
+        // 打开失败，清掉本段空目录
+        QDir(currentTempDir).removeRecursively();
+        currentTempDir.clear();
     }
 }
 
@@ -669,9 +731,8 @@ void Camera::stopRecording(bool save)
     if (resultVideoWriter.isOpened())
         resultVideoWriter.release();
 
-    QString tempDir = baseVideoPath + "temp/";
-    QString originalPath = tempDir + "original.avi";
-    QString resultPath = tempDir + "result.avi";
+    QString originalPath = currentTempDir + "original.avi";
+    QString resultPath = currentTempDir + "result.avi";
 
     if (forceSaveVideo)
     {
@@ -705,8 +766,12 @@ void Camera::stopRecording(bool save)
         emit sendQStringtoMain("Error videos saved: " + currentVideoTimestamp);
     }
 
-    // 删除临时目录
-    QDir(tempDir).removeRecursively();
+    // 删除本次录制的临时子目录
+    if (!currentTempDir.isEmpty())
+    {
+        QDir(currentTempDir).removeRecursively();
+        currentTempDir.clear();
+    }
 
     isRecording = false;
     qDebug() << "Stopped recording:" << originalPath << "and" << resultPath;
@@ -722,6 +787,7 @@ void Camera::saveErrorLog(const QString &message)
         QString formattedTime = ts.mid(0, 4) + "-" + ts.mid(4, 2) + "-" + ts.mid(6, 2) + " " + ts.mid(8, 2) + ":" + ts.mid(10, 2) + ":" + ts.mid(12, 2) + "." + ts.mid(15, 3);
         out << formattedTime << " | " << message << "\n";
         file.close();
+        emit logFileChanged();
     }
 }
 

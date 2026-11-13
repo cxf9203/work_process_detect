@@ -8,7 +8,6 @@
 #include <QImage>
 #include <QObject>
 #include <QSettings>
-#include <cmath>
 #include <queue>
 #ifdef USE_OPENVINO
     #include "yolov8_openvino.h"
@@ -28,11 +27,11 @@ class Camera : public QObject
     Q_OBJECT
 public:
     Camera(QObject *parent = nullptr);
-    void initCamera();
     ~Camera();
     static std::queue<cv::Mat> gImage;
     bool connectPLC();
     void disconnectPLC();
+    void resetDetectionState(); // 复位检测状态
     // ROI 检测控制
     void enableROIDetection(bool enable); // 启用或禁用ROI检测
     void setRoiX(int x);
@@ -42,6 +41,7 @@ public:
     void setRoiColor(QString color);
     void setRoiOpacity(float opacity);
     void setRoiLineWidth(int lineWidth);
+    void setProbabilityThreshold(float threshold);
     // 动作检测控制
     void processActionDetection(const std::vector<bool> &actions);
     void setActionConfig(bool pEnableAction, const QVector<int> &pEnabledActions, bool pIncludeActionInResult, const QVector<int> &pOrderedActions);
@@ -69,12 +69,14 @@ signals:
     void sendNumber(QString str_chilun_num, QString str_luosi_num);
     void finishedthread();
     void updateLabelState(bool p1, bool p2, bool p3);
+    void logFileChanged();
     void updateStatistics(bool result);
     void send_connectstate(bool state);
 
 private:
     QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
     bool Camera_thread_flag;
+    YoloV8 *yoloV8 = nullptr;
     cv::Mat BGR_image;
     int id;
     bool cameraOpened = false;
@@ -107,14 +109,15 @@ private:
     int cur_keti = 0; // 当前keti计数
     int last_keti = 0; // 上次keti计数
     // ROI参数
-    bool m_enableROIDetection; // ROI检测启用状态
-    int roi_x;
-    int roi_y;
-    int roi_w;
-    int roi_h;
-    QString roi_color; // ROI颜色
-    float roi_opacity; // ROI透明度
-    int roi_line_width; // ROI矩形线宽
+    bool m_enableROIDetection = false; // ROI检测启用状态
+    int roi_x = 0;
+    int roi_y = 0;
+    int roi_w = 0;
+    int roi_h = 0;
+    QString roi_color = "#00ff00"; // ROI颜色
+    float roi_opacity = 0.5f; // ROI透明度
+    int roi_line_width = 5; // ROI矩形线宽
+    float m_probabilityThreshold = 0.25f; // 置信度阈值
     // 滑动窗口相关变量，用于平滑壳体检测结果
     std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
     const int KETI_WINDOW_SIZE = 4; // 滑动窗口大小
@@ -130,6 +133,7 @@ private:
     cv::VideoWriter resultVideoWriter;
     bool isRecording = false;
     QString currentVideoTimestamp;
+    QString currentTempDir;
     QString baseVideoPath = QCoreApplication::applicationDirPath() + "/saved_videos/";
 
 public slots:
