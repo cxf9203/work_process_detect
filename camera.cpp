@@ -81,7 +81,7 @@ void Camera::run()
     QString modelPath = settings.value("modelPath").toString();
     qDebug() << "modelPath: " << modelPath;
     YoloV8Config config;
-    config.probabilityThreshold = m_probabilityThreshold;
+    config.probabilityThreshold = probabilityThreshold;
     try
     {
         yoloV8 = new YoloV8(modelPath.replace("/", "\\").toStdString(), config); // 加载深度学习模型
@@ -101,7 +101,7 @@ void Camera::run()
     }
 
     // 设置检测区域ROI
-    yoloV8->enableROIDetection(m_enableROIDetection);
+    yoloV8->enableROIDetection(roiDetectionEnabled);
     yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
     yoloV8->setRoiColor(roi_color);
     yoloV8->setRoiOpacity(roi_opacity);
@@ -306,9 +306,14 @@ void Camera::run()
                 int chilun_num = classCount[0];
                 int keti_num = classCount[1];
                 int luosi_num = classCount[2];
-                QString str_chilun_num = QString::number(chilun_num);
-                QString str_luosi_num = QString::number(luosi_num);
-                emit sendNumber(str_chilun_num, str_luosi_num);
+                // 锁定模式：达标后锁存
+                if (chilunLockMode && chilun_num >= CHILUN_NUM)
+                    chilunLatched = true;
+                if (luosiLockMode && luosi_num >= LUOSI_NUM)
+                    luosiLatched = true;
+                int chilun_display = chilunLockMode ? (chilunLatched ? CHILUN_NUM : chilun_num) : chilun_num;
+                int luosi_display = luosiLockMode ? (luosiLatched ? LUOSI_NUM : luosi_num) : luosi_num;
+                emit sendNumber(QString::number(chilun_display), QString::number(luosi_display));
                 // 检查动作是否有做到了（瞬时动作可以消失）
                 if (enableAction)
                     processActionDetection(yoloV8->getActionFlag());
@@ -326,10 +331,10 @@ void Camera::run()
 
                 if (cur_keti > 0)
                 {
-                    if (chilun_num == CHILUN_NUM)
+                    if (chilun_num >= CHILUN_NUM)
                         chilun_flag = true;
 
-                    if (luosi_num == LUOSI_NUM)
+                    if (luosi_num >= LUOSI_NUM)
                         luosi_flag = true;
 
                     cv::putText(BGR_image, chilun_flag ? "chilun OK" : "chilun miss", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, chilun_flag ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255), 2);
@@ -535,14 +540,38 @@ void Camera::resetDetectionState()
     chilun_flag = luosi_flag = false;
     actionGroup = {false, false, false, false, false};
     emit updateLabelState(false, false, false); // 齿轮/螺丝/总体
+    chilunLatched = false;
+    luosiLatched = false;
     // 复位PLC输出(让PLC自己复位)
     // setD(0, 0); // 复位报警
     // setD(2, 0); // 复位绿灯
 }
 
+void Camera::setProbabilityThreshold(float threshold)
+{
+    probabilityThreshold = threshold;
+    if (yoloV8)
+        yoloV8->setProbabilityThreshold(threshold);
+}
+
+void Camera::setNumberConfig(int chilunNum, int luosiNum, bool chilunLock, bool luosiLock)
+{
+    if (CHILUN_NUM != chilunNum || LUOSI_NUM != luosiNum || chilunLockMode != chilunLock || luosiLockMode != luosiLock)
+    {
+        chilunLatched = false;
+        luosiLatched = false;
+        chilun_flag = false;
+        luosi_flag = false;
+    }
+    CHILUN_NUM = chilunNum;
+    LUOSI_NUM = luosiNum;
+    chilunLockMode = chilunLock;
+    luosiLockMode = luosiLock;
+}
+
 void Camera::enableROIDetection(bool enable)
 {
-    m_enableROIDetection = enable;
+    roiDetectionEnabled = enable;
     if (yoloV8)
         yoloV8->enableROIDetection(enable);
 }
@@ -594,13 +623,6 @@ void Camera::setRoiLineWidth(int lineWidth)
     roi_line_width = lineWidth;
     if (yoloV8)
         yoloV8->setRoiLineWidth(lineWidth);
-}
-
-void Camera::setProbabilityThreshold(float threshold)
-{
-    m_probabilityThreshold = threshold;
-    if (yoloV8)
-        yoloV8->setProbabilityThreshold(threshold);
 }
 
 void Camera::processActionDetection(const std::vector<bool> &actions)

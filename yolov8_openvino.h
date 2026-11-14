@@ -79,6 +79,10 @@ public:
     std::vector<Object> detectObjects(cv::Mat inputImageBGR);
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
+    std::vector<int> getclassnumer();
+    std::vector<bool> getActionFlag();
+    // Set the probability threshold for filtering detected objects
+    void setProbabilityThreshold(float threshold);
     // Enable or disable ROI-based detection
     void enableROIDetection(bool enable);
     // Set the detection ROI
@@ -89,10 +93,6 @@ public:
     void setRoiOpacity(float opacity);
     // Set the line width of the detection ROI
     void setRoiLineWidth(int lineWidth);
-    // Set the probability threshold for filtering detected objects
-    void setProbabilityThreshold(float threshold);
-    std::vector<int> getclassnumer();
-    std::vector<bool> getActionFlag();
 
 private:
     int numOutputs;

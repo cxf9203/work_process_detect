@@ -25,9 +25,11 @@ MainWindow::MainWindow(QWidget *parent)
     cam = new Camera;
 
     loadStatsFromCsv();
-    initActionControls();
-    loadROIParametersToUI();
     initProbabilityThresholdControl();
+    initNumberSettings();
+    loadROIParametersToUI();
+    initActionControls();
+    initGroupLocks();
     initForceSaveVideoControl();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
@@ -47,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::destroyed, cam, &Camera::deleteLater, Qt::QueuedConnection);
 
     // 启动相机1
-    on_start_clicked();
+    on_btn_start_clicked();
 }
 
 MainWindow::~MainWindow()
@@ -382,6 +384,103 @@ void MainWindow::loadStatsFromCsv()
     ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 }
 
+void MainWindow::initProbabilityThresholdControl()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("Model");
+    int sliderValue = settings.value("probabilityThreshold").toInt();
+    settings.endGroup();
+    float threshold = sliderValue / 100.0f;
+
+    ui->slider_prob_threshold->setValue(sliderValue);
+    ui->label_prob_threshold_display->setText(QString("%1").arg(threshold, 0, 'f', 2));
+
+    cam->setProbabilityThreshold(threshold);
+}
+
+void MainWindow::applyNumberSettings()
+{
+    int chilunNum = ui->spinBox_chilunNum->value();
+    int luosiNum = ui->spinBox_luosiNum->value();
+    bool chilunLock = ui->cb_chilunLock->isChecked();
+    bool luosiLock = ui->cb_luosiLock->isChecked();
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("NumberSettings");
+    settings.setValue("chilunNum", chilunNum);
+    settings.setValue("luosiNum", luosiNum);
+    settings.setValue("chilunLock", chilunLock);
+    settings.setValue("luosiLock", luosiLock);
+    settings.endGroup();
+    cam->setNumberConfig(chilunNum, luosiNum, chilunLock, luosiLock);
+}
+
+void MainWindow::initNumberSettings()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("NumberSettings");
+    int chilunNum = settings.value("chilunNum").toInt();
+    int luosiNum = settings.value("luosiNum").toInt();
+    bool chilunLock = settings.value("chilunLock").toBool();
+    bool luosiLock = settings.value("luosiLock").toBool();
+    settings.endGroup();
+    ui->spinBox_chilunNum->setValue(chilunNum);
+    ui->spinBox_luosiNum->setValue(luosiNum);
+    ui->cb_chilunLock->setChecked(chilunLock);
+    ui->cb_luosiLock->setChecked(luosiLock);
+    cam->setNumberConfig(chilunNum, luosiNum, chilunLock, luosiLock);
+}
+
+void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("ROI");
+    settings.setValue(parameterName, newValue);
+    settings.endGroup();
+}
+
+void MainWindow::loadROIParametersToUI()
+{
+    // 从 INI 文件读取 ROI 配置
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("ROI");
+    // 读取 ROI 参数
+    bool enableROI = settings.value("EnableROI").toBool();
+    int roi_x = settings.value("RoiX").toInt();
+    int roi_y = settings.value("RoiY").toInt();
+    int roi_w = settings.value("RoiW").toInt();
+    int roi_h = settings.value("RoiH").toInt();
+    QString roiColorStr = settings.value("RoiColor").toString();
+    currentRoiColor = roiColorStr;
+    int roi_opacity = settings.value("RoiOpacity").toInt();
+    int roi_line_width = settings.value("RoiLineWidth").toInt();
+    settings.endGroup();
+
+    // 更新 UI
+    ui->cb_enableROI->setChecked(enableROI);
+    ui->spinBox_roi_x->setValue(roi_x);
+    ui->spinBox_roi_y->setValue(roi_y);
+    ui->spinBox_roi_w->setValue(roi_w);
+    ui->spinBox_roi_h->setValue(roi_h);
+    // 初始化颜色预览样式
+    ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(roiColorStr));
+    // 初始化透明度滑块
+    ui->slider_opacity->setValue(roi_opacity);
+    ui->label_opacity_display->setText(QString("%1%").arg(roi_opacity));
+    // 初始化线宽滑块
+    ui->slider_line_width->setValue(roi_line_width);
+    ui->label_line_width_display->setText(QString("%1").arg(roi_line_width));
+
+    // 更新 Camera 参数
+    cam->enableROIDetection(enableROI);
+    cam->setRoiX(roi_x);
+    cam->setRoiY(roi_y);
+    cam->setRoiW(roi_w);
+    cam->setRoiH(roi_h);
+    cam->setRoiColor(roiColorStr);
+    cam->setRoiOpacity(roi_opacity / 100.0f);
+    cam->setRoiLineWidth(roi_line_width);
+}
+
 void MainWindow::modifyActionParameter()
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
@@ -502,6 +601,20 @@ void MainWindow::loadActionConfig()
     updateActionConfig();
 }
 
+void MainWindow::refreshActionControlEnabled()
+{
+    bool enableAction = ui->checkBox_enableAction->isChecked();
+    for (const auto &pair : actionItems)
+        pair.second->setEnabled(enableAction);
+    ui->checkBox_includeActionInResult->setEnabled(enableAction);
+    ui->checkBox_enableOrder->setEnabled(enableAction);
+    bool orderEnabled = enableAction && ui->checkBox_enableOrder->isChecked();
+    ui->listWidget_order->setEnabled(orderEnabled);
+    ui->btn_addToOrder->setEnabled(orderEnabled);
+    ui->btn_removeFromOrder->setEnabled(orderEnabled);
+    ui->btn_clearOrder->setEnabled(orderEnabled);
+}
+
 void MainWindow::initActionControls()
 {
     // 动作配置
@@ -518,15 +631,7 @@ void MainWindow::initActionControls()
     // 启用动作检测
     connect(ui->checkBox_enableAction, &QCheckBox::toggled, [this](bool checked)
     {
-        // 启用/禁用动作复选框
-        for (const auto& pair : actionItems) pair.second->setEnabled(checked);
-        ui->checkBox_includeActionInResult->setEnabled(checked);
-        ui->checkBox_enableOrder->setEnabled(checked);
-        bool orderChecked = checked && ui->checkBox_enableOrder->isChecked();
-        ui->listWidget_order->setEnabled(orderChecked);
-        ui->btn_addToOrder->setEnabled(orderChecked);
-        ui->btn_removeFromOrder->setEnabled(orderChecked);
-        ui->btn_clearOrder->setEnabled(orderChecked);
+        refreshActionControlEnabled();
         updateActionConfig();
     });
 
@@ -554,10 +659,7 @@ void MainWindow::initActionControls()
     // 启用顺序检测
     connect(ui->checkBox_enableOrder, &QCheckBox::toggled, [this](bool checked)
     {
-        ui->listWidget_order->setEnabled(checked);
-        ui->btn_addToOrder->setEnabled(checked);
-        ui->btn_removeFromOrder->setEnabled(checked);
-        ui->btn_clearOrder->setEnabled(checked);
+        refreshActionControlEnabled();
         updateActionConfig();
     });
 
@@ -603,61 +705,30 @@ void MainWindow::initActionControls()
     connect(ui->listWidget_order->model(), &QAbstractItemModel::rowsMoved, [this]() { updateActionConfig(); });
 }
 
-void MainWindow::loadROIParametersToUI()
+void MainWindow::setGroupLocked(QGroupBox *group, QCheckBox *lockBox, bool locked)
 {
-    // 从 INI 文件读取 ROI 配置
-    QSettings settings(iniFilePath, QSettings::IniFormat);
-    settings.beginGroup("ROI");
-    // 读取 ROI 参数
-    bool enableROI = settings.value("EnableROI").toBool();
-    int roi_x = settings.value("RoiX").toInt();
-    int roi_y = settings.value("RoiY").toInt();
-    int roi_w = settings.value("RoiW").toInt();
-    int roi_h = settings.value("RoiH").toInt();
-    QString roiColorStr = settings.value("RoiColor").toString();
-    currentRoiColor = roiColorStr;
-    int roi_opacity = settings.value("RoiOpacity").toInt();
-    int roi_line_width = settings.value("RoiLineWidth").toInt();
-    settings.endGroup();
-
-    // 更新 UI
-    ui->cb_enableROI->setChecked(enableROI);
-    ui->spinBox_roi_x->setValue(roi_x);
-    ui->spinBox_roi_y->setValue(roi_y);
-    ui->spinBox_roi_w->setValue(roi_w);
-    ui->spinBox_roi_h->setValue(roi_h);
-    // 初始化颜色预览样式
-    ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(roiColorStr));
-    // 初始化透明度滑块
-    ui->slider_opacity->setValue(roi_opacity);
-    ui->label_opacity_display->setText(QString("%1%").arg(roi_opacity));
-    // 初始化线宽滑块
-    ui->slider_line_width->setValue(roi_line_width);
-    ui->label_line_width_display->setText(QString("%1").arg(roi_line_width));
-
-    // 更新 Camera 参数
-    cam->enableROIDetection(enableROI);
-    cam->setRoiX(roi_x);
-    cam->setRoiY(roi_y);
-    cam->setRoiW(roi_w);
-    cam->setRoiH(roi_h);
-    cam->setRoiColor(roiColorStr);
-    cam->setRoiOpacity(roi_opacity / 100.0f);
-    cam->setRoiLineWidth(roi_line_width);
+    const auto widgets = group->findChildren<QWidget *>();
+    for (QWidget *w : widgets)
+    {
+        if (w != lockBox)
+            w->setEnabled(!locked);
+    }
 }
 
-void MainWindow::initProbabilityThresholdControl()
+void MainWindow::initGroupLocks()
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
-    settings.beginGroup("Model");
-    int sliderValue = settings.value("probabilityThreshold", 25).toInt();
+    settings.beginGroup("GroupLock");
+    bool lockModelSetting = settings.value("lockModelSetting").toBool();
+    bool lockNumberSettings = settings.value("lockNumberSettings").toBool();
+    bool lockROI = settings.value("lockROI").toBool();
+    bool lockActionControl = settings.value("lockActionControl").toBool();
     settings.endGroup();
-    float threshold = sliderValue / 100.0f;
 
-    ui->slider_prob_threshold->setValue(sliderValue);
-    ui->label_prob_threshold_display->setText(QString("%1").arg(threshold, 0, 'f', 2));
-
-    cam->setProbabilityThreshold(threshold);
+    ui->cb_lockModelSetting->setChecked(lockModelSetting);
+    ui->cb_lockNumberSettings->setChecked(lockNumberSettings);
+    ui->cb_lockROI->setChecked(lockROI);
+    ui->cb_lockActionControl->setChecked(lockActionControl);
 }
 
 void MainWindow::initForceSaveVideoControl()
@@ -668,35 +739,15 @@ void MainWindow::initForceSaveVideoControl()
     cam->setForceSaveVideo(forceSaveVideo);
 }
 
-void MainWindow::on_start_clicked()
-{
-    if (!THREAD1_cam1->isRunning())
-    {
-        THREAD1_cam1->start();
-        ui->start->setDisabled(true);
-        ui->stop->setDisabled(false);
-    }
-}
-
-void MainWindow::on_stop_clicked()
-{
-    if (THREAD1_cam1->isRunning())
-    {
-        cam->stop_camera();
-        ui->start->setDisabled(false);
-        ui->stop->setDisabled(true);
-    }
-}
-
 void MainWindow::receiveslotQImg(QImage img)
 {
-    ui->label->setPixmap(QPixmap::fromImage(img));
+    ui->label_video->setPixmap(QPixmap::fromImage(img));
 }
 
 void MainWindow::receivefinish()
 {
-    ui->start->setDisabled(false);
-    ui->stop->setDisabled(true);
+    ui->btn_start->setDisabled(false);
+    ui->btn_stop->setDisabled(true);
     qDebug() << "finished thread";
     cam->closeDevice(); // 关闭相机线程
 }
@@ -752,6 +803,348 @@ void MainWindow::updateStatistics(bool result)
     ui->today_good_number->setText(QString::number(today_good_number));
     ui->today_number->setText(QString::number(today_number));
     ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
+}
+
+void MainWindow::loadHistoryList()
+{
+    if (!listWidget)
+        return;
+
+    allLogLines.clear();
+    listWidget->clear();
+
+    QFile file(logDirPath + "error_log.txt");
+    if (!file.exists())
+    {
+        showEmptyLabel();
+        return;
+    }
+
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QTextStream in(&file);
+        while (!in.atEnd())
+        {
+            QString line = in.readLine();
+            if (!line.isEmpty())
+                allLogLines.append(line);
+        }
+        file.close();
+    }
+
+    // 计算总页数（从最新开始，反向分页）
+    totalPages = (allLogLines.size() + PAGE_SIZE - 1) / PAGE_SIZE;
+    currentPage = 0;
+
+    if (totalPages > 0)
+        loadPage(currentPage);
+    else
+        showEmptyLabel();
+}
+
+void MainWindow::showEmptyLabel()
+{
+    QLabel *emptyLabel = new QLabel(QStringLiteral("暂无历史记录"), historyWindow);
+    emptyLabel->setStyleSheet("color: #888; font-size: 16px;");
+    emptyLabel->setAlignment(Qt::AlignCenter);
+    QListWidgetItem *item = new QListWidgetItem(listWidget);
+    item->setSizeHint(QSize(0, 60));
+    listWidget->setItemWidget(item, emptyLabel);
+    currentPage = 0;
+    totalPages = 1;
+    updatePaginationControls();
+}
+
+void MainWindow::loadPage(int page)
+{
+    if (!listWidget || allLogLines.isEmpty())
+        return;
+
+    listWidget->clear();
+
+    int totalRecords = allLogLines.size();
+    int startIndex = totalRecords - 1 - page * PAGE_SIZE;
+    int endIndex = qMax(0, startIndex - PAGE_SIZE + 1);
+
+    for (int i = startIndex; i >= endIndex && i >= 0; i--)
+    {
+        QString line = allLogLines[i];
+        QString ts = line.left(23);
+        QString dateDir = ts.mid(0, 4) + ts.mid(5, 2) + ts.mid(8, 2);
+        QString videoTs = dateDir + ts.mid(11, 2) + ts.mid(14, 2) + ts.mid(17, 2) + "_" + ts.mid(20, 3);
+        QString originalPath = logDirPath + dateDir + "/original_error/" + videoTs + ".avi";
+        QString resultPath = logDirPath + dateDir + "/result_error/" + videoTs + ".avi";
+
+        QListWidgetItem *item = new QListWidgetItem(listWidget);
+        item->setSizeHint(QSize(0, 45));
+        listWidget->setItemWidget(item, createHistoryItem(totalRecords - i, line, originalPath, resultPath));
+    }
+    updatePaginationControls();
+}
+
+void MainWindow::updatePaginationControls()
+{
+    if (!currentPageRecordLabel || !prevPageBtn || !pageInfoLabel || !nextPageBtn || !jumpLineEdit || !recordCountLabel)
+        return;
+
+    // 计算当前页的记录数
+    int totalRecords = allLogLines.size();
+    int startIndex = totalRecords - 1 - currentPage * PAGE_SIZE;
+    int endIndex = qMax(0, startIndex - PAGE_SIZE + 1);
+    int currentPageRecords = qMax(0, startIndex - endIndex + 1);
+
+    currentPageRecordLabel->setText(QStringLiteral("本页 %1 条 (每页最多 %2 条)").arg(currentPageRecords).arg(PAGE_SIZE));
+    prevPageBtn->setEnabled(currentPage > 0);
+    pageInfoLabel->setText(QString("%1 / %2").arg(currentPage + 1).arg(totalPages));
+    nextPageBtn->setEnabled(currentPage < totalPages - 1);
+    jumpLineEdit->setPlaceholderText("1-" + QString::number(totalPages));
+    recordCountLabel->setText(QStringLiteral("共 %1 条").arg(totalRecords));
+}
+
+QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QString originalPath, QString resultPath)
+{
+    QWidget *itemWidget = new QWidget(listWidget);
+    QHBoxLayout *layout = new QHBoxLayout(itemWidget);
+    layout->setContentsMargins(5, 2, 5, 2);
+
+    // 记录号
+    QLabel *recordLabel = new QLabel(QString::number(recordNumber), itemWidget);
+    recordLabel->setStyleSheet("color: #ffa500; font-size: 12px; font-weight: bold; min-width: 45px;");
+    recordLabel->setAlignment(Qt::AlignCenter);
+
+    // 日志内容
+    QLabel *logLabel = new QLabel(logLine, itemWidget);
+    logLabel->setStyleSheet("color: #00ff00; font-size: 12px;");
+    logLabel->setWordWrap(true);
+
+    // 原视频按钮
+    QString originalVideoText = QStringLiteral("原视频");
+    QPushButton *btnOriginal = new QPushButton(originalVideoText, itemWidget);
+    btnOriginal->setStyleSheet("QPushButton { background-color: #1976d2; color: white; border-radius: 4px; padding: 4px 12px; }"
+                               "QPushButton:hover { background-color: #42a5f5; }"
+                               "QPushButton:pressed { background-color: #0d47a1; }"
+                               "QPushButton:disabled { background-color: #555555; color: #888888; }");
+    btnOriginal->setEnabled(!originalPath.isEmpty() && QFile::exists(originalPath));
+    connect(btnOriginal, &QPushButton::clicked, [this, recordNumber, originalVideoText, logLine, originalPath]() { showVideo(recordNumber, originalVideoText, logLine, originalPath); });
+
+    // 结果视频按钮
+    QString resultVideoText = QStringLiteral("结果视频");
+    QPushButton *btnResult = new QPushButton(resultVideoText, itemWidget);
+    btnResult->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 4px; padding: 4px 12px; }"
+                             "QPushButton:hover { background-color: #66bb6a; }"
+                             "QPushButton:pressed { background-color: #1b5e20; }"
+                             "QPushButton:disabled { background-color: #555555; color: #888888; }");
+    btnResult->setEnabled(!resultPath.isEmpty() && QFile::exists(resultPath));
+    connect(btnResult, &QPushButton::clicked, [this, recordNumber, resultVideoText, logLine, resultPath]() { showVideo(recordNumber, resultVideoText, logLine, resultPath); });
+
+    layout->addWidget(recordLabel);
+    layout->addWidget(logLabel, 3);
+    layout->addWidget(btnOriginal);
+    layout->addWidget(btnResult);
+
+    return itemWidget;
+}
+
+void MainWindow::showVideo(int recordNumber, QString type, QString logInfo, QString path)
+{
+    if (path.isEmpty() || !QFile::exists(path))
+    {
+        QMessageBox::warning(historyWindow, QStringLiteral("警告"), QStringLiteral("视频文件不存在:\n%1").arg(path));
+        return;
+    }
+
+    // 隐藏列表容器，显示视频
+    if (listContainer)
+        listContainer->setVisible(false);
+    if (videoContainer)
+    {
+        videoContainer->setVisible(true);
+        // 更新视频标题（显示编号 + 类型 + 日志信息）
+        if (videoTitleLabel)
+            videoTitleLabel->setText(QStringLiteral("#%1 %2 —— %3").arg(recordNumber).arg(type).arg(logInfo));
+        if (player)
+        {
+            // 设置视频
+            player->setMedia(QUrl::fromLocalFile(path));
+            player->pause();
+        }
+    }
+}
+
+void MainWindow::updateVideoPosition(qint64 position)
+{
+    if (!isSliderPressed)
+    {
+        qint64 duration = player ? player->duration() : -1;
+        if (duration > 0)
+        {
+            if (timeLabel)
+                timeLabel->setText(formatTime(position) + " / " + formatTime(duration));
+            if (videoSlider)
+                videoSlider->setValue(static_cast<int>(position * 1000 / duration));
+        }
+    }
+}
+
+void MainWindow::onSliderPressed()
+{
+    isSliderPressed = true;
+    if (player && player->state() == QMediaPlayer::StoppedState)
+    {
+        player->play();
+        player->pause();
+    }
+}
+
+void MainWindow::onSliderReleased()
+{
+    isSliderPressed = false;
+    if (player && videoSlider)
+    {
+        qint64 duration = player->duration();
+        if (duration > 0)
+        {
+            qint64 position = (videoSlider->value() * duration) / 1000;
+            player->setPosition(position);
+        }
+    }
+}
+
+void MainWindow::onSliderMoved(int value)
+{
+    if (player && timeLabel)
+    {
+        qint64 duration = player->duration();
+        if (duration > 0)
+        {
+            qint64 position = (value * duration) / 1000;
+            timeLabel->setText(formatTime(position) + " / " + formatTime(duration));
+        }
+    }
+}
+
+QString MainWindow::formatTime(qint64 ms)
+{
+    if (ms <= 0)
+        return "00:00";
+    qint64 seconds = ms / 1000;
+    qint64 minutes = seconds / 60;
+    seconds = seconds % 60;
+    return QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
+}
+
+void MainWindow::showHistoryList()
+{
+    // 显示列表容器，隐藏视频
+    if (listContainer)
+        listContainer->setVisible(true);
+    if (videoContainer)
+    {
+        videoContainer->setVisible(false);
+        if (player)
+        {
+            player->stop();
+            player->setMedia(QUrl()); // 清空媒体
+        }
+        // 重置进度条
+        if (timeLabel)
+            timeLabel->setText("00:00 / 00:00");
+        if (videoSlider)
+            videoSlider->setValue(0);
+        // 重置速度
+        if (speedCombo)
+        {
+            int index = speedCombo->findData(0.5);
+            speedCombo->setCurrentIndex(index >= 0 ? index : 0);
+        }
+    }
+}
+
+void MainWindow::receive_connectstate(bool state)
+{
+    ui->btn_connectPLC->setEnabled(!state);
+    ui->btn_disconnectPLC->setEnabled(state);
+    ui->lb_proc4->setStyleSheet(QString("QLabel {"
+                                        "    background-color: %1;"
+                                        "    color: #ffffff;"
+                                        "    border: 1px solid #555;"
+                                        "    border-radius: 6px;"
+                                        "}")
+                                    .arg(state ? "#2e7d32" : "#c62828"));
+    ui->lb_proc4->setText(state ? QStringLiteral("已连接") : QStringLiteral("未连接"));
+}
+
+void MainWindow::getActionState(std::vector<bool> actionState)
+{
+    QLabel *labels[] = {ui->label_action1, ui->label_action2, ui->label_action3, ui->label_action4, ui->label_action5};
+    QVector<int> enabledActions = getEnabledActions();
+    bool enableAction = ui->checkBox_enableAction->isChecked();
+    for (int i = 0; i < 5; i++)
+    {
+        QString color;
+        if (!enableAction || !enabledActions.contains(i))
+            color = "#424242"; // 未启用
+        else if (actionState[i])
+            color = "#2e7d32"; // 已完成
+        else
+            color = "#c62828"; // 未完成
+        labels[i]->setStyleSheet(QString("QLabel {"
+                                         "    background-color: %1;"
+                                         "    color: #ffffff;"
+                                         "    border-radius: 5px;"
+                                         "}")
+                                     .arg(color));
+    }
+}
+
+void MainWindow::receiveQStringtoMain(QString s)
+{
+    static int colorIndex = 0;
+    static QStringList colors = {
+        "#00ff00", // 绿色
+        "#00ffff", // 青色
+        "#ffff00", // 黄色
+        "#ff00ff", // 紫色
+        "#ffa500", // 橙色
+        "#ffffff", // 白色
+    };
+    // 获取当前时间
+    QDateTime currentDateTime = QDateTime::currentDateTime();
+    QString timeStamp = currentDateTime.toString("yyyy-MM-dd HH:mm:ss");
+    // // 构建带有时间戳的日志消息
+    // QString logMessage = "[" + timeStamp + "] " + s;
+    // 构建带有时间戳的日志消息，并根据当前颜色索引设置颜色
+    QString logMessage = QString("<font color=\"%1\">[%2] %3</font>").arg(colors[colorIndex++ % colors.size()]).arg(timeStamp).arg(s);
+    // 将日志消息添加到 QTextBrowser 中
+    ui->textBrowser->append(logMessage);
+    // 滚动到文本末尾，确保最新的日志消息可见
+    ui->textBrowser->moveCursor(QTextCursor::End);
+}
+
+void MainWindow::receiveNumber(QString str_chilun_num, QString str_luosi_num)
+{
+    ui->lb_luosi_num->setText(str_luosi_num);
+    ui->lb_chilun_num->setText(str_chilun_num);
+}
+
+void MainWindow::on_btn_start_clicked()
+{
+    if (!THREAD1_cam1->isRunning())
+    {
+        THREAD1_cam1->start();
+        ui->btn_start->setDisabled(true);
+        ui->btn_stop->setDisabled(false);
+    }
+}
+
+void MainWindow::on_btn_stop_clicked()
+{
+    if (THREAD1_cam1->isRunning())
+    {
+        cam->stop_camera();
+        ui->btn_start->setDisabled(false);
+        ui->btn_stop->setDisabled(true);
+    }
 }
 
 void MainWindow::on_btn_connectPLC_clicked()
@@ -1173,275 +1566,6 @@ void MainWindow::on_btn_history_clicked()
     historyWindow->show();
 }
 
-void MainWindow::loadHistoryList()
-{
-    if (!listWidget)
-        return;
-
-    allLogLines.clear();
-    listWidget->clear();
-
-    QFile file(logDirPath + "error_log.txt");
-    if (!file.exists())
-    {
-        showEmptyLabel();
-        return;
-    }
-
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        QTextStream in(&file);
-        while (!in.atEnd())
-        {
-            QString line = in.readLine();
-            if (!line.isEmpty())
-                allLogLines.append(line);
-        }
-        file.close();
-    }
-
-    // 计算总页数（从最新开始，反向分页）
-    totalPages = (allLogLines.size() + PAGE_SIZE - 1) / PAGE_SIZE;
-    currentPage = 0;
-
-    if (totalPages > 0)
-        loadPage(currentPage);
-    else
-        showEmptyLabel();
-}
-
-void MainWindow::showEmptyLabel()
-{
-    QLabel *emptyLabel = new QLabel(QStringLiteral("暂无历史记录"), historyWindow);
-    emptyLabel->setStyleSheet("color: #888; font-size: 16px;");
-    emptyLabel->setAlignment(Qt::AlignCenter);
-    QListWidgetItem *item = new QListWidgetItem(listWidget);
-    item->setSizeHint(QSize(0, 60));
-    listWidget->setItemWidget(item, emptyLabel);
-    currentPage = 0;
-    totalPages = 1;
-    updatePaginationControls();
-}
-
-void MainWindow::loadPage(int page)
-{
-    if (!listWidget || allLogLines.isEmpty())
-        return;
-
-    listWidget->clear();
-
-    int totalRecords = allLogLines.size();
-    int startIndex = totalRecords - 1 - page * PAGE_SIZE;
-    int endIndex = qMax(0, startIndex - PAGE_SIZE + 1);
-
-    for (int i = startIndex; i >= endIndex && i >= 0; i--)
-    {
-        QString line = allLogLines[i];
-        QString ts = line.left(23);
-        QString dateDir = ts.mid(0, 4) + ts.mid(5, 2) + ts.mid(8, 2);
-        QString videoTs = dateDir + ts.mid(11, 2) + ts.mid(14, 2) + ts.mid(17, 2) + "_" + ts.mid(20, 3);
-        QString originalPath = logDirPath + dateDir + "/original_error/" + videoTs + ".avi";
-        QString resultPath = logDirPath + dateDir + "/result_error/" + videoTs + ".avi";
-
-        QListWidgetItem *item = new QListWidgetItem(listWidget);
-        item->setSizeHint(QSize(0, 45));
-        listWidget->setItemWidget(item, createHistoryItem(totalRecords - i, line, originalPath, resultPath));
-    }
-    updatePaginationControls();
-}
-
-void MainWindow::updatePaginationControls()
-{
-    if (!currentPageRecordLabel || !prevPageBtn || !pageInfoLabel || !nextPageBtn || !jumpLineEdit || !recordCountLabel)
-        return;
-
-    // 计算当前页的记录数
-    int totalRecords = allLogLines.size();
-    int startIndex = totalRecords - 1 - currentPage * PAGE_SIZE;
-    int endIndex = qMax(0, startIndex - PAGE_SIZE + 1);
-    int currentPageRecords = qMax(0, startIndex - endIndex + 1);
-
-    currentPageRecordLabel->setText(QStringLiteral("本页 %1 条 (每页最多 %2 条)").arg(currentPageRecords).arg(PAGE_SIZE));
-    prevPageBtn->setEnabled(currentPage > 0);
-    pageInfoLabel->setText(QString("%1 / %2").arg(currentPage + 1).arg(totalPages));
-    nextPageBtn->setEnabled(currentPage < totalPages - 1);
-    jumpLineEdit->setPlaceholderText("1-" + QString::number(totalPages));
-    recordCountLabel->setText(QStringLiteral("共 %1 条").arg(totalRecords));
-}
-
-QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QString originalPath, QString resultPath)
-{
-    QWidget *itemWidget = new QWidget(listWidget);
-    QHBoxLayout *layout = new QHBoxLayout(itemWidget);
-    layout->setContentsMargins(5, 2, 5, 2);
-
-    // 记录号
-    QLabel *recordLabel = new QLabel(QString::number(recordNumber), itemWidget);
-    recordLabel->setStyleSheet("color: #ffa500; font-size: 12px; font-weight: bold; min-width: 45px;");
-    recordLabel->setAlignment(Qt::AlignCenter);
-
-    // 日志内容
-    QLabel *logLabel = new QLabel(logLine, itemWidget);
-    logLabel->setStyleSheet("color: #00ff00; font-size: 12px;");
-    logLabel->setWordWrap(true);
-
-    // 原视频按钮
-    QString originalVideoText = QStringLiteral("原视频");
-    QPushButton *btnOriginal = new QPushButton(originalVideoText, itemWidget);
-    btnOriginal->setStyleSheet("QPushButton { background-color: #1976d2; color: white; border-radius: 4px; padding: 4px 12px; }"
-                               "QPushButton:hover { background-color: #42a5f5; }"
-                               "QPushButton:pressed { background-color: #0d47a1; }"
-                               "QPushButton:disabled { background-color: #555555; color: #888888; }");
-    btnOriginal->setEnabled(!originalPath.isEmpty() && QFile::exists(originalPath));
-    connect(btnOriginal, &QPushButton::clicked, [this, recordNumber, originalVideoText, logLine, originalPath]() { showVideo(recordNumber, originalVideoText, logLine, originalPath); });
-
-    // 结果视频按钮
-    QString resultVideoText = QStringLiteral("结果视频");
-    QPushButton *btnResult = new QPushButton(resultVideoText, itemWidget);
-    btnResult->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 4px; padding: 4px 12px; }"
-                             "QPushButton:hover { background-color: #66bb6a; }"
-                             "QPushButton:pressed { background-color: #1b5e20; }"
-                             "QPushButton:disabled { background-color: #555555; color: #888888; }");
-    btnResult->setEnabled(!resultPath.isEmpty() && QFile::exists(resultPath));
-    connect(btnResult, &QPushButton::clicked, [this, recordNumber, resultVideoText, logLine, resultPath]() { showVideo(recordNumber, resultVideoText, logLine, resultPath); });
-
-    layout->addWidget(recordLabel);
-    layout->addWidget(logLabel, 3);
-    layout->addWidget(btnOriginal);
-    layout->addWidget(btnResult);
-
-    return itemWidget;
-}
-
-void MainWindow::showVideo(int recordNumber, QString type, QString logInfo, QString path)
-{
-    if (path.isEmpty() || !QFile::exists(path))
-    {
-        QMessageBox::warning(historyWindow, QStringLiteral("警告"), QStringLiteral("视频文件不存在:\n%1").arg(path));
-        return;
-    }
-
-    // 隐藏列表容器，显示视频
-    if (listContainer)
-        listContainer->setVisible(false);
-    if (videoContainer)
-    {
-        videoContainer->setVisible(true);
-        // 更新视频标题（显示编号 + 类型 + 日志信息）
-        if (videoTitleLabel)
-            videoTitleLabel->setText(QStringLiteral("#%1 %2 —— %3").arg(recordNumber).arg(type).arg(logInfo));
-        if (player)
-        {
-            // 设置视频
-            player->setMedia(QUrl::fromLocalFile(path));
-            player->pause();
-        }
-    }
-}
-
-void MainWindow::updateVideoPosition(qint64 position)
-{
-    if (!isSliderPressed)
-    {
-        qint64 duration = player ? player->duration() : -1;
-        if (duration > 0)
-        {
-            if (timeLabel)
-                timeLabel->setText(formatTime(position) + " / " + formatTime(duration));
-            if (videoSlider)
-                videoSlider->setValue(static_cast<int>(position * 1000 / duration));
-        }
-    }
-}
-
-void MainWindow::onSliderPressed()
-{
-    isSliderPressed = true;
-    if (player && player->state() == QMediaPlayer::StoppedState)
-    {
-        player->play();
-        player->pause();
-    }
-}
-
-void MainWindow::onSliderReleased()
-{
-    isSliderPressed = false;
-    if (player && videoSlider)
-    {
-        qint64 duration = player->duration();
-        if (duration > 0)
-        {
-            qint64 position = (videoSlider->value() * duration) / 1000;
-            player->setPosition(position);
-        }
-    }
-}
-
-void MainWindow::onSliderMoved(int value)
-{
-    if (player && timeLabel)
-    {
-        qint64 duration = player->duration();
-        if (duration > 0)
-        {
-            qint64 position = (value * duration) / 1000;
-            timeLabel->setText(formatTime(position) + " / " + formatTime(duration));
-        }
-    }
-}
-
-QString MainWindow::formatTime(qint64 ms)
-{
-    if (ms <= 0)
-        return "00:00";
-    qint64 seconds = ms / 1000;
-    qint64 minutes = seconds / 60;
-    seconds = seconds % 60;
-    return QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
-}
-
-void MainWindow::showHistoryList()
-{
-    // 显示列表容器，隐藏视频
-    if (listContainer)
-        listContainer->setVisible(true);
-    if (videoContainer)
-    {
-        videoContainer->setVisible(false);
-        if (player)
-        {
-            player->stop();
-            player->setMedia(QUrl()); // 清空媒体
-        }
-        // 重置进度条
-        if (timeLabel)
-            timeLabel->setText("00:00 / 00:00");
-        if (videoSlider)
-            videoSlider->setValue(0);
-        // 重置速度
-        if (speedCombo)
-        {
-            int index = speedCombo->findData(0.5);
-            speedCombo->setCurrentIndex(index >= 0 ? index : 0);
-        }
-    }
-}
-
-void MainWindow::receive_connectstate(bool state)
-{
-    ui->btn_connectPLC->setEnabled(!state);
-    ui->btn_disconnectPLC->setEnabled(state);
-    ui->lb_proc4->setStyleSheet(QString("QLabel {"
-                                        "    background-color: %1;"
-                                        "    color: #ffffff;"
-                                        "    border: 1px solid #555;"
-                                        "    border-radius: 6px;"
-                                        "}")
-                                    .arg(state ? "#2e7d32" : "#c62828"));
-    ui->lb_proc4->setText(state ? QStringLiteral("已连接") : QStringLiteral("未连接"));
-}
-
 void MainWindow::on_btn_settings_clicked()
 {
     if (ui->stackedWidget->currentIndex() != 1)
@@ -1450,65 +1574,37 @@ void MainWindow::on_btn_settings_clicked()
         ui->stackedWidget->setCurrentIndex(0);
 }
 
-void MainWindow::getActionState(std::vector<bool> actionState)
+void MainWindow::on_slider_prob_threshold_valueChanged(int value)
 {
-    QLabel *labels[] = {ui->label_4, ui->label_5, ui->label_6, ui->label_7, ui->label_8};
-    QVector<int> enabledActions = getEnabledActions();
-    bool enableAction = ui->checkBox_enableAction->isChecked();
-    for (int i = 0; i < 5; i++)
-    {
-        QString color;
-        if (!enableAction || !enabledActions.contains(i))
-            color = "#424242"; // 未启用
-        else if (actionState[i])
-            color = "#2e7d32"; // 已完成
-        else
-            color = "#c62828"; // 未完成
-        labels[i]->setStyleSheet(QString("QLabel {"
-                                         "    background-color: %1;"
-                                         "    color: #ffffff;"
-                                         "    border-radius: 5px;"
-                                         "}")
-                                     .arg(color));
-    }
-}
+    float t = value / 100.0f;
+    ui->label_prob_threshold_display->setText(QString("%1").arg(t, 0, 'f', 2));
 
-void MainWindow::receiveQStringtoMain(QString s)
-{
-    static int colorIndex = 0;
-    static QStringList colors = {
-        "#00ff00", // 绿色
-        "#00ffff", // 青色
-        "#ffff00", // 黄色
-        "#ff00ff", // 紫色
-        "#ffa500", // 橙色
-        "#ffffff", // 白色
-    };
-    // 获取当前时间
-    QDateTime currentDateTime = QDateTime::currentDateTime();
-    QString timeStamp = currentDateTime.toString("yyyy-MM-dd HH:mm:ss");
-    // // 构建带有时间戳的日志消息
-    // QString logMessage = "[" + timeStamp + "] " + s;
-    // 构建带有时间戳的日志消息，并根据当前颜色索引设置颜色
-    QString logMessage = QString("<font color=\"%1\">[%2] %3</font>").arg(colors[colorIndex++ % colors.size()]).arg(timeStamp).arg(s);
-    // 将日志消息添加到 QTextBrowser 中
-    ui->textBrowser->append(logMessage);
-    // 滚动到文本末尾，确保最新的日志消息可见
-    ui->textBrowser->moveCursor(QTextCursor::End);
-}
-
-void MainWindow::receiveNumber(QString str_chilun_num, QString str_luosi_num)
-{
-    ui->lb_luosi_num->setText(str_luosi_num);
-    ui->lb_chilun_num->setText(str_chilun_num);
-}
-
-void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)
-{
     QSettings settings(iniFilePath, QSettings::IniFormat);
-    settings.beginGroup("ROI");
-    settings.setValue(parameterName, newValue);
+    settings.beginGroup("Model");
+    settings.setValue("probabilityThreshold", value);
     settings.endGroup();
+
+    cam->setProbabilityThreshold(t);
+}
+
+void MainWindow::on_spinBox_chilunNum_valueChanged(int value)
+{
+    applyNumberSettings();
+}
+
+void MainWindow::on_spinBox_luosiNum_valueChanged(int value)
+{
+    applyNumberSettings();
+}
+
+void MainWindow::on_cb_chilunLock_toggled(bool checked)
+{
+    applyNumberSettings();
+}
+
+void MainWindow::on_cb_luosiLock_toggled(bool checked)
+{
+    applyNumberSettings();
 }
 
 void MainWindow::on_cb_enableROI_toggled(bool value)
@@ -1568,17 +1664,41 @@ void MainWindow::on_slider_line_width_valueChanged(int value)
     cam->setRoiLineWidth(value);
 }
 
-void MainWindow::on_slider_prob_threshold_valueChanged(int value)
+void MainWindow::on_cb_lockModelSetting_toggled(bool checked)
 {
-    float t = value / 100.0f;
-    ui->label_prob_threshold_display->setText(QString("%1").arg(t, 0, 'f', 2));
-
+    setGroupLocked(ui->groupBox_modelSetting, ui->cb_lockModelSetting, checked);
     QSettings settings(iniFilePath, QSettings::IniFormat);
-    settings.beginGroup("Model");
-    settings.setValue("probabilityThreshold", value);
+    settings.beginGroup("GroupLock");
+    settings.setValue("lockModelSetting", checked);
     settings.endGroup();
+}
 
-    cam->setProbabilityThreshold(t);
+void MainWindow::on_cb_lockNumberSettings_toggled(bool checked)
+{
+    setGroupLocked(ui->groupBox_numberSettings, ui->cb_lockNumberSettings, checked);
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("GroupLock");
+    settings.setValue("lockNumberSettings", checked);
+    settings.endGroup();
+}
+void MainWindow::on_cb_lockROI_toggled(bool checked)
+{
+    setGroupLocked(ui->groupBox_ROI, ui->cb_lockROI, checked);
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("GroupLock");
+    settings.setValue("lockROI", checked);
+    settings.endGroup();
+}
+
+void MainWindow::on_cb_lockActionControl_toggled(bool checked)
+{
+    setGroupLocked(ui->groupBox_actionControl, ui->cb_lockActionControl, checked);
+    if (!checked)
+        refreshActionControlEnabled();
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("GroupLock");
+    settings.setValue("lockActionControl", checked);
+    settings.endGroup();
 }
 
 void MainWindow::on_checkBox_forceSaveVideo_toggled(bool value)

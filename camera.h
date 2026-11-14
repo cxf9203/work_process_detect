@@ -1,4 +1,4 @@
-﻿#ifndef CAMERA_H
+#ifndef CAMERA_H
 #define CAMERA_H
 #include <QThread>
 #pragma warning(disable : 4819) // 解决SDK中包含中文问题；忽略C4819错误
@@ -32,6 +32,8 @@ public:
     bool connectPLC();
     void disconnectPLC();
     void resetDetectionState(); // 复位检测状态
+    void setProbabilityThreshold(float threshold);
+    void setNumberConfig(int chilunNum, int luosiNum, bool chilunLock, bool luosiLock);
     // ROI 检测控制
     void enableROIDetection(bool enable); // 启用或禁用ROI检测
     void setRoiX(int x);
@@ -41,7 +43,6 @@ public:
     void setRoiColor(QString color);
     void setRoiOpacity(float opacity);
     void setRoiLineWidth(int lineWidth);
-    void setProbabilityThreshold(float threshold);
     // 动作检测控制
     void processActionDetection(const std::vector<bool> &actions);
     void setActionConfig(bool pEnableAction, const QVector<int> &pEnabledActions, bool pIncludeActionInResult, const QVector<int> &pOrderedActions);
@@ -100,16 +101,16 @@ private:
     ProcessState currentState = WAIT_P1;
     std::vector<std::string> classes = {"process1", "process2", "process3"};
     std::vector<bool> actionGroup = {false, false, false, false, false}; // "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"; //动作序列
+    float probabilityThreshold = 0.25f; // 置信度阈值
     // 用于存储每个类别的计数
     int CHILUN_NUM = 1; // 标准齿轮数
     int LUOSI_NUM = 4; // 标准螺丝数
-    bool res_flag = false; // 结果标志位
-    bool chilun_flag = false; // 齿轮标志位
-    int luosi_flag = 0; // 螺丝标志位
-    int cur_keti = 0; // 当前keti计数
-    int last_keti = 0; // 上次keti计数
+    bool chilunLockMode = false; // 齿轮数量锁定显示模式
+    bool luosiLockMode = false; // 螺丝数量锁定显示模式
+    bool chilunLatched = false; // 齿轮达标锁存（锁定模式用）
+    bool luosiLatched = false; // 螺丝达标锁存（锁定模式用）
     // ROI参数
-    bool m_enableROIDetection = false; // ROI检测启用状态
+    bool roiDetectionEnabled = false; // ROI检测启用状态
     int roi_x = 0;
     int roi_y = 0;
     int roi_w = 0;
@@ -117,17 +118,21 @@ private:
     QString roi_color = "#00ff00"; // ROI颜色
     float roi_opacity = 0.5f; // ROI透明度
     int roi_line_width = 5; // ROI矩形线宽
-    float m_probabilityThreshold = 0.25f; // 置信度阈值
-    // 滑动窗口相关变量，用于平滑壳体检测结果
-    std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
-    const int KETI_WINDOW_SIZE = 4; // 滑动窗口大小
-    const int KETI_THRESHOLD = 2; // 判定壳体存在的阈值
     // 动作检测配置
     bool enableAction = false; // 动作检测启用状态
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
     bool includeActionInResult = false; // 动作检测是否计入结果判定
     QVector<int> orderedActions; // 顺序检测的动作索引列表（按用户指定的顺序）
     bool forceSaveVideo = false; // 是否强制保存视频
+    bool res_flag = false; // 结果标志位
+    bool chilun_flag = false; // 齿轮标志位
+    int luosi_flag = 0; // 螺丝标志位
+    int cur_keti = 0; // 当前keti计数
+    int last_keti = 0; // 上次keti计数
+    // 滑动窗口相关变量，用于平滑壳体检测结果
+    std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
+    const int KETI_WINDOW_SIZE = 4; // 滑动窗口大小
+    const int KETI_THRESHOLD = 2; // 判定壳体存在的阈值
     // 视频录制
     cv::VideoWriter originalVideoWriter;
     cv::VideoWriter resultVideoWriter;

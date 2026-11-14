@@ -104,8 +104,8 @@ QSlider::sub-page:horizontal {
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_3">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_chilunNum">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -124,8 +124,8 @@ QSlider::sub-page:horizontal {
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_2">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_luosiNum">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -144,7 +144,7 @@ QSlider::sub-page:horizontal {
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QLabel" name="lb_luosi_num">
        <property name="font">
         <font>
@@ -171,7 +171,7 @@ QSlider::sub-page:horizontal {
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="0" column="1">
       <widget class="QLabel" name="lb_chilun_num">
        <property name="font">
         <font>
@@ -200,7 +200,7 @@ QSlider::sub-page:horizontal {
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="start">
+   <widget class="QPushButton" name="btn_start">
     <property name="geometry">
      <rect>
       <x>1200</x>
@@ -240,7 +240,7 @@ QPushButton:disabled {
      <string>开始检测</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="stop">
+   <widget class="QPushButton" name="btn_stop">
     <property name="geometry">
      <rect>
       <x>1360</x>
@@ -280,7 +280,7 @@ QPushButton:disabled {
      <string>停止检测</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="label_video">
     <property name="geometry">
      <rect>
       <x>60</x>
@@ -416,7 +416,7 @@ QPushButton:pressed {
        <item>
         <layout class="QGridLayout" name="gridLayout_5" columnstretch="1,0">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="label_action1">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -441,7 +441,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_5">
+          <widget class="QLabel" name="label_action2">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -466,7 +466,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="label_6">
+          <widget class="QLabel" name="label_action3">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -491,7 +491,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="3" column="0">
-          <widget class="QLabel" name="label_7">
+          <widget class="QLabel" name="label_action4">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -516,7 +516,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QLabel" name="label_8">
+          <widget class="QLabel" name="label_action5">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -775,7 +775,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_10">
+          <widget class="QLabel" name="label_history_count">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -795,7 +795,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_9">
+          <widget class="QLabel" name="label_history_good">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -842,7 +842,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="label_11">
+          <widget class="QLabel" name="label_history_rate">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -947,7 +947,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_12">
+          <widget class="QLabel" name="label_today_good">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -967,7 +967,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_13">
+          <widget class="QLabel" name="label_today_count">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -987,7 +987,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="label_14">
+          <widget class="QLabel" name="label_today_rate">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -1110,22 +1110,37 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>1045</height>
+           <height>1267</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>360</y>
+            <y>332</y>
             <width>471</width>
-            <height>453</height>
+            <height>493</height>
            </rect>
           </property>
           <property name="title">
            <string>ROI 设置</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QCheckBox" name="cb_lockROI">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QWidget" name="ROIControls" native="true">
              <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1459,15 +1474,30 @@ QPushButton:pressed {
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>20</y>
+            <y>845</y>
             <width>471</width>
-            <height>301</height>
+            <height>341</height>
            </rect>
           </property>
           <property name="title">
            <string>动作检测控制</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_actionControl">
+           <item>
+            <widget class="QCheckBox" name="cb_lockActionControl">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_5">
              <item>
@@ -1721,15 +1751,30 @@ QPushButton:hover {
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>852</y>
+            <y>20</y>
             <width>471</width>
-            <height>101</height>
+            <height>121</height>
            </rect>
           </property>
           <property name="title">
            <string>模型设置</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_model">
+           <item>
+            <widget class="QCheckBox" name="cb_lockModelSetting">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <layout class="QGridLayout" name="gridLayout_model">
              <item row="0" column="0">
@@ -1795,11 +1840,125 @@ QPushButton:hover {
            </item>
           </layout>
          </widget>
+         <widget class="QGroupBox" name="groupBox_numberSettings">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>161</y>
+            <width>471</width>
+            <height>151</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>数量设置</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_number">
+           <item row="0" column="0" colspan="3">
+            <widget class="QCheckBox" name="cb_lockNumberSettings">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_chilunStdNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>齿轮标准数:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="spinBox_chilunNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="maximum">
+              <number>99</number>
+             </property>
+             <property name="value">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QCheckBox" name="cb_chilunLock">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>达标锁定</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_luosiStdNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>螺丝标准数:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="spinBox_luosiNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="maximum">
+              <number>99</number>
+             </property>
+             <property name="value">
+              <number>4</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QCheckBox" name="cb_luosiLock">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>达标锁定</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
          <widget class="QCheckBox" name="checkBox_forceSaveVideo">
           <property name="geometry">
            <rect>
             <x>50</x>
-            <y>982</y>
+            <y>1206</y>
             <width>251</width>
             <height>41</height>
            </rect>
