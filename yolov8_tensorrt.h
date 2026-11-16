@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "engine.h"
 #include <fstream>
@@ -69,6 +69,8 @@ public:
     std::vector<Object> detectObjects(const cv::cuda::GpuMat &inputImageBGR);
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
+    std::vector<int> getclassnumer();
+    std::vector<bool> getActionFlag();
     // Enable or disable ROI-based detection
     void enableROIDetection(bool enable);
     // Set the detection ROI
@@ -79,8 +81,6 @@ public:
     void setRoiOpacity(float opacity);
     // Set the line width of the detection ROI
     void setRoiLineWidth(int lineWidth);
-    std::vector<int> getclassnumer();
-    std::vector<bool> getActionFlag();
 
 private:
     // 用于存储每个类别的计数

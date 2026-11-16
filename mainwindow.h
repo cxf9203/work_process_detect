@@ -27,6 +27,8 @@ public:
     void showEvent(QShowEvent *event);
 
 public slots:
+    void modifyROIParameter(QString parameterName, QVariant newValue); // 修改 ROI 参数
+    void loadROIParametersToUI(); // 读取 ROI 参数到 UI 控件
     void modifyActionParameter(); // 修改动作参数
     QVector<int> getEnabledActions(); // 获取启用的动作
     QVector<int> getOrderedActions(); // 获取顺序检测的动作
@@ -34,8 +36,7 @@ public slots:
     void updateActionConfig(); // 更新动作配置
     void loadActionConfig(); // 加载动作配置
     void initActionControls(); // 初始化动作控件
-    void loadROIParametersToUI();
-    void initForceSaveVideoControl();
+    void initForceSaveVideoControl(); // 初始化强制保存视频复选框
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected);
@@ -56,7 +57,6 @@ public slots:
     void getActionState(std::vector<bool> actionState);
     void receiveQStringtoMain(QString s);
     void receiveNumber(QString str_chilun_num, QString str_luosi_num);
-    void modifyROIParameter(QString parameterName, QVariant newValue);
 
 private slots:
     void on_start_clicked();
@@ -83,13 +83,13 @@ private:
     Camera *cam; // camera thread
     QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
     QString statFilePath = "D:\\jiance\\work_process_statistics.ini"; // 统计数据配置
-    QString currentRoiColor;
     long long int history_good_number;
     long long int history_number;
     double history_good_rates;
     long long int today_good_number;
     long long int today_number;
     double today_good_rates;
+    QString currentRoiColor;
     QVector<QPair<QString, QCheckBox *>> actionItems;
     // 历史记录窗口
     QWidget *historyWindow = nullptr;

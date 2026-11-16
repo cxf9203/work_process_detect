@@ -7,7 +7,6 @@
 #include <QThread>
 #include <string>
 #include <QSettings>
-#include <cmath>
 #include <QDateTime>
 
 std::queue<cv::Mat> Camera::gImage;
@@ -57,20 +56,18 @@ void CALLBACK g_RealDataCallBack_V30(LONG lPlayHandle, DWORD dwDataType, BYTE *p
 
 Camera::Camera(QObject *parent)
 {
-    initCamera();
 }
 
 Camera::~Camera()
 {
 }
 
-void Camera::initCamera()
-{
-}
-
 void Camera::run()
 {
     Camera_thread_flag = false;
+
+    // 清理上次运行残留的临时录制目录
+    QDir(baseVideoPath + "temp/").removeRecursively();
 
     // 链接PLC
     if (!connectPLC())
@@ -190,9 +187,6 @@ void Camera::run()
 
         qDebug() << "Camera" << id << "opened successfully";
         emit sendQStringtoMain("Camera " + QString::number(id) + " opened successfully");
-        setD(0, 0);
-        setD(1, 0);
-        setD(2, 0);
         LONG lRealHandle = NET_DVR_RealPlay_V40(lUserID, &struPlayInfo, g_RealDataCallBack_V30, NULL); // 开始取流
         if (lRealHandle < 0)
         {
@@ -298,10 +292,10 @@ void Camera::run()
 
                 if (cur_keti > 0)
                 {
-                    if (chilun_num == CHILUN_NUM)
+                    if (chilun_num >= CHILUN_NUM)
                         chilun_flag = true;
 
-                    if (luosi_num == LUOSI_NUM)
+                    if (luosi_num >= LUOSI_NUM)
                         luosi_flag = true;
 
                     cv::putText(BGR_image, chilun_flag ? "chilun OK" : "chilun miss", cv::Point(10, 190), cv::FONT_HERSHEY_SIMPLEX, 1, chilun_flag ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255), 2);

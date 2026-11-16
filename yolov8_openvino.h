@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <fstream>
 #include <iostream>
@@ -79,6 +79,8 @@ public:
     std::vector<Object> detectObjects(cv::Mat inputImageBGR);
     // Draw the object bounding boxes and labels on the image
     void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
+    std::vector<int> getclassnumer();
+    std::vector<bool> getActionFlag();
     // Enable or disable ROI-based detection
     void enableROIDetection(bool enable);
     // Set the detection ROI
@@ -89,8 +91,6 @@ public:
     void setRoiOpacity(float opacity);
     // Set the line width of the detection ROI
     void setRoiLineWidth(int lineWidth);
-    std::vector<int> getclassnumer();
-    std::vector<bool> getActionFlag();
 
 private:
     int numOutputs;

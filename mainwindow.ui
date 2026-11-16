@@ -1057,7 +1057,7 @@ QPushButton:pressed {
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>360</y>
+            <y>20</y>
             <width>471</width>
             <height>453</height>
            </rect>
@@ -1463,7 +1463,7 @@ QSlider::handle:horizontal:hover {
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>20</y>
+            <y>512</y>
             <width>471</width>
             <height>301</height>
            </rect>

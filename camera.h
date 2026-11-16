@@ -8,7 +8,6 @@
 #include <QImage>
 #include <QObject>
 #include <QSettings>
-#include <cmath>
 #include <queue>
 #ifdef USE_OPENVINO
     #include "yolov8_openvino.h"
@@ -28,7 +27,6 @@ class Camera : public QObject
     Q_OBJECT
 public:
     Camera(QObject *parent = nullptr);
-    void initCamera();
     ~Camera();
     static std::queue<cv::Mat> gImage;
     bool connectPLC();
@@ -101,30 +99,30 @@ private:
     // 用于存储每个类别的计数
     int CHILUN_NUM = 1; // 标准齿轮数
     int LUOSI_NUM = 4; // 标准螺丝数
-    bool res_flag = false; // 结果标志位
-    bool chilun_flag = false; // 齿轮标志位
-    int luosi_flag = 0; // 螺丝标志位
-    int cur_keti = 0; // 当前keti计数
-    int last_keti = 0; // 上次keti计数
     // ROI参数
-    bool m_enableROIDetection; // ROI检测启用状态
-    int roi_x;
-    int roi_y;
-    int roi_w;
-    int roi_h;
-    QString roi_color; // ROI颜色
-    float roi_opacity; // ROI透明度
-    int roi_line_width; // ROI矩形线宽
-    // 滑动窗口相关变量，用于平滑壳体检测结果
-    std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
-    const int KETI_WINDOW_SIZE = 4; // 滑动窗口大小
-    const int KETI_THRESHOLD = 2; // 判定壳体存在的阈值
+    bool m_enableROIDetection = false; // ROI检测启用状态
+    int roi_x = 0;
+    int roi_y = 0;
+    int roi_w = 0;
+    int roi_h = 0;
+    QString roi_color = "#00ff00"; // ROI颜色
+    float roi_opacity = 0.5f; // ROI透明度
+    int roi_line_width = 5; // ROI矩形线宽
     // 动作检测配置
     bool enableAction = false; // 动作检测启用状态
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
     bool includeActionInResult = false; // 动作检测是否计入结果判定
     QVector<int> orderedActions; // 顺序检测的动作索引列表（按用户指定的顺序）
     bool forceSaveVideo = false; // 是否强制保存视频
+    bool res_flag = false; // 结果标志位
+    bool chilun_flag = false; // 齿轮标志位
+    int luosi_flag = 0; // 螺丝标志位
+    int cur_keti = 0; // 当前keti计数
+    int last_keti = 0; // 上次keti计数
+    // 滑动窗口相关变量，用于平滑壳体检测结果
+    std::deque<bool> keti_history; // 存储最近 KETI_WINDOW_SIZE 个壳体检测结果
+    const int KETI_WINDOW_SIZE = 4; // 滑动窗口大小
+    const int KETI_THRESHOLD = 2; // 判定壳体存在的阈值
     // 视频录制
     cv::VideoWriter originalVideoWriter;
     cv::VideoWriter resultVideoWriter;
