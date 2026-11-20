@@ -59,8 +59,8 @@ public slots:
     void receiveNumber(QString str_chilun_num, QString str_luosi_num);
 
 private slots:
-    void on_start_clicked();
-    void on_stop_clicked();
+    void on_btn_start_clicked();
+    void on_btn_stop_clicked();
     void on_btn_connectPLC_clicked();
     void on_btn_disconnectPLC_clicked();
     void on_btn_history_rst_clicked();

@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 
     // 启动相机1
-    on_start_clicked();
+    on_btn_start_clicked();
 }
 
 MainWindow::~MainWindow()
@@ -272,11 +272,11 @@ void MainWindow::initActionControls()
 {
     // 动作配置
     actionItems = {
-        {QString::fromLocal8Bit("1.左上螺丝"), ui->checkBox_action1},
-        {QString::fromLocal8Bit("2.右上螺丝"), ui->checkBox_action2},
-        {QString::fromLocal8Bit("3.左下螺丝"), ui->checkBox_action3},
-        {QString::fromLocal8Bit("4.右下螺丝"), ui->checkBox_action4},
-        {QString::fromLocal8Bit("5.放齿轮"), ui->checkBox_action5}};
+        {QStringLiteral("1.左上螺丝"), ui->checkBox_action1},
+        {QStringLiteral("2.右上螺丝"), ui->checkBox_action2},
+        {QStringLiteral("3.左下螺丝"), ui->checkBox_action3},
+        {QStringLiteral("4.右下螺丝"), ui->checkBox_action4},
+        {QStringLiteral("5.放齿轮"), ui->checkBox_action5}};
 
     // 加载动作配置
     loadActionConfig();
@@ -336,7 +336,7 @@ void MainWindow::initActionControls()
             if (pair.second->isChecked()) selectedActions.append(pair.first);
         }
         if (selectedActions.isEmpty()) {
-            QMessageBox::information(this, QString::fromLocal8Bit("提示"), QString::fromLocal8Bit("请先勾选需要检测的动作"));
+            QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("请先勾选需要检测的动作"));
             return;
         }
         // 添加到顺序列表（去重）
@@ -379,13 +379,13 @@ void MainWindow::initForceSaveVideoControl()
 
 void MainWindow::receiveslotQImg(QImage img)
 {
-    ui->label->setPixmap(QPixmap::fromImage(img));
+    ui->label_video->setPixmap(QPixmap::fromImage(img));
 }
 
 void MainWindow::receivefinish()
 {
-    ui->start->setDisabled(false);
-    ui->stop->setDisabled(true);
+    ui->btn_start->setDisabled(false);
+    ui->btn_stop->setDisabled(true);
     qDebug() << "finished thread";
     cam->closeDevice(); // 关闭相机线程
 }
@@ -476,7 +476,7 @@ void MainWindow::loadHistoryList()
 
 void MainWindow::showEmptyLabel()
 {
-    QLabel *emptyLabel = new QLabel(QString::fromLocal8Bit("暂无历史记录"), historyWindow);
+    QLabel *emptyLabel = new QLabel(QStringLiteral("暂无历史记录"), historyWindow);
     emptyLabel->setStyleSheet("color: #888; font-size: 16px;");
     emptyLabel->setAlignment(Qt::AlignCenter);
     QListWidgetItem *item = new QListWidgetItem(listWidget);
@@ -525,12 +525,12 @@ void MainWindow::updatePaginationControls()
     int endIndex = qMax(0, startIndex - PAGE_SIZE + 1);
     int currentPageRecords = qMax(0, startIndex - endIndex + 1);
 
-    currentPageRecordLabel->setText(QString::fromLocal8Bit("本页 %1 条 (每页最多 %2 条)").arg(currentPageRecords).arg(PAGE_SIZE));
+    currentPageRecordLabel->setText(QStringLiteral("本页 %1 条 (每页最多 %2 条)").arg(currentPageRecords).arg(PAGE_SIZE));
     prevPageBtn->setEnabled(currentPage > 0);
     pageInfoLabel->setText(QString("%1 / %2").arg(currentPage + 1).arg(totalPages));
     nextPageBtn->setEnabled(currentPage < totalPages - 1);
     jumpLineEdit->setPlaceholderText("1-" + QString::number(totalPages));
-    recordCountLabel->setText(QString::fromLocal8Bit("共 %1 条").arg(totalRecords));
+    recordCountLabel->setText(QStringLiteral("共 %1 条").arg(totalRecords));
 }
 
 QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QString originalPath, QString resultPath)
@@ -550,7 +550,7 @@ QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QStrin
     logLabel->setWordWrap(true);
 
     // 原视频按钮
-    QString originalVideoText = QString::fromLocal8Bit("原视频");
+    QString originalVideoText = QStringLiteral("原视频");
     QPushButton *btnOriginal = new QPushButton(originalVideoText, itemWidget);
     btnOriginal->setStyleSheet("QPushButton { background-color: #1976d2; color: white; border-radius: 4px; padding: 4px 12px; }"
                                "QPushButton:hover { background-color: #42a5f5; }"
@@ -560,7 +560,7 @@ QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QStrin
     connect(btnOriginal, &QPushButton::clicked, [this, recordNumber, originalVideoText, logLine, originalPath]() { showVideo(recordNumber, originalVideoText, logLine, originalPath); });
 
     // 结果视频按钮
-    QString resultVideoText = QString::fromLocal8Bit("结果视频");
+    QString resultVideoText = QStringLiteral("结果视频");
     QPushButton *btnResult = new QPushButton(resultVideoText, itemWidget);
     btnResult->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 4px; padding: 4px 12px; }"
                              "QPushButton:hover { background-color: #66bb6a; }"
@@ -581,7 +581,7 @@ void MainWindow::showVideo(int recordNumber, QString type, QString logInfo, QStr
 {
     if (path.isEmpty() || !QFile::exists(path))
     {
-        QMessageBox::warning(historyWindow, QString::fromLocal8Bit("警告"), QString::fromLocal8Bit("视频文件不存在:\n%1").arg(path));
+        QMessageBox::warning(historyWindow, QStringLiteral("警告"), QStringLiteral("视频文件不存在:\n%1").arg(path));
         return;
     }
 
@@ -593,7 +593,7 @@ void MainWindow::showVideo(int recordNumber, QString type, QString logInfo, QStr
         videoContainer->setVisible(true);
         // 更新视频标题（显示编号 + 类型 + 日志信息）
         if (videoTitleLabel)
-            videoTitleLabel->setText(QString::fromLocal8Bit("#%1 %2 —— %3").arg(recordNumber).arg(type).arg(logInfo));
+            videoTitleLabel->setText(QStringLiteral("#%1 %2 —— %3").arg(recordNumber).arg(type).arg(logInfo));
         if (player)
         {
             // 设置视频
@@ -703,12 +703,12 @@ void MainWindow::receive_connectstate(bool state)
                                         "    border-radius: 6px;"
                                         "}")
                                     .arg(state ? "#2e7d32" : "#c62828"));
-    ui->lb_proc4->setText(QString::fromLocal8Bit(state ? "已连接" : "未连接"));
+    ui->lb_proc4->setText(state ? QStringLiteral("已连接") : QStringLiteral("未连接"));
 }
 
 void MainWindow::getActionState(std::vector<bool> actionState)
 {
-    QLabel *labels[] = {ui->label_4, ui->label_5, ui->label_6, ui->label_7, ui->label_8};
+    QLabel *labels[] = {ui->label_action1, ui->label_action2, ui->label_action3, ui->label_action4, ui->label_action5};
     QVector<int> enabledActions = getEnabledActions();
     bool enableAction = ui->checkBox_enableAction->isChecked();
     for (int i = 0; i < 5; i++)
@@ -759,23 +759,23 @@ void MainWindow::receiveNumber(QString str_chilun_num, QString str_luosi_num)
     ui->lb_chilun_num->setText(str_chilun_num);
 }
 
-void MainWindow::on_start_clicked()
+void MainWindow::on_btn_start_clicked()
 {
     if (!THREAD1_cam1->isRunning())
     {
         THREAD1_cam1->start();
-        ui->start->setDisabled(true);
-        ui->stop->setDisabled(false);
+        ui->btn_start->setDisabled(true);
+        ui->btn_stop->setDisabled(false);
     }
 }
 
-void MainWindow::on_stop_clicked()
+void MainWindow::on_btn_stop_clicked()
 {
     if (THREAD1_cam1->isRunning())
     {
         cam->stop_camera();
-        ui->start->setDisabled(false);
-        ui->stop->setDisabled(true);
+        ui->btn_start->setDisabled(false);
+        ui->btn_stop->setDisabled(true);
     }
 }
 
@@ -867,7 +867,7 @@ void MainWindow::on_btn_history_clicked()
     QVBoxLayout *mainLayout = new QVBoxLayout(historyWindow);
 
     // 标题
-    QLabel *titleLabel = new QLabel(QString::fromLocal8Bit("历史记录"), historyWindow);
+    QLabel *titleLabel = new QLabel(QStringLiteral("历史记录"), historyWindow);
     titleLabel->setStyleSheet("color: #ffffff; font-size: 18px; font-weight: bold; padding: 10px;");
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
@@ -902,12 +902,12 @@ void MainWindow::on_btn_history_clicked()
     };
 
     // 当前页记录数
-    currentPageRecordLabel = new QLabel(QString::fromLocal8Bit("本页 0 条 (每页最多 %1 条)").arg(PAGE_SIZE), listContainer);
+    currentPageRecordLabel = new QLabel(QStringLiteral("本页 0 条 (每页最多 %1 条)").arg(PAGE_SIZE), listContainer);
     currentPageRecordLabel->setStyleSheet("color: #00ff00; font-size: 12px; min-width: 200px;");
     currentPageRecordLabel->setAlignment(Qt::AlignCenter);
 
     // 上一页按钮
-    prevPageBtn = createBtn(QString::fromLocal8Bit("上一页"), [this]() { if (currentPage > 0) { loadPage(--currentPage); } });
+    prevPageBtn = createBtn(QStringLiteral("上一页"), [this]() { if (currentPage > 0) { loadPage(--currentPage); } });
 
     // 页码信息
     pageInfoLabel = new QLabel("1 / 1", listContainer);
@@ -915,18 +915,18 @@ void MainWindow::on_btn_history_clicked()
     pageInfoLabel->setAlignment(Qt::AlignCenter);
 
     // 下一页按钮
-    nextPageBtn = createBtn(QString::fromLocal8Bit("下一页"), [this]() { if (currentPage < totalPages - 1) { loadPage(++currentPage); } });
+    nextPageBtn = createBtn(QStringLiteral("下一页"), [this]() { if (currentPage < totalPages - 1) { loadPage(++currentPage); } });
 
     // 跳转功能
     QHBoxLayout *jumpLayout = new QHBoxLayout();
     jumpLayout->setSpacing(4);
 
     jumpLineEdit = new QLineEdit(listContainer);
-    jumpLineEdit->setPlaceholderText(QString::fromLocal8Bit("页数"));
+    jumpLineEdit->setPlaceholderText(QStringLiteral("页数"));
     jumpLineEdit->setStyleSheet("QLineEdit { background-color: #333; color: white; border: 1px solid #555; border-radius: 3px; padding: 3px 5px; width: 60px; }"
                                 "QLineEdit:focus { border: 1px solid #2e7d32; }");
 
-    QPushButton *jumpBtn = new QPushButton(QString::fromLocal8Bit("跳转"), listContainer);
+    QPushButton *jumpBtn = new QPushButton(QStringLiteral("跳转"), listContainer);
     jumpBtn->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 3px; padding: 3px 6px; width: 35px; }"
                            "QPushButton:hover { background-color: #388e3c; }"
                            "QPushButton:pressed { background-color: #1b5e20; }");
@@ -955,7 +955,7 @@ void MainWindow::on_btn_history_clicked()
     jumpLayout->addWidget(jumpBtn);
 
     // 总记录数信息
-    recordCountLabel = new QLabel(QString::fromLocal8Bit("共 0 条"), listContainer);
+    recordCountLabel = new QLabel(QStringLiteral("共 0 条"), listContainer);
     recordCountLabel->setStyleSheet("color: #00ff00; font-size: 12px; min-width: 70px;");
     recordCountLabel->setAlignment(Qt::AlignCenter);
 
@@ -993,7 +993,7 @@ void MainWindow::on_btn_history_clicked()
                                    "    border-radius: 4px;"
                                    "}");
     videoTitleLabel->setAlignment(Qt::AlignCenter);
-    videoTitleLabel->setText(QString::fromLocal8Bit("请选择视频查看"));
+    videoTitleLabel->setText(QStringLiteral("请选择视频查看"));
     videoLayout->addWidget(videoTitleLabel);
 
     // 视频播放器
@@ -1032,7 +1032,7 @@ void MainWindow::on_btn_history_clicked()
     connect(videoSlider, &QSlider::sliderMoved, this, &MainWindow::onSliderMoved);
 
     // 速度控制
-    QLabel *speedLabel = new QLabel(QString::fromLocal8Bit("速度:"), videoContainer);
+    QLabel *speedLabel = new QLabel(QStringLiteral("速度:"), videoContainer);
     speedLabel->setStyleSheet("color: #ffffff; font-size: 12px;");
 
     speedCombo = new QComboBox(videoContainer);
@@ -1074,10 +1074,10 @@ void MainWindow::on_btn_history_clicked()
 
     // 视频控制栏
     QHBoxLayout *videoControlLayout = new QHBoxLayout();
-    QPushButton *videoPlayBtn = new QPushButton(QString::fromLocal8Bit("播放"), videoContainer);
-    QPushButton *videoPauseBtn = new QPushButton(QString::fromLocal8Bit("暂停"), videoContainer);
-    QPushButton *videoStopBtn = new QPushButton(QString::fromLocal8Bit("停止"), videoContainer);
-    QPushButton *videoCloseBtn = new QPushButton(QString::fromLocal8Bit("返回列表"), videoContainer);
+    QPushButton *videoPlayBtn = new QPushButton(QStringLiteral("播放"), videoContainer);
+    QPushButton *videoPauseBtn = new QPushButton(QStringLiteral("暂停"), videoContainer);
+    QPushButton *videoStopBtn = new QPushButton(QStringLiteral("停止"), videoContainer);
+    QPushButton *videoCloseBtn = new QPushButton(QStringLiteral("返回列表"), videoContainer);
 
     videoPlayBtn->setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border-radius: 4px; padding: 6px 16px; }"
                                 "QPushButton:hover { background-color: #66bb6a; }"
@@ -1107,7 +1107,7 @@ void MainWindow::on_btn_history_clicked()
     mainLayout->addWidget(videoContainer, 1);
 
     // 关闭按钮
-    QPushButton *closeBtn = new QPushButton(QString::fromLocal8Bit("关闭"), historyWindow);
+    QPushButton *closeBtn = new QPushButton(QStringLiteral("关闭"), historyWindow);
     closeBtn->setStyleSheet("QPushButton { background-color: #c62828; color: white; border-radius: 5px; padding: 8px 20px; }"
                             "QPushButton:hover { background-color: #ef5350; }"
                             "QPushButton:pressed { background-color: #b71c1c; }");
@@ -1157,7 +1157,7 @@ void MainWindow::on_spinBox_roi_h_valueChanged(int value)
 
 void MainWindow::on_btn_colorPicker_clicked()
 {
-    QColor color = QColorDialog::getColor(QColor(currentRoiColor), this, QString::fromLocal8Bit("选择检测框颜色"));
+    QColor color = QColorDialog::getColor(QColor(currentRoiColor), this, QStringLiteral("选择检测框颜色"));
     if (color.isValid())
     {
         QString colorName = color.name();

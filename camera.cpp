@@ -124,6 +124,12 @@ void Camera::run()
         // 真实相机模式
         emit sendQStringtoMain("Using real camera mode...");
 
+        // 清空图像队列（清除上次运行残留帧）
+        {
+            QMutexLocker locker(&queueMutex);
+            std::queue<cv::Mat>().swap(Camera::gImage);
+        }
+
         // 初始化
         NET_DVR_Init();
         // 设置连接时间与重连时间
@@ -205,6 +211,7 @@ void Camera::run()
 
     keti_history.clear(); // 清空队列
     last_keti = 0; // 重置计数器
+    resetDetectionState(); // 复位检测状态
 
     try
     {
@@ -260,9 +267,8 @@ void Camera::run()
                 // qDebug() << "run inference";
                 const auto objects = yoloV8->detectObjects(BGR_image);
                 // 设置检测区域ROI
-                yoloV8->enableROIDetection(m_enableROIDetection);
-                cv::Rect detectionROI(roi_x, roi_y, roi_w, roi_h);
-                yoloV8->setDetectionROI(detectionROI);
+                yoloV8->enableROIDetection(roiDetectionEnabled);
+                yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
                 yoloV8->setRoiColor(roi_color);
                 yoloV8->setRoiOpacity(roi_opacity);
                 yoloV8->setRoiLineWidth(roi_line_width);
@@ -360,14 +366,8 @@ void Camera::run()
 
                 if (cur_keti == 0 && last_keti == 0)
                 {
-                    // keti消失，chilun_flag和luosi_flag置0
-                    chilun_flag = luosi_flag = false;
-                    // reset actionGroup and buttonState
-                    actionGroup = {false, false, false, false, false};
-                    emit updateLabelState(false, false, false); // 齿轮/螺丝/总体
-                    // 复位PLC输出(让PLC自己复位)
-                    // setD(0, 0); // 复位报警
-                    // setD(2, 0); // 复位绿灯
+                    // keti消失，复位检测状态
+                    resetDetectionState();
                 }
 
                 last_keti = cur_keti;
@@ -499,9 +499,19 @@ void Camera::disconnectPLC()
     emit send_connectstate(false);
 }
 
+void Camera::resetDetectionState()
+{
+    chilun_flag = luosi_flag = false;
+    actionGroup = {false, false, false, false, false};
+    emit updateLabelState(false, false, false); // 齿轮/螺丝/总体
+    // 复位PLC输出(让PLC自己复位)
+    // setD(0, 0); // 复位报警
+    // setD(2, 0); // 复位绿灯
+}
+
 void Camera::enableROIDetection(bool enable)
 {
-    m_enableROIDetection = enable;
+    roiDetectionEnabled = enable;
 }
 
 void Camera::setRoiX(int x)

@@ -31,6 +31,7 @@ public:
     static std::queue<cv::Mat> gImage;
     bool connectPLC();
     void disconnectPLC();
+    void resetDetectionState(); // 复位检测状态
     // ROI 检测控制
     void enableROIDetection(bool enable); // 启用或禁用ROI检测
     void setRoiX(int x);
@@ -100,7 +101,7 @@ private:
     int CHILUN_NUM = 1; // 标准齿轮数
     int LUOSI_NUM = 4; // 标准螺丝数
     // ROI参数
-    bool m_enableROIDetection = false; // ROI检测启用状态
+    bool roiDetectionEnabled = false; // ROI检测启用状态
     int roi_x = 0;
     int roi_y = 0;
     int roi_w = 0;

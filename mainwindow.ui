@@ -20,7 +20,6 @@
     border: 1px solid #555;
     border-radius: 5px;
     padding: 8px;
-    font-family: Arial;
     font-weight: bold;
 }
 
@@ -29,7 +28,7 @@ QPushButton:hover {
 }
 
 QPushButton:pressed {
-    background-color: #5d5d5d;
+    background-color: #2a2a2a;
 }
 
 QPushButton:disabled {
@@ -38,7 +37,6 @@ QPushButton:disabled {
 }
 
 QCheckBox {
-    color: #ffffff;
     spacing: 8px;
 }
 
@@ -60,7 +58,6 @@ QCheckBox::indicator:unchecked {
 }
 
 QGroupBox {
-    color: #ffffff;
     border: 1px solid #555;
     border-radius: 5px;
     margin-top: 10px;
@@ -84,9 +81,9 @@ QGroupBox::title {
       <height>81</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_3">
+    <layout class="QGridLayout" name="gridLayout_numberDisplay">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_chilunNum">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -97,7 +94,6 @@ QGroupBox::title {
        </property>
        <property name="styleSheet">
         <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
        </property>
@@ -106,8 +102,8 @@ QGroupBox::title {
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_2">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_luosiNum">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -118,7 +114,6 @@ QGroupBox::title {
        </property>
        <property name="styleSheet">
         <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
        </property>
@@ -127,7 +122,7 @@ QGroupBox::title {
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QLabel" name="lb_luosi_num">
        <property name="font">
         <font>
@@ -154,7 +149,7 @@ QGroupBox::title {
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="0" column="1">
       <widget class="QLabel" name="lb_chilun_num">
        <property name="font">
         <font>
@@ -183,7 +178,7 @@ QGroupBox::title {
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="start">
+   <widget class="QPushButton" name="btn_start">
     <property name="geometry">
      <rect>
       <x>1200</x>
@@ -223,7 +218,7 @@ QPushButton:disabled {
      <string>开始检测</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="stop">
+   <widget class="QPushButton" name="btn_stop">
     <property name="geometry">
      <rect>
       <x>1360</x>
@@ -263,7 +258,7 @@ QPushButton:disabled {
      <string>停止检测</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="label_video">
     <property name="geometry">
      <rect>
       <x>60</x>
@@ -374,7 +369,7 @@ QPushButton:pressed {
         <height>261</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <layout class="QHBoxLayout" name="horizontalLayout_actionStatus">
        <property name="spacing">
         <number>15</number>
        </property>
@@ -397,9 +392,9 @@ QPushButton:pressed {
         </widget>
        </item>
        <item>
-        <layout class="QGridLayout" name="gridLayout_5" columnstretch="1,0">
+        <layout class="QGridLayout" name="gridLayout_actionStatus" columnstretch="1,0">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="label_action1">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -424,7 +419,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_5">
+          <widget class="QLabel" name="label_action2">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -449,7 +444,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="label_6">
+          <widget class="QLabel" name="label_action3">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -474,7 +469,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="3" column="0">
-          <widget class="QLabel" name="label_7">
+          <widget class="QLabel" name="label_action4">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -499,7 +494,7 @@ QPushButton:pressed {
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QLabel" name="label_8">
+          <widget class="QLabel" name="label_action5">
            <property name="font">
             <font>
              <family>Arial</family>
@@ -700,11 +695,25 @@ QPushButton:pressed {
         <bold>true</bold>
        </font>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #1565c0;
+    border-radius: 6px;
+}
+
+QPushButton:hover {
+    background-color: #1976d2;
+}
+
+QPushButton:pressed {
+    background-color: #0d47a1;
+}</string>
+      </property>
       <property name="text">
        <string>历史记录</string>
       </property>
      </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_2">
+     <widget class="QWidget" name="gridLayoutWidget_2">
       <property name="geometry">
        <rect>
         <x>30</x>
@@ -713,302 +722,288 @@ QPushButton:pressed {
         <height>161</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <layout class="QGridLayout" name="gridLayout_3">
-         <item row="0" column="1">
-          <widget class="QLabel" name="history_good_number">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>16</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
+      <layout class="QGridLayout" name="gridLayout_statistics">
+       <item row="0" column="1">
+        <widget class="QLabel" name="history_good_number">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
     color: #00ff00;
     background-color: #1e1e1e;
     border: 1px solid #555;
     border-radius: 5px;
     padding: 5px;
 }</string>
-           </property>
-           <property name="text">
-            <string>0</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_10">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>14</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #ffffff;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>历史检测数</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_9">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>14</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #ffffff;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>历史合格数</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="history_number">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>16</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #00ff00;
-    background-color: #1e1e1e;
-    border: 1px solid #555;
-    border-radius: 5px;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>0</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_11">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>14</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #ffffff;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>历史合格率</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="history_good_rates">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>16</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #00ff00;
-    background-color: #1e1e1e;
-    border: 1px solid #555;
-    border-radius: 5px;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>0</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
        </item>
-       <item>
-        <layout class="QGridLayout" name="gridLayout_4">
-         <item row="1" column="1">
-          <widget class="QLabel" name="today_number">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>16</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_history_count">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>历史检测数</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_history_good">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>历史合格数</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="history_number">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
     color: #00ff00;
     background-color: #1e1e1e;
     border: 1px solid #555;
     border-radius: 5px;
     padding: 5px;
 }</string>
-           </property>
-           <property name="text">
-            <string>0</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="today_good_number">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>16</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_history_rate">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>历史合格率</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLabel" name="history_good_rates">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
     color: #00ff00;
     background-color: #1e1e1e;
     border: 1px solid #555;
     border-radius: 5px;
     padding: 5px;
 }</string>
-           </property>
-           <property name="text">
-            <string>0</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_12">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>14</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #ffffff;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>今日合格数</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_13">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>14</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #ffffff;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>今日检测数</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_14">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>14</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
-    color: #ffffff;
-    padding: 5px;
-}</string>
-           </property>
-           <property name="text">
-            <string>今日合格率</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="today_good_rates">
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>16</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel {
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QLabel" name="today_number">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
     color: #00ff00;
     background-color: #1e1e1e;
     border: 1px solid #555;
     border-radius: 5px;
     padding: 5px;
 }</string>
-           </property>
-           <property name="text">
-            <string>0</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLabel" name="today_good_number">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    color: #00ff00;
+    background-color: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QLabel" name="label_today_good">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>今日合格数</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLabel" name="label_today_count">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>今日检测数</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QLabel" name="label_today_rate">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>今日合格率</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QLabel" name="today_good_rates">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>16</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    color: #00ff00;
+    background-color: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px;
+}</string>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1035,7 +1030,7 @@ QPushButton:pressed {
      </widget>
     </widget>
     <widget class="QWidget" name="page_2">
-     <layout class="QVBoxLayout" name="verticalLayout_6">
+     <layout class="QVBoxLayout" name="verticalLayout_page2">
       <item>
        <widget class="QScrollArea" name="scrollArea">
         <property name="horizontalScrollBarPolicy">
@@ -1050,7 +1045,7 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>920</height>
+           <height>875</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
@@ -1065,16 +1060,16 @@ QPushButton:pressed {
           <property name="title">
            <string>ROI 设置</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_5">
+          <layout class="QVBoxLayout" name="verticalLayout_roi">
            <item>
             <widget class="QWidget" name="ROIControls" native="true">
-             <layout class="QVBoxLayout" name="verticalLayout_2">
+             <layout class="QVBoxLayout" name="verticalLayout_roiControls">
               <item>
                <widget class="QCheckBox" name="cb_enableROI">
                 <property name="font">
                  <font>
                   <family>Arial</family>
-                  <pointsize>18</pointsize>
+                  <pointsize>14</pointsize>
                  </font>
                 </property>
                 <property name="text">
@@ -1083,18 +1078,17 @@ QPushButton:pressed {
                </widget>
               </item>
               <item>
-               <layout class="QGridLayout" name="roiLayout">
+               <layout class="QGridLayout" name="gridLayout_roi">
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_roi_x">
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1108,17 +1102,11 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>0</number>
-                  </property>
                   <property name="maximum">
-                   <number>1920</number>
-                  </property>
-                  <property name="value">
-                   <number>0</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1127,12 +1115,11 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1146,17 +1133,11 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>0</number>
-                  </property>
                   <property name="maximum">
-                   <number>1080</number>
-                  </property>
-                  <property name="value">
-                   <number>0</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1165,12 +1146,11 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1184,17 +1164,11 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
                   <property name="maximum">
-                   <number>1920</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1203,12 +1177,11 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QLabel {
-    color: #ffffff;
     padding: 5px;
 }</string>
                   </property>
@@ -1222,17 +1195,11 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
                   </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
                   <property name="maximum">
-                   <number>1080</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
+                   <number>2147483647</number>
                   </property>
                  </widget>
                 </item>
@@ -1243,13 +1210,13 @@ QPushButton:pressed {
            </item>
            <item>
             <widget class="QWidget" name="DisplayControls" native="true">
-             <layout class="QVBoxLayout" name="verticalLayout_3">
+             <layout class="QVBoxLayout" name="verticalLayout_displayControls">
               <item>
                <widget class="QLabel" name="label_display_settings">
                 <property name="font">
                  <font>
                   <family>Arial</family>
-                  <pointsize>18</pointsize>
+                  <pointsize>14</pointsize>
                  </font>
                 </property>
                 <property name="text">
@@ -1264,7 +1231,7 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                     <weight>75</weight>
                     <bold>true</bold>
                    </font>
@@ -1293,8 +1260,13 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QLabel {
+    padding: 5px;
+}</string>
                   </property>
                   <property name="text">
                    <string>颜色预览</string>
@@ -1304,13 +1276,13 @@ QPushButton:pressed {
                </layout>
               </item>
               <item>
-               <layout class="QGridLayout" name="gridLayout_2">
+               <layout class="QGridLayout" name="gridLayout_display">
                 <item row="0" column="3">
                  <widget class="QLabel" name="label_opacity_display">
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                     <weight>75</weight>
                     <bold>true</bold>
                    </font>
@@ -1338,8 +1310,13 @@ QPushButton:pressed {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QLabel {
+    padding: 5px;
+}</string>
                   </property>
                   <property name="text">
                    <string>线宽:</string>
@@ -1382,8 +1359,13 @@ QSlider::handle:horizontal:hover {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                    </font>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QLabel {
+    padding: 5px;
+}</string>
                   </property>
                   <property name="text">
                    <string>透明度:</string>
@@ -1429,7 +1411,7 @@ QSlider::handle:horizontal:hover {
                   <property name="font">
                    <font>
                     <family>Arial</family>
-                    <pointsize>18</pointsize>
+                    <pointsize>14</pointsize>
                     <weight>75</weight>
                     <bold>true</bold>
                    </font>
@@ -1463,7 +1445,7 @@ QSlider::handle:horizontal:hover {
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>512</y>
+            <y>493</y>
             <width>471</width>
             <height>301</height>
            </rect>
@@ -1473,7 +1455,7 @@ QSlider::handle:horizontal:hover {
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_actionControl">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <layout class="QHBoxLayout" name="horizontalLayout_actionTop">
              <item>
               <widget class="QCheckBox" name="checkBox_enableAction">
                <property name="font">
@@ -1591,7 +1573,7 @@ QSlider::handle:horizontal:hover {
                 </widget>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <layout class="QHBoxLayout" name="horizontalLayout_order">
                  <item>
                   <widget class="QListWidget" name="listWidget_order">
                    <property name="styleSheet">
@@ -1710,7 +1692,9 @@ QPushButton:hover {
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: #888888;</string>
+              <string notr="true">QLabel {
+    color: #888888;
+}</string>
              </property>
              <property name="text">
               <string>提示：勾选需要检测的动作 → 点击&quot;添加选中&quot; → 拖拽调整顺序</string>
@@ -1723,7 +1707,7 @@ QPushButton:hover {
           <property name="geometry">
            <rect>
             <x>50</x>
-            <y>846</y>
+            <y>814</y>
             <width>251</width>
             <height>41</height>
            </rect>
@@ -1731,7 +1715,7 @@ QPushButton:hover {
           <property name="font">
            <font>
             <family>Arial</family>
-            <pointsize>18</pointsize>
+            <pointsize>14</pointsize>
            </font>
           </property>
           <property name="text">
