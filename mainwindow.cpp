@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     // connect(cam, &Camera::finished, cam, &QObject::deleteLater); // 在空闲时间删除线程对象，执行后将不能在用start方法启动线程
     connect(cam, &Camera::send_connectstate, this, &MainWindow::receive_connectstate, Qt::QueuedConnection);
     connect(cam, &Camera::updateLabelState, this, &MainWindow::updateLabelState, Qt::QueuedConnection);
+    connect(cam, &Camera::logFileChanged, this, &MainWindow::onLogFileChanged, Qt::QueuedConnection);
     connect(cam, &Camera::updateStatistics, this, &MainWindow::updateStatistics, Qt::QueuedConnection);
     connect(cam, &Camera::sendQImgToAutoMain, this, &MainWindow::receiveslotQImg, Qt::QueuedConnection);
     connect(cam, &Camera::updateActionState, this, &MainWindow::getActionState, Qt::QueuedConnection);
@@ -95,6 +96,13 @@ void MainWindow::showEvent(QShowEvent *event)
     x = qMax(screenRect.left(), qMin(x, screenRect.right() - frameRect.width()));
     y = qMax(screenRect.top(), qMin(y, screenRect.bottom() - frameRect.height()));
     move(x, y);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    if (historyWindow)
+        historyWindow->move(qMax(0, width() - historyWindow->width()), 0);
 }
 
 void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)
@@ -439,6 +447,12 @@ void MainWindow::updateLabelState(bool p1Detected, bool p2Detected, bool p3Detec
                                          "}")
                                      .arg(states[i] ? "#2e7d32" : "#c62828"));
     }
+}
+
+void MainWindow::onLogFileChanged()
+{
+    if (historyWindow)
+        loadHistoryList();
 }
 
 void MainWindow::updateStatistics(bool result)
@@ -856,9 +870,13 @@ void MainWindow::on_btn_today_rst_clicked()
 
 void MainWindow::on_btn_history_clicked()
 {
-    // 如果窗口已经存在，则不再创建新的窗口
+    // 如果窗口已经存在，则刷新数据并置前
     if (historyWindow)
     {
+        loadHistoryList();
+        historyWindow->show();
+        historyWindow->raise();
+        historyWindow->activateWindow();
         return;
     }
 
@@ -867,7 +885,11 @@ void MainWindow::on_btn_history_clicked()
     historyWindow->setObjectName("historyWindow");
     historyWindow->setMinimumSize(680, height());
     historyWindow->setStyleSheet("QWidget { background-color: #1e1e1e; }"
-                                 "QWidget#historyWindow { border: 2px solid #444; border-radius: 8px; }");
+                                 "QWidget#historyWindow { border: 2px solid #444; border-radius: 8px; }"
+                                 "QPushButton { background-color: #3d3d3d; color: #ffffff; border: 1px solid #555; border-radius: 5px; padding: 8px; font-weight: bold; }"
+                                 "QPushButton:hover { background-color: #4d4d4d; }"
+                                 "QPushButton:pressed { background-color: #2a2a2a; }"
+                                 "QPushButton:disabled { background-color: #2d2d2d; color: #888; }");
     historyWindow->setAttribute(Qt::WA_DeleteOnClose);
 
     // 设置窗口位置
@@ -914,9 +936,6 @@ void MainWindow::on_btn_history_clicked()
 
     // 列表
     listWidget = new QListWidget(listContainer);
-    listWidget->setStyleSheet("QListWidget { background-color: #1e1e1e; border: 1px solid #444; border-radius: 5px; }"
-                              "QListWidget::item { padding: 5px; border-bottom: 1px solid #333; }"
-                              "QListWidget::item:selected { background-color: #2d2d2d; }");
     listWidget->setSelectionMode(QAbstractItemView::NoSelection);
     listContainerLayout->addWidget(listWidget, 1);
 
@@ -1056,10 +1075,6 @@ void MainWindow::on_btn_history_clicked()
     videoSlider->setRange(0, 1000);
     videoSlider->setValue(0);
     videoSlider->setPageStep(0);
-    videoSlider->setStyleSheet("QSlider::groove:horizontal { height: 6px; background: #555; border-radius: 3px; }"
-                               "QSlider::handle:horizontal { background: #2e7d32; width: 14px; margin: -4px 0; border-radius: 7px; }"
-                               "QSlider::handle:horizontal:hover { background: #388e3c; }"
-                               "QSlider::sub-page:horizontal { background: #2e7d32; border-radius: 3px; }");
 
     connect(player, &QMediaPlayer::positionChanged, this, &MainWindow::updateVideoPosition);
     connect(videoSlider, &QSlider::sliderPressed, this, &MainWindow::onSliderPressed);
@@ -1129,8 +1144,7 @@ void MainWindow::on_btn_history_clicked()
     connect(videoPlayBtn, &QPushButton::clicked, player, &QMediaPlayer::play);
     connect(videoPauseBtn, &QPushButton::clicked, player, &QMediaPlayer::pause);
     connect(videoStopBtn, &QPushButton::clicked, player, &QMediaPlayer::stop);
-    connect(videoCloseBtn, &QPushButton::clicked, [this]()
-            { showHistoryList(); });
+    connect(videoCloseBtn, &QPushButton::clicked, this, &MainWindow::showHistoryList);
 
     videoControlLayout->addWidget(videoPlayBtn);
     videoControlLayout->addWidget(videoPauseBtn);

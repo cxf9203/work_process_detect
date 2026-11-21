@@ -68,6 +68,7 @@ signals:
     void sendNumber(QString str_chilun_num, QString str_luosi_num);
     void finishedthread();
     void updateLabelState(bool p1, bool p2, bool p3);
+    void logFileChanged();
     void updateStatistics(bool result);
     void send_connectstate(bool state);
 

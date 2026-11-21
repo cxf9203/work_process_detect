@@ -25,6 +25,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void showEvent(QShowEvent *event);
+    void resizeEvent(QResizeEvent *event);
 
 public slots:
     void modifyROIParameter(QString parameterName, QVariant newValue); // 修改 ROI 参数
@@ -39,6 +40,7 @@ public slots:
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected);
+    void onLogFileChanged();
     void updateStatistics(bool result);
     void loadHistoryList();
     void showEmptyLabel();

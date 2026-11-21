@@ -357,10 +357,13 @@ void Camera::run()
                         if (!isActionsCompleted())
                             errorDetails.append("actions NG");
                         QString logMsg = QString("ERROR | %1").arg(errorDetails.join(", "));
+                        stopRecording(hasError);
                         saveErrorLog(logMsg);
                     }
-
-                    stopRecording(hasError);
+                    else
+                    {
+                        stopRecording(hasError);
+                    }
                     emit updateStatistics(!hasError);
                 }
 
@@ -742,6 +745,7 @@ void Camera::saveErrorLog(const QString &message)
         QString formattedTime = ts.mid(0, 4) + "-" + ts.mid(4, 2) + "-" + ts.mid(6, 2) + " " + ts.mid(8, 2) + ":" + ts.mid(10, 2) + ":" + ts.mid(12, 2) + "." + ts.mid(15, 3);
         out << formattedTime << " | " << message << "\n";
         file.close();
+        emit logFileChanged();
     }
 }
 
