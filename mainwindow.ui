@@ -113,6 +113,14 @@ QSlider::handle:horizontal:hover {
 QSlider::sub-page:horizontal {
     background: #2e7d32;
     border-radius: 4px;
+}
+
+QSlider::handle:horizontal:disabled {
+    background: #555555;
+}
+
+QSlider::sub-page:horizontal:disabled {
+    background: #555555;
 }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -1089,7 +1097,7 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>860</height>
+           <height>898</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
@@ -1105,6 +1113,21 @@ QPushButton:pressed {
            <string>ROI 设置</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_roi">
+           <item>
+            <widget class="QCheckBox" name="cb_lockROI">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QWidget" name="ROIControls" native="true">
              <layout class="QVBoxLayout" name="verticalLayout_roiControls">
@@ -1319,6 +1342,11 @@ QPushButton:pressed {
     border-radius: 5px;
     padding: 5px;
     min-width: 70px;
+}
+
+QLabel:disabled {
+    color: #888888;
+    background-color: #2d2d2d;
 }</string>
                   </property>
                   <property name="text">
@@ -1412,6 +1440,11 @@ QPushButton:pressed {
     border-radius: 5px;
     padding: 5px;
     min-width: 70px;
+}
+
+QLabel:disabled {
+    color: #888888;
+    background-color: #2d2d2d;
 }</string>
                   </property>
                   <property name="text">
@@ -1435,13 +1468,28 @@ QPushButton:pressed {
             <x>30</x>
             <y>471</y>
             <width>471</width>
-            <height>308</height>
+            <height>346</height>
            </rect>
           </property>
           <property name="title">
            <string>动作检测控制</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_actionControl">
+           <item>
+            <widget class="QCheckBox" name="cb_lockActionControl">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_actionTop">
              <item>
@@ -1672,7 +1720,7 @@ QPushButton:hover {
           <property name="geometry">
            <rect>
             <x>50</x>
-            <y>799</y>
+            <y>837</y>
             <width>251</width>
             <height>41</height>
            </rect>

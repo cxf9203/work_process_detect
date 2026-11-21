@@ -105,6 +105,16 @@ void MainWindow::resizeEvent(QResizeEvent *event)
         historyWindow->move(qMax(0, width() - historyWindow->width()), 0);
 }
 
+void MainWindow::setGroupLocked(QGroupBox *group, QCheckBox *lockBox, bool locked)
+{
+    const auto widgets = group->findChildren<QWidget *>();
+    for (QWidget *w : widgets)
+    {
+        if (w != lockBox)
+            w->setEnabled(!locked);
+    }
+}
+
 void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
@@ -113,10 +123,21 @@ void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)
     settings.endGroup();
 }
 
+QString MainWindow::colorButtonStyle(const QColor &color)
+{
+    int h, s, v, a;
+    color.getHsv(&h, &s, &v, &a);
+    const QColor disabled = QColor::fromHsv(h, s, v / 2, a);
+    return QString("QPushButton { background-color: %1; border: 1px solid #888; }"
+                   "QPushButton:disabled { background-color: %2; }")
+        .arg(color.name(), disabled.name());
+}
+
 void MainWindow::initROIControls()
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
     settings.beginGroup("ROI");
+    bool lockROI = settings.value("lockROI").toBool();
     bool enableROI = settings.value("EnableROI").toBool();
     int roi_x = settings.value("RoiX").toInt();
     int roi_y = settings.value("RoiY").toInt();
@@ -128,12 +149,13 @@ void MainWindow::initROIControls()
     int roi_line_width = settings.value("RoiLineWidth").toInt();
     settings.endGroup();
 
+    ui->cb_lockROI->setChecked(lockROI);
     ui->cb_enableROI->setChecked(enableROI);
     ui->spinBox_roi_x->setValue(roi_x);
     ui->spinBox_roi_y->setValue(roi_y);
     ui->spinBox_roi_w->setValue(roi_w);
     ui->spinBox_roi_h->setValue(roi_h);
-    ui->btn_colorPicker->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #888; }").arg(roiColorStr));
+    ui->btn_colorPicker->setStyleSheet(colorButtonStyle(QColor(roiColorStr)));
     ui->slider_opacity->setValue(roi_opacity);
     ui->label_opacity_display->setText(QString("%1%").arg(roi_opacity));
     ui->slider_line_width->setValue(roi_line_width);
@@ -146,6 +168,17 @@ void MainWindow::initROIControls()
     cam->setRoiColor(roiColorStr);
     cam->setRoiOpacity(roi_opacity / 100.0f);
     cam->setRoiLineWidth(roi_line_width);
+    setGroupLocked(ui->groupBox_ROI, ui->cb_lockROI, lockROI);
+
+    // 锁定ROI设置
+    connect(ui->cb_lockROI, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("ROI");
+        settings.setValue("lockROI", checked);
+        settings.endGroup();
+
+        setGroupLocked(ui->groupBox_ROI, ui->cb_lockROI, checked); });
 
     // 启用ROI检测
     connect(ui->cb_enableROI, &QCheckBox::toggled, [this](bool value)
@@ -180,7 +213,7 @@ void MainWindow::initROIControls()
         QString colorName = color.name();
         modifyROIParameter("RoiColor", colorName);
         currentRoiColor = colorName;
-        ui->btn_colorPicker->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #888; }").arg(colorName));
+        ui->btn_colorPicker->setStyleSheet(colorButtonStyle(QColor(colorName)));
         cam->setRoiColor(colorName); });
 
     // ROI透明度
@@ -300,9 +333,11 @@ void MainWindow::initActionControls()
     // 加载动作配置
     QSettings settings(iniFilePath, QSettings::IniFormat);
     settings.beginGroup("Action");
+    bool lockActionControl = settings.value("lockActionControl").toBool();
     bool enableAction = settings.value("EnableAction").toBool();
     bool enableOrder = settings.value("EnableOrder").toBool();
     // 更新控件状态
+    ui->cb_lockActionControl->setChecked(lockActionControl);
     ui->checkBox_enableAction->setChecked(enableAction);
     // 加载每个动作的勾选状态
     for (int i = 0; i < actionItems.size(); i++)
@@ -324,7 +359,30 @@ void MainWindow::initActionControls()
     ui->listWidget_order->addItems(settings.value("OrderList").toStringList());
     settings.endGroup();
 
+    setGroupLocked(ui->groupBox_actionControl, ui->cb_lockActionControl, lockActionControl);
     updateActionConfig();
+
+    // 锁定动作配置
+    connect(ui->cb_lockActionControl, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("Action");
+        settings.setValue("lockActionControl", checked);
+        settings.endGroup();
+
+        setGroupLocked(ui->groupBox_actionControl, ui->cb_lockActionControl, checked);
+        if (!checked)
+        {
+            bool enableAction = ui->checkBox_enableAction->isChecked();
+            for (const auto& pair : actionItems) pair.second->setEnabled(enableAction);
+            ui->checkBox_includeActionInResult->setEnabled(enableAction);
+            ui->checkBox_enableOrder->setEnabled(enableAction);
+            bool orderEnabled = enableAction && ui->checkBox_enableOrder->isChecked();
+            ui->listWidget_order->setEnabled(orderEnabled);
+            ui->btn_addToOrder->setEnabled(orderEnabled);
+            ui->btn_removeFromOrder->setEnabled(orderEnabled);
+            ui->btn_clearOrder->setEnabled(orderEnabled);
+        } });
 
     // 启用动作检测
     connect(ui->checkBox_enableAction, &QCheckBox::toggled, [this](bool checked)
@@ -333,11 +391,11 @@ void MainWindow::initActionControls()
         for (const auto& pair : actionItems) pair.second->setEnabled(checked);
         ui->checkBox_includeActionInResult->setEnabled(checked);
         ui->checkBox_enableOrder->setEnabled(checked);
-        bool orderChecked = checked && ui->checkBox_enableOrder->isChecked();
-        ui->listWidget_order->setEnabled(orderChecked);
-        ui->btn_addToOrder->setEnabled(orderChecked);
-        ui->btn_removeFromOrder->setEnabled(orderChecked);
-        ui->btn_clearOrder->setEnabled(orderChecked);
+        bool orderEnabled = checked && ui->checkBox_enableOrder->isChecked();
+        ui->listWidget_order->setEnabled(orderEnabled);
+        ui->btn_addToOrder->setEnabled(orderEnabled);
+        ui->btn_removeFromOrder->setEnabled(orderEnabled);
+        ui->btn_clearOrder->setEnabled(orderEnabled);
         updateActionConfig(); });
 
     // 取消勾选时自动从顺序列表移除
@@ -358,8 +416,7 @@ void MainWindow::initActionControls()
     }
 
     // 动作检测影响结果
-    connect(ui->checkBox_includeActionInResult, &QCheckBox::toggled, [this](bool checked)
-            { updateActionConfig(); });
+    connect(ui->checkBox_includeActionInResult, &QCheckBox::toggled, this, &MainWindow::updateActionConfig);
 
     // 启用顺序检测
     connect(ui->checkBox_enableOrder, &QCheckBox::toggled, [this](bool checked)
@@ -406,8 +463,7 @@ void MainWindow::initActionControls()
         updateActionConfig(); });
 
     // 拖拽排序时更新
-    connect(ui->listWidget_order->model(), &QAbstractItemModel::rowsMoved, [this]()
-            { updateActionConfig(); });
+    connect(ui->listWidget_order->model(), &QAbstractItemModel::rowsMoved, this, &MainWindow::updateActionConfig);
 }
 
 void MainWindow::initForceSaveVideoControl()

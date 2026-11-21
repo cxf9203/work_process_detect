@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QMediaPlayer>
 #include <QCheckBox>
+#include <QGroupBox>
 #include <QLabel>
 #include <QComboBox>
 #include "camera.h"
@@ -28,7 +29,9 @@ public:
     void resizeEvent(QResizeEvent *event);
 
 public slots:
+    void setGroupLocked(QGroupBox *group, QCheckBox *lockBox, bool locked); // 设置分组锁定状态
     void modifyROIParameter(QString parameterName, QVariant newValue); // 修改 ROI 参数
+    QString colorButtonStyle(const QColor &color); // 生成色块按钮样式（禁用态显示暗化原色）
     void initROIControls(); // 初始化 ROI 分组
     void modifyActionParameter(); // 修改动作参数
     QVector<int> getEnabledActions(); // 获取启用的动作
