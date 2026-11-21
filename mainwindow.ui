@@ -1097,14 +1097,14 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>1029</height>
+           <height>1200</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>151</y>
+            <y>322</y>
             <width>471</width>
             <height>431</height>
            </rect>
@@ -1466,7 +1466,7 @@ QLabel:disabled {
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>602</y>
+            <y>773</y>
             <width>471</width>
             <height>346</height>
            </rect>
@@ -1814,11 +1814,125 @@ QLabel:disabled {
            </item>
           </layout>
          </widget>
+         <widget class="QGroupBox" name="groupBox_numberSettings">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>151</y>
+            <width>471</width>
+            <height>151</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>数量设置</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_number">
+           <item row="0" column="0" colspan="3">
+            <widget class="QCheckBox" name="cb_lockNumberSettings">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_chilunStdNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>齿轮标准数:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="spinBox_chilunNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="maximum">
+              <number>99</number>
+             </property>
+             <property name="value">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QCheckBox" name="cb_chilunLock">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>达标锁定</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_luosiStdNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>螺丝标准数:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="spinBox_luosiNum">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="maximum">
+              <number>99</number>
+             </property>
+             <property name="value">
+              <number>4</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QCheckBox" name="cb_luosiLock">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>达标锁定</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
          <widget class="QCheckBox" name="checkBox_forceSaveVideo">
           <property name="geometry">
            <rect>
             <x>50</x>
-            <y>968</y>
+            <y>1139</y>
             <width>251</width>
             <height>41</height>
            </rect>

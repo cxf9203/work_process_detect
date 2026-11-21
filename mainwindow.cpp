@@ -22,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
     cam = new Camera;
 
     initModelSettingControls();
+    initNumberSettings();
     initROIControls();
     initActionControls();
     initForceSaveVideoControl();
@@ -204,6 +205,59 @@ void MainWindow::initModelSettingControls()
         float t = value / 100.0f;
         ui->label_prob_threshold_display->setText(QString("%1").arg(t, 0, 'f', 2));
         cam->setProbabilityThreshold(t); });
+}
+
+void MainWindow::applyNumberSettings()
+{
+    int chilunNum = ui->spinBox_chilunNum->value();
+    int luosiNum = ui->spinBox_luosiNum->value();
+    bool chilunLock = ui->cb_chilunLock->isChecked();
+    bool luosiLock = ui->cb_luosiLock->isChecked();
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("NumberSettings");
+    settings.setValue("chilunNum", chilunNum);
+    settings.setValue("luosiNum", luosiNum);
+    settings.setValue("chilunLock", chilunLock);
+    settings.setValue("luosiLock", luosiLock);
+    settings.endGroup();
+
+    cam->setNumberConfig(chilunNum, luosiNum, chilunLock, luosiLock);
+}
+
+void MainWindow::initNumberSettings()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("NumberSettings");
+    bool lockNumberSettings = settings.value("lockNumberSettings").toBool();
+    int chilunNum = settings.value("chilunNum").toInt();
+    int luosiNum = settings.value("luosiNum").toInt();
+    bool chilunLock = settings.value("chilunLock").toBool();
+    bool luosiLock = settings.value("luosiLock").toBool();
+    settings.endGroup();
+
+    ui->cb_lockNumberSettings->setChecked(lockNumberSettings);
+    ui->spinBox_chilunNum->setValue(chilunNum);
+    ui->spinBox_luosiNum->setValue(luosiNum);
+    ui->cb_chilunLock->setChecked(chilunLock);
+    ui->cb_luosiLock->setChecked(luosiLock);
+    cam->setNumberConfig(chilunNum, luosiNum, chilunLock, luosiLock);
+    setGroupLocked(ui->groupBox_numberSettings, ui->cb_lockNumberSettings, lockNumberSettings);
+
+    // 锁定数量设置
+    connect(ui->cb_lockNumberSettings, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("NumberSettings");
+        settings.setValue("lockNumberSettings", checked);
+        settings.endGroup();
+
+        setGroupLocked(ui->groupBox_numberSettings, ui->cb_lockNumberSettings, checked); });
+
+    // 数量参数变化时应用
+    connect(ui->spinBox_chilunNum, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::applyNumberSettings);
+    connect(ui->spinBox_luosiNum, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::applyNumberSettings);
+    connect(ui->cb_chilunLock, &QCheckBox::toggled, this, &MainWindow::applyNumberSettings);
+    connect(ui->cb_luosiLock, &QCheckBox::toggled, this, &MainWindow::applyNumberSettings);
 }
 
 void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)

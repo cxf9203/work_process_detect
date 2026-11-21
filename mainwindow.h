@@ -34,6 +34,8 @@ public slots:
     void initTopMostButton(); // 初始化置顶按钮
     void setGroupLocked(QGroupBox *group, QCheckBox *lockBox, bool locked); // 设置分组锁定状态
     void initModelSettingControls(); // 初始化模型设置分组
+    void applyNumberSettings(); // 应用齿轮/螺丝标准数设置
+    void initNumberSettings(); // 初始化齿轮/螺丝标准数设置
     void modifyROIParameter(QString parameterName, QVariant newValue); // 修改 ROI 参数
     QString colorButtonStyle(const QColor &color); // 生成色块按钮样式（禁用态显示暗化原色）
     void initROIControls(); // 初始化 ROI 分组

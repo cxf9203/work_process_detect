@@ -33,6 +33,7 @@ public:
     void disconnectPLC();
     void resetDetectionState(); // 复位检测状态
     void setProbabilityThreshold(float threshold);
+    void setNumberConfig(int chilunNum, int luosiNum, bool chilunLock, bool luosiLock);
     // ROI 检测控制
     void enableROIDetection(bool enable); // 启用或禁用ROI检测
     void setRoiX(int x);
@@ -104,6 +105,10 @@ private:
     // 用于存储每个类别的计数
     int CHILUN_NUM = 1; // 标准齿轮数
     int LUOSI_NUM = 4; // 标准螺丝数
+    bool chilunLockMode = false; // 齿轮数量锁定显示模式
+    bool luosiLockMode = false; // 螺丝数量锁定显示模式
+    bool chilunLatched = false; // 齿轮达标锁存（锁定模式用）
+    bool luosiLatched = false; // 螺丝达标锁存（锁定模式用）
     // ROI参数
     bool roiDetectionEnabled = false; // ROI检测启用状态
     int roi_x = 0;
