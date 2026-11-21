@@ -71,6 +71,8 @@ public:
     void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
     std::vector<int> getclassnumer();
     std::vector<bool> getActionFlag();
+    // Set the probability threshold for filtering detected objects
+    void setProbabilityThreshold(float threshold);
     // Enable or disable ROI-based detection
     void enableROIDetection(bool enable);
     // Set the detection ROI
@@ -112,7 +114,7 @@ private:
     float m_imgWidth = 0;
     float m_imgHeight = 0;
     // Filter thresholds
-    const float PROBABILITY_THRESHOLD;
+    float PROBABILITY_THRESHOLD;
     const float NMS_THRESHOLD;
     const int TOP_K;
     // Segmentation constants

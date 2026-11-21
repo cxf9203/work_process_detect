@@ -81,6 +81,7 @@ void Camera::run()
     QString modelPath = settings.value("modelPath").toString();
     qDebug() << "modelPath: " << modelPath;
     YoloV8Config config;
+    config.probabilityThreshold = probabilityThreshold;
     try
     {
         yoloV8 = new YoloV8(modelPath.replace("/", "\\").toStdString(), config); // 加载深度学习模型
@@ -537,6 +538,13 @@ void Camera::resetDetectionState()
     // 复位PLC输出(让PLC自己复位)
     // setD(0, 0); // 复位报警
     // setD(2, 0); // 复位绿灯
+}
+
+void Camera::setProbabilityThreshold(float threshold)
+{
+    probabilityThreshold = threshold;
+    if (yoloV8)
+        yoloV8->setProbabilityThreshold(threshold);
 }
 
 void Camera::enableROIDetection(bool enable)

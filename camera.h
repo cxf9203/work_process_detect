@@ -32,6 +32,7 @@ public:
     bool connectPLC();
     void disconnectPLC();
     void resetDetectionState(); // 复位检测状态
+    void setProbabilityThreshold(float threshold);
     // ROI 检测控制
     void enableROIDetection(bool enable); // 启用或禁用ROI检测
     void setRoiX(int x);
@@ -99,6 +100,7 @@ private:
     ProcessState currentState = WAIT_P1;
     std::vector<std::string> classes = {"process1", "process2", "process3"};
     std::vector<bool> actionGroup = {false, false, false, false, false}; // "luosi_left_bottom", "luosi_left_top", "luosi_right_bottom", "luosi_right_top", "place_chilun"; //动作序列
+    float probabilityThreshold = 0.25f; // 置信度阈值
     // 用于存储每个类别的计数
     int CHILUN_NUM = 1; // 标准齿轮数
     int LUOSI_NUM = 4; // 标准螺丝数

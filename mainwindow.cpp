@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     THREAD1_cam1 = new QThread();
     cam = new Camera;
 
+    initModelSettingControls();
     initROIControls();
     initActionControls();
     initForceSaveVideoControl();
@@ -165,6 +166,44 @@ void MainWindow::setGroupLocked(QGroupBox *group, QCheckBox *lockBox, bool locke
         if (w != lockBox)
             w->setEnabled(!locked);
     }
+}
+
+void MainWindow::initModelSettingControls()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("Model");
+    bool lockModelSetting = settings.value("lockModelSetting").toBool();
+    int sliderValue = settings.value("probabilityThreshold").toInt();
+    settings.endGroup();
+
+    ui->cb_lockModelSetting->setChecked(lockModelSetting);
+    ui->slider_prob_threshold->setValue(sliderValue);
+    float threshold = sliderValue / 100.0f;
+    ui->label_prob_threshold_display->setText(QString("%1").arg(threshold, 0, 'f', 2));
+    cam->setProbabilityThreshold(threshold);
+    setGroupLocked(ui->groupBox_modelSetting, ui->cb_lockModelSetting, lockModelSetting);
+
+    // 锁定模型设置
+    connect(ui->cb_lockModelSetting, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("Model");
+        settings.setValue("lockModelSetting", checked);
+        settings.endGroup();
+
+        setGroupLocked(ui->groupBox_modelSetting, ui->cb_lockModelSetting, checked); });
+
+    // 概率阈值滑块
+    connect(ui->slider_prob_threshold, &QSlider::valueChanged, [this](int value)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("Model");
+        settings.setValue("probabilityThreshold", value);
+        settings.endGroup();
+
+        float t = value / 100.0f;
+        ui->label_prob_threshold_display->setText(QString("%1").arg(t, 0, 'f', 2));
+        cam->setProbabilityThreshold(t); });
 }
 
 void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)
