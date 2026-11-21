@@ -45,7 +45,8 @@ public slots:
     void updateOrderStatusLabels(QVector<int> &orderedActions); // 更新顺序状态标签
     void updateActionConfig(); // 更新动作配置
     void initActionControls(); // 初始化动作控件
-    void initForceSaveVideoControl(); // 初始化强制保存视频复选框
+    void updateSaveVideoControlsEnabled(); // 依据锁定/录制状态更新保存视频类控件可用性
+    void initSaveSettings(); // 初始化保存设置分组
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected);
@@ -77,7 +78,6 @@ private slots:
     void on_btn_today_rst_clicked();
     void on_btn_history_clicked();
     void on_btn_settings_clicked();
-    void on_checkBox_forceSaveVideo_toggled(bool value);
 
 private:
     Ui::MainWindow *ui;

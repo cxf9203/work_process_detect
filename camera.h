@@ -47,7 +47,10 @@ public:
     void processActionDetection(const std::vector<bool> &actions);
     void setActionConfig(bool pEnableAction, const QVector<int> &pEnabledActions, bool pIncludeActionInResult, const QVector<int> &pOrderedActions);
     bool isActionsCompleted();
+    void setRecordVideo(bool enable);
+    void setSaveErrorVideo(bool enable);
     void setForceSaveVideo(bool enable);
+    void setSaveErrorLog(bool enable);
     // 视频录制控制
     void startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame); // 开始录制
     void stopRecording(bool save); // 停止录制
@@ -123,7 +126,10 @@ private:
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
     bool includeActionInResult = false; // 动作检测是否计入结果判定
     QVector<int> orderedActions; // 顺序检测的动作索引列表（按用户指定的顺序）
+    bool recordVideoEnabled = false; // 是否录制视频
+    bool saveErrorVideoEnabled = false; // 是否保存错误视频
     bool forceSaveVideo = false; // 是否强制保存视频
+    bool saveErrorLogEnabled = false; // 是否保存错误日志
     bool res_flag = false; // 结果标志位
     bool chilun_flag = false; // 齿轮标志位
     int luosi_flag = 0; // 螺丝标志位

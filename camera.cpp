@@ -365,10 +365,17 @@ void Camera::run()
 
                 if (cur_keti == 1 && last_keti == 0)
                 {
-                    startRecording(original_image, BGR_image);
+                    if (recordVideoEnabled)
+                        startRecording(original_image, BGR_image);
+                    else
+                        currentVideoTimestamp.clear();
                 }
 
-                if (isRecording)
+                if (!recordVideoEnabled && isRecording)
+                {
+                    stopRecording(false);
+                }
+                else if (isRecording)
                 {
                     originalVideoWriter.write(original_image);
                     resultVideoWriter.write(BGR_image);
@@ -391,7 +398,8 @@ void Camera::run()
                             errorDetails.append("actions NG");
                         QString logMsg = QString("ERROR | %1").arg(errorDetails.join(", "));
                         stopRecording(hasError);
-                        saveErrorLog(logMsg);
+                        if (saveErrorLogEnabled)
+                            saveErrorLog(logMsg);
                     }
                     else
                     {
@@ -701,9 +709,24 @@ bool Camera::isActionsCompleted()
     return true;
 }
 
+void Camera::setRecordVideo(bool enable)
+{
+    recordVideoEnabled = enable;
+}
+
+void Camera::setSaveErrorVideo(bool enable)
+{
+    saveErrorVideoEnabled = enable;
+}
+
 void Camera::setForceSaveVideo(bool enable)
 {
     forceSaveVideo = enable;
+}
+
+void Camera::setSaveErrorLog(bool enable)
+{
+    saveErrorLogEnabled = enable;
 }
 
 void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame)
@@ -771,10 +794,10 @@ void Camera::stopRecording(bool save)
         emit sendQStringtoMain(logTag + currentVideoTimestamp);
     };
 
-    if (forceSaveVideo)
+    if (recordVideoEnabled && forceSaveVideo)
         copyToPairDirs(baseVideoPath + "/force_save/", "original_force", "result_force", "Force saved videos: ");
 
-    if (save)
+    if (saveErrorVideoEnabled && save)
         copyToPairDirs(baseVideoPath + QDateTime::currentDateTime().toString("yyyyMMdd") + "/", "original_error", "result_error", "Error videos saved: ");
 
     // 删除本次录制的临时子目录
@@ -795,6 +818,8 @@ void Camera::saveErrorLog(const QString &message)
     {
         QTextStream out(&file);
         QString ts = currentVideoTimestamp;
+        if (ts.isEmpty())
+            ts = QDateTime::currentDateTime().toString("yyyyMMddhhmmss_zzz");
         QString formattedTime = ts.mid(0, 4) + "-" + ts.mid(4, 2) + "-" + ts.mid(6, 2) + " " + ts.mid(8, 2) + ":" + ts.mid(10, 2) + ":" + ts.mid(12, 2) + "." + ts.mid(15, 3);
         out << formattedTime << " | " << message << "\n";
         file.close();

@@ -1097,7 +1097,7 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>1200</height>
+           <height>1340</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
@@ -1928,24 +1928,91 @@ QLabel:disabled {
            </item>
           </layout>
          </widget>
-         <widget class="QCheckBox" name="checkBox_forceSaveVideo">
+         <widget class="QGroupBox" name="groupBox_saveSettings">
           <property name="geometry">
            <rect>
-            <x>50</x>
+            <x>30</x>
             <y>1139</y>
-            <width>251</width>
-            <height>41</height>
+            <width>471</width>
+            <height>181</height>
            </rect>
           </property>
-          <property name="font">
-           <font>
-            <family>Arial</family>
-            <pointsize>14</pointsize>
-           </font>
+          <property name="title">
+           <string>保存设置</string>
           </property>
-          <property name="text">
-           <string>强制保存视频</string>
-          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_saveSettings">
+           <item>
+            <widget class="QCheckBox" name="cb_lockSaveSettings">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>锁定所有参数</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_saveSettings">
+             <item row="0" column="0">
+              <widget class="QCheckBox" name="checkBox_recordVideo">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>录制视频</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QCheckBox" name="checkBox_saveErrorVideo">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>保存错误视频</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QCheckBox" name="checkBox_forceSaveVideo">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>强制保存视频</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QCheckBox" name="checkBox_saveErrorLog">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>保存错误日志</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </widget>
         </widget>
        </widget>

@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     initNumberSettings();
     initROIControls();
     initActionControls();
-    initForceSaveVideoControl();
+    initSaveSettings();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
@@ -611,12 +611,87 @@ void MainWindow::initActionControls()
     connect(ui->listWidget_order->model(), &QAbstractItemModel::rowsMoved, this, &MainWindow::updateActionConfig);
 }
 
-void MainWindow::initForceSaveVideoControl()
+void MainWindow::updateSaveVideoControlsEnabled()
+{
+    bool canEdit = !ui->cb_lockSaveSettings->isChecked() && ui->checkBox_recordVideo->isChecked();
+    ui->checkBox_saveErrorVideo->setEnabled(canEdit);
+    ui->checkBox_forceSaveVideo->setEnabled(canEdit);
+}
+
+void MainWindow::initSaveSettings()
 {
     QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("SaveSettings");
+    bool lockSaveSettings = settings.value("lockSaveSettings").toBool();
+    bool recordVideo = settings.value("recordVideo").toBool();
+    bool saveErrorVideo = settings.value("saveErrorVideo").toBool();
     bool forceSaveVideo = settings.value("forceSaveVideo").toBool();
+    bool saveErrorLog = settings.value("saveErrorLog").toBool();
+    settings.endGroup();
+
+    ui->cb_lockSaveSettings->setChecked(lockSaveSettings);
+    ui->checkBox_recordVideo->setChecked(recordVideo);
+    ui->checkBox_saveErrorVideo->setChecked(saveErrorVideo);
     ui->checkBox_forceSaveVideo->setChecked(forceSaveVideo);
+    ui->checkBox_saveErrorLog->setChecked(saveErrorLog);
+    cam->setRecordVideo(recordVideo);
+    cam->setSaveErrorVideo(saveErrorVideo);
     cam->setForceSaveVideo(forceSaveVideo);
+    cam->setSaveErrorLog(saveErrorLog);
+    setGroupLocked(ui->groupBox_saveSettings, ui->cb_lockSaveSettings, lockSaveSettings);
+    updateSaveVideoControlsEnabled();
+
+    // 锁定保存设置
+    connect(ui->cb_lockSaveSettings, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("SaveSettings");
+        settings.setValue("lockSaveSettings", checked);
+        settings.endGroup();
+
+        setGroupLocked(ui->groupBox_saveSettings, ui->cb_lockSaveSettings, checked);
+        updateSaveVideoControlsEnabled(); });
+
+    // 录制视频开关
+    connect(ui->checkBox_recordVideo, &QCheckBox::toggled, [this](bool value)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("SaveSettings");
+        settings.setValue("recordVideo", value);
+        settings.endGroup();
+
+        cam->setRecordVideo(value);
+        updateSaveVideoControlsEnabled(); });
+
+    // 保存异常视频
+    connect(ui->checkBox_saveErrorVideo, &QCheckBox::toggled, [this](bool value)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("SaveSettings");
+        settings.setValue("saveErrorVideo", value);
+        settings.endGroup();
+
+        cam->setSaveErrorVideo(value); });
+
+    // 强制保存视频
+    connect(ui->checkBox_forceSaveVideo, &QCheckBox::toggled, [this](bool value)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("SaveSettings");
+        settings.setValue("forceSaveVideo", value);
+        settings.endGroup();
+
+        cam->setForceSaveVideo(value); });
+
+    // 保存异常日志
+    connect(ui->checkBox_saveErrorLog, &QCheckBox::toggled, [this](bool value)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("SaveSettings");
+        settings.setValue("saveErrorLog", value);
+        settings.endGroup();
+
+        cam->setSaveErrorLog(value); });
 }
 
 void MainWindow::receiveslotQImg(QImage img)
@@ -1373,11 +1448,4 @@ void MainWindow::on_btn_settings_clicked()
         ui->stackedWidget->setCurrentIndex(1);
     else
         ui->stackedWidget->setCurrentIndex(0);
-}
-
-void MainWindow::on_checkBox_forceSaveVideo_toggled(bool value)
-{
-    QSettings settings(iniFilePath, QSettings::IniFormat);
-    settings.setValue("forceSaveVideo", value);
-    cam->setForceSaveVideo(value);
 }
