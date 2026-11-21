@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    initTopMostButton();
+
     // 创建相机1
     THREAD1_cam1 = new QThread();
     cam = new Camera;
@@ -86,6 +88,9 @@ MainWindow::~MainWindow()
 void MainWindow::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
+    if (initialCentered)
+        return;
+    initialCentered = true;
     // 设置窗口居中（带边界限制）
     QRect screenRect = QApplication::primaryScreen()->availableGeometry();
     QRect frameRect = frameGeometry();
@@ -103,6 +108,53 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     QMainWindow::resizeEvent(event);
     if (historyWindow)
         historyWindow->move(qMax(0, width() - historyWindow->width()), 0);
+    if (pinBtn)
+        pinBtn->move(width() - pinBtn->width() - 6, 4);
+}
+
+void MainWindow::applyTopMost(bool checked)
+{
+    if (!pinBtn)
+        return;
+
+    bool wasVisible = isVisible();
+    setWindowFlag(Qt::WindowStaysOnTopHint, checked);
+    if (wasVisible)
+        show();
+
+    pinBtn->setStyleSheet(checked
+                              ? "QToolButton { background-color: #2e7d32; color: white; border: 1px solid #4caf50;"
+                                "border-radius: 4px; font-weight: bold; }"
+                                "QToolButton:hover { background-color: #388e3c; }"
+                                "QToolButton:pressed { background-color: #1b5e20; }"
+                              : "QToolButton { background-color: #555; color: #aaa; border: 1px solid #666;"
+                                "border-radius: 4px; }"
+                                "QToolButton:hover { background-color: #666; color: #fff; }"
+                                "QToolButton:pressed { background-color: #444; }");
+}
+
+void MainWindow::initTopMostButton()
+{
+    pinBtn = new QToolButton(this);
+    pinBtn->setObjectName("pinBtn");
+    pinBtn->setText(QStringLiteral("置顶"));
+    pinBtn->setCheckable(true);
+    pinBtn->setAutoRaise(true);
+    pinBtn->setFixedSize(50, 28);
+    pinBtn->move(width() - pinBtn->width() - 6, 4);
+
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    bool topMost = settings.value("topMost").toBool();
+
+    applyTopMost(topMost);
+    pinBtn->setChecked(topMost);
+
+    connect(pinBtn, &QToolButton::toggled, this, [this](bool checked)
+            {
+        applyTopMost(checked);
+
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.setValue("topMost", checked); });
 }
 
 void MainWindow::setGroupLocked(QGroupBox *group, QCheckBox *lockBox, bool locked)

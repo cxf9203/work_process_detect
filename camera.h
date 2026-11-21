@@ -131,6 +131,7 @@ private:
     cv::VideoWriter resultVideoWriter;
     bool isRecording = false;
     QString currentVideoTimestamp;
+    QString currentTempDir;
     QString baseVideoPath = QCoreApplication::applicationDirPath() + "/saved_videos/";
 
 public slots:

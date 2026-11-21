@@ -8,6 +8,7 @@
 #include <QMediaPlayer>
 #include <QCheckBox>
 #include <QGroupBox>
+#include <QToolButton>
 #include <QLabel>
 #include <QComboBox>
 #include "camera.h"
@@ -29,6 +30,8 @@ public:
     void resizeEvent(QResizeEvent *event);
 
 public slots:
+    void applyTopMost(bool checked); // 应用窗口置顶状态
+    void initTopMostButton(); // 初始化置顶按钮
     void setGroupLocked(QGroupBox *group, QCheckBox *lockBox, bool locked); // 设置分组锁定状态
     void modifyROIParameter(QString parameterName, QVariant newValue); // 修改 ROI 参数
     QString colorButtonStyle(const QColor &color); // 生成色块按钮样式（禁用态显示暗化原色）
@@ -77,6 +80,7 @@ private:
     Ui::MainWindow *ui;
     QThread *THREAD1_cam1;
     Camera *cam; // camera thread
+    bool initialCentered = false;
     QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
     QString statFilePath = "D:\\jiance\\work_process_statistics.ini"; // 统计数据配置
     long long int history_good_number;
@@ -87,6 +91,7 @@ private:
     double today_good_rates;
     QString currentRoiColor;
     QVector<QPair<QString, QCheckBox *>> actionItems;
+    QToolButton *pinBtn = nullptr;
     // 历史记录窗口
     QWidget *historyWindow = nullptr;
     QWidget *listContainer = nullptr;

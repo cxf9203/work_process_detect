@@ -171,6 +171,33 @@ void Camera::run()
             emit sendQStringtoMain("register success with camera!");
         }
 
+        // 登录成功后，先校准设备时间
+        NET_DVR_TIME struTimeCfg = {0};
+        time_t now = time(NULL);
+        struct tm localTime;
+        localtime_s(&localTime, &now);
+
+        struTimeCfg.dwYear = localTime.tm_year + 1900;
+        struTimeCfg.dwMonth = localTime.tm_mon + 1;
+        struTimeCfg.dwDay = localTime.tm_mday;
+        struTimeCfg.dwHour = localTime.tm_hour;
+        struTimeCfg.dwMinute = localTime.tm_min;
+        struTimeCfg.dwSecond = localTime.tm_sec;
+
+        BOOL bTimeRet = NET_DVR_SetDVRConfig(lUserID, NET_DVR_SET_TIMECORRECT, 0xFFFFFFFF, &struTimeCfg, sizeof(NET_DVR_TIME));
+
+        if (!bTimeRet)
+        {
+            DWORD dwTimeErr = NET_DVR_GetLastError();
+            std::cout << "校时失败！错误码: " << dwTimeErr << std::endl;
+            emit sendQStringtoMain(QString("Time correction failed! Error code: %1").arg(dwTimeErr));
+        }
+        else
+        {
+            std::cout << "校时成功！" << std::endl;
+            emit sendQStringtoMain("Time correction success!");
+        }
+
         if (PlayM4_GetPort(&g_nPort)) // 获取播放库通道号
             if (PlayM4_SetStreamOpenMode(g_nPort, STREAME_REALTIME)) // 设置流模式
                 if (PlayM4_OpenStream(g_nPort, NULL, 0, 1024 * 1024)) // 打开流
@@ -656,15 +683,15 @@ void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultF
 
     currentVideoTimestamp = QDateTime::currentDateTime().toString("yyyyMMddhhmmss_zzz");
 
-    QString tempDir = baseVideoPath + "temp/";
-    QDir(tempDir).mkpath(".");
+    currentTempDir = baseVideoPath + "temp/" + currentVideoTimestamp + "/";
+    QDir().mkpath(currentTempDir);
 
     // 原图视频
-    QString originalPath = tempDir + "original.avi";
+    QString originalPath = currentTempDir + "original.avi";
     originalVideoWriter.open(originalPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, originalFrame.size());
 
     // 结果图视频
-    QString resultPath = tempDir + "result.avi";
+    QString resultPath = currentTempDir + "result.avi";
     resultVideoWriter.open(resultPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, resultFrame.size());
 
     if (originalVideoWriter.isOpened() && resultVideoWriter.isOpened())
@@ -678,6 +705,10 @@ void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultF
             originalVideoWriter.release();
         if (resultVideoWriter.isOpened())
             resultVideoWriter.release();
+
+        // 打开失败，清掉本段空目录
+        QDir(currentTempDir).removeRecursively();
+        currentTempDir.clear();
     }
 }
 
@@ -692,44 +723,36 @@ void Camera::stopRecording(bool save)
     if (resultVideoWriter.isOpened())
         resultVideoWriter.release();
 
-    QString tempDir = baseVideoPath + "temp/";
-    QString originalPath = tempDir + "original.avi";
-    QString resultPath = tempDir + "result.avi";
+    QString originalPath = currentTempDir + "original.avi";
+    QString resultPath = currentTempDir + "result.avi";
+
+    auto copyToPairDirs = [&](const QString &saveDir, const QString &origSubDir, const QString &resSubDir, const QString &logTag)
+    {
+        QString originalDir = saveDir + origSubDir + "/";
+        QString resultDir = saveDir + resSubDir + "/";
+        QDir(originalDir).mkpath(".");
+        QDir(resultDir).mkpath(".");
+
+        if (QFile::exists(originalPath))
+            QFile::copy(originalPath, originalDir + currentVideoTimestamp + ".avi");
+        if (QFile::exists(resultPath))
+            QFile::copy(resultPath, resultDir + currentVideoTimestamp + ".avi");
+
+        emit sendQStringtoMain(logTag + currentVideoTimestamp);
+    };
 
     if (forceSaveVideo)
-    {
-        QString saveDir = baseVideoPath + "/force_save/";
-        QString originalForceDir = saveDir + "/original_force/";
-        QString resultForceDir = saveDir + "/result_force/";
-        QDir(originalForceDir).mkpath(".");
-        QDir(resultForceDir).mkpath(".");
-
-        if (QFile::exists(originalPath))
-            QFile::copy(originalPath, originalForceDir + currentVideoTimestamp + ".avi");
-        if (QFile::exists(resultPath))
-            QFile::copy(resultPath, resultForceDir + currentVideoTimestamp + ".avi");
-
-        emit sendQStringtoMain("Force saved videos: " + currentVideoTimestamp);
-    }
+        copyToPairDirs(baseVideoPath + "/force_save/", "original_force", "result_force", "Force saved videos: ");
 
     if (save)
+        copyToPairDirs(baseVideoPath + QDateTime::currentDateTime().toString("yyyyMMdd") + "/", "original_error", "result_error", "Error videos saved: ");
+
+    // 删除本次录制的临时子目录
+    if (!currentTempDir.isEmpty())
     {
-        QString saveDir = baseVideoPath + QDateTime::currentDateTime().toString("yyyyMMdd");
-        QString originalErrorDir = saveDir + "/original_error/";
-        QString resultErrorDir = saveDir + "/result_error/";
-        QDir(originalErrorDir).mkpath(".");
-        QDir(resultErrorDir).mkpath(".");
-
-        if (QFile::exists(originalPath))
-            QFile::rename(originalPath, originalErrorDir + currentVideoTimestamp + ".avi");
-        if (QFile::exists(resultPath))
-            QFile::rename(resultPath, resultErrorDir + currentVideoTimestamp + ".avi");
-
-        emit sendQStringtoMain("Error videos saved: " + currentVideoTimestamp);
+        QDir(currentTempDir).removeRecursively();
+        currentTempDir.clear();
     }
-
-    // 删除临时目录
-    QDir(tempDir).removeRecursively();
 
     isRecording = false;
     qDebug() << "Stopped recording:" << originalPath << "and" << resultPath;
