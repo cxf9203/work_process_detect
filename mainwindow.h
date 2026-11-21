@@ -47,6 +47,12 @@ public slots:
     void initActionControls(); // 初始化动作控件
     void updateSaveVideoControlsEnabled(); // 依据锁定/录制状态更新保存视频类控件可用性
     void initSaveSettings(); // 初始化保存设置分组
+    void ensureStatCsvExists(); // 确保统计 CSV 文件存在
+    QString statisticalDate(); // 按当日起始时间计算当前统计日期
+    bool isValidCsvRow(const QString &line); // 判断 CSV 行是否为有效行（日期/标记）
+    void fillCsvTable(); // 将 CSV 数据填充到详情表格
+    void saveTodayRowToCsv(); // 将今日统计行追加写入 CSV
+    void loadStatsFromCsv(); // 从 CSV 加载历史/今日统计到 UI
     void receiveslotQImg(QImage img);
     void receivefinish();
     void updateLabelState(bool p1Detected, bool p2Detected, bool p3Detected);
@@ -76,6 +82,7 @@ private slots:
     void on_btn_disconnectPLC_clicked();
     void on_btn_history_rst_clicked();
     void on_btn_today_rst_clicked();
+    void on_btn_csv_detail_clicked();
     void on_btn_history_clicked();
     void on_btn_settings_clicked();
 
@@ -85,7 +92,9 @@ private:
     Camera *cam; // camera thread
     bool initialCentered = false;
     QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
-    QString statFilePath = "D:\\jiance\\work_process_statistics.ini"; // 统计数据配置
+    QString statFilePath = "D:\\jiance\\work_process_statistics.csv"; // 统计数据配置
+    QTime dayStartTime = QTime(0, 0); // 当日起始时间：早于该时刻的数据计入前一天
+    QString lastStatDate;
     long long int history_good_number;
     long long int history_number;
     double history_good_rates;
@@ -95,6 +104,7 @@ private:
     QString currentRoiColor;
     QVector<QPair<QString, QCheckBox *>> actionItems;
     QToolButton *pinBtn = nullptr;
+    QDialog *csvDialog = nullptr;
     // 历史记录窗口
     QWidget *historyWindow = nullptr;
     QWidget *listContainer = nullptr;

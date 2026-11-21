@@ -1080,6 +1080,41 @@ QPushButton:pressed {
        <string>历史清零</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="btn_csv_detail">
+      <property name="geometry">
+       <rect>
+        <x>315</x>
+        <y>530</y>
+        <width>111</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+    background-color: #6a1b9a;
+    border-radius: 6px;
+}
+
+QPushButton:hover {
+    background-color: #7b1fa2;
+}
+
+QPushButton:pressed {
+    background-color: #4a148c;
+}</string>
+      </property>
+      <property name="text">
+       <string>统计数据</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="page_2">
      <layout class="QVBoxLayout" name="verticalLayout_page2">
@@ -1097,7 +1132,7 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>1340</height>
+           <height>1386</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
@@ -1934,7 +1969,7 @@ QLabel:disabled {
             <x>30</x>
             <y>1139</y>
             <width>471</width>
-            <height>181</height>
+            <height>227</height>
            </rect>
           </property>
           <property name="title">
@@ -2007,6 +2042,37 @@ QLabel:disabled {
                </property>
                <property name="text">
                 <string>保存错误日志</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_dayStart">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>当日起始时间:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QTimeEdit" name="timeEdit_dayStart">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="displayFormat">
+                <string>HH:mm</string>
                </property>
               </widget>
              </item>
