@@ -74,6 +74,7 @@ signals:
 private:
     QString iniFilePath = "D:\\jiance\\work_process.ini"; // 工序检测配置文件
     bool Camera_thread_flag;
+    YoloV8 *yoloV8 = nullptr;
     cv::Mat BGR_image;
     int id;
     bool cameraOpened = false;

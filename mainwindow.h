@@ -28,13 +28,12 @@ public:
 
 public slots:
     void modifyROIParameter(QString parameterName, QVariant newValue); // 修改 ROI 参数
-    void loadROIParametersToUI(); // 读取 ROI 参数到 UI 控件
+    void initROIControls(); // 初始化 ROI 分组
     void modifyActionParameter(); // 修改动作参数
     QVector<int> getEnabledActions(); // 获取启用的动作
     QVector<int> getOrderedActions(); // 获取顺序检测的动作
     void updateOrderStatusLabels(QVector<int> &orderedActions); // 更新顺序状态标签
     void updateActionConfig(); // 更新动作配置
-    void loadActionConfig(); // 加载动作配置
     void initActionControls(); // 初始化动作控件
     void initForceSaveVideoControl(); // 初始化强制保存视频复选框
     void receiveslotQImg(QImage img);
@@ -67,14 +66,6 @@ private slots:
     void on_btn_today_rst_clicked();
     void on_btn_history_clicked();
     void on_btn_settings_clicked();
-    void on_cb_enableROI_toggled(bool value);
-    void on_spinBox_roi_x_valueChanged(int value);
-    void on_spinBox_roi_y_valueChanged(int value);
-    void on_spinBox_roi_w_valueChanged(int value);
-    void on_spinBox_roi_h_valueChanged(int value);
-    void on_btn_colorPicker_clicked();
-    void on_slider_opacity_valueChanged(int value);
-    void on_slider_line_width_valueChanged(int value);
     void on_checkBox_forceSaveVideo_toggled(bool value);
 
 private:

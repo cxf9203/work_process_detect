@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     THREAD1_cam1 = new QThread();
     cam = new Camera;
 
-    loadROIParametersToUI();
+    initROIControls();
     initActionControls();
     initForceSaveVideoControl();
 
@@ -105,12 +105,10 @@ void MainWindow::modifyROIParameter(QString parameterName, QVariant newValue)
     settings.endGroup();
 }
 
-void MainWindow::loadROIParametersToUI()
+void MainWindow::initROIControls()
 {
-    // 从 INI 文件读取 ROI 配置
     QSettings settings(iniFilePath, QSettings::IniFormat);
     settings.beginGroup("ROI");
-    // 读取 ROI 参数
     bool enableROI = settings.value("EnableROI").toBool();
     int roi_x = settings.value("RoiX").toInt();
     int roi_y = settings.value("RoiY").toInt();
@@ -122,22 +120,16 @@ void MainWindow::loadROIParametersToUI()
     int roi_line_width = settings.value("RoiLineWidth").toInt();
     settings.endGroup();
 
-    // 更新 UI
     ui->cb_enableROI->setChecked(enableROI);
     ui->spinBox_roi_x->setValue(roi_x);
     ui->spinBox_roi_y->setValue(roi_y);
     ui->spinBox_roi_w->setValue(roi_w);
     ui->spinBox_roi_h->setValue(roi_h);
-    // 初始化颜色预览样式
-    ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(roiColorStr));
-    // 初始化透明度滑块
+    ui->btn_colorPicker->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #888; }").arg(roiColorStr));
     ui->slider_opacity->setValue(roi_opacity);
     ui->label_opacity_display->setText(QString("%1%").arg(roi_opacity));
-    // 初始化线宽滑块
     ui->slider_line_width->setValue(roi_line_width);
     ui->label_line_width_display->setText(QString("%1").arg(roi_line_width));
-
-    // 更新 Camera 参数
     cam->enableROIDetection(enableROI);
     cam->setRoiX(roi_x);
     cam->setRoiY(roi_y);
@@ -146,6 +138,56 @@ void MainWindow::loadROIParametersToUI()
     cam->setRoiColor(roiColorStr);
     cam->setRoiOpacity(roi_opacity / 100.0f);
     cam->setRoiLineWidth(roi_line_width);
+
+    // 启用ROI检测
+    connect(ui->cb_enableROI, &QCheckBox::toggled, [this](bool value)
+            {
+        modifyROIParameter("EnableROI", value);
+        cam->enableROIDetection(value); });
+
+    // ROI坐标/尺寸变化
+    connect(ui->spinBox_roi_x, QOverload<int>::of(&QSpinBox::valueChanged), [this](int v)
+            {
+        modifyROIParameter("RoiX", v);
+        cam->setRoiX(v); });
+    connect(ui->spinBox_roi_y, QOverload<int>::of(&QSpinBox::valueChanged), [this](int v)
+            {
+        modifyROIParameter("RoiY", v);
+        cam->setRoiY(v); });
+    connect(ui->spinBox_roi_w, QOverload<int>::of(&QSpinBox::valueChanged), [this](int v)
+            {
+        modifyROIParameter("RoiW", v);
+        cam->setRoiW(v); });
+    connect(ui->spinBox_roi_h, QOverload<int>::of(&QSpinBox::valueChanged), [this](int v)
+            {
+        modifyROIParameter("RoiH", v);
+        cam->setRoiH(v); });
+
+    // ROI颜色选择
+    connect(ui->btn_colorPicker, &QPushButton::clicked, [this]()
+            {
+        QColor color = QColorDialog::getColor(QColor(currentRoiColor), this, QStringLiteral("选择检测框颜色"));
+        if (!color.isValid())
+            return;
+        QString colorName = color.name();
+        modifyROIParameter("RoiColor", colorName);
+        currentRoiColor = colorName;
+        ui->btn_colorPicker->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #888; }").arg(colorName));
+        cam->setRoiColor(colorName); });
+
+    // ROI透明度
+    connect(ui->slider_opacity, &QSlider::valueChanged, [this](int value)
+            {
+        modifyROIParameter("RoiOpacity", value);
+        ui->label_opacity_display->setText(QString("%1%").arg(value));
+        cam->setRoiOpacity(value / 100.0f); });
+
+    // ROI线宽
+    connect(ui->slider_line_width, &QSlider::valueChanged, [this](int value)
+            {
+        modifyROIParameter("RoiLineWidth", value);
+        ui->label_line_width_display->setText(QString("%1").arg(value));
+        cam->setRoiLineWidth(value); });
 }
 
 void MainWindow::modifyActionParameter()
@@ -237,8 +279,17 @@ void MainWindow::updateActionConfig()
     cam->setActionConfig(ui->checkBox_enableAction->isChecked(), getEnabledActions(), ui->checkBox_includeActionInResult->isChecked(), orderedActions);
 }
 
-void MainWindow::loadActionConfig()
+void MainWindow::initActionControls()
 {
+    // 动作配置
+    actionItems = {
+        {QStringLiteral("1.左上螺丝"), ui->checkBox_action1},
+        {QStringLiteral("2.右上螺丝"), ui->checkBox_action2},
+        {QStringLiteral("3.左下螺丝"), ui->checkBox_action3},
+        {QStringLiteral("4.右下螺丝"), ui->checkBox_action4},
+        {QStringLiteral("5.放齿轮"), ui->checkBox_action5}};
+
+    // 加载动作配置
     QSettings settings(iniFilePath, QSettings::IniFormat);
     settings.beginGroup("Action");
     bool enableAction = settings.value("EnableAction").toBool();
@@ -266,24 +317,10 @@ void MainWindow::loadActionConfig()
     settings.endGroup();
 
     updateActionConfig();
-}
-
-void MainWindow::initActionControls()
-{
-    // 动作配置
-    actionItems = {
-        {QStringLiteral("1.左上螺丝"), ui->checkBox_action1},
-        {QStringLiteral("2.右上螺丝"), ui->checkBox_action2},
-        {QStringLiteral("3.左下螺丝"), ui->checkBox_action3},
-        {QStringLiteral("4.右下螺丝"), ui->checkBox_action4},
-        {QStringLiteral("5.放齿轮"), ui->checkBox_action5}};
-
-    // 加载动作配置
-    loadActionConfig();
 
     // 启用动作检测
     connect(ui->checkBox_enableAction, &QCheckBox::toggled, [this](bool checked)
-    {
+            {
         // 启用/禁用动作复选框
         for (const auto& pair : actionItems) pair.second->setEnabled(checked);
         ui->checkBox_includeActionInResult->setEnabled(checked);
@@ -293,14 +330,13 @@ void MainWindow::initActionControls()
         ui->btn_addToOrder->setEnabled(orderChecked);
         ui->btn_removeFromOrder->setEnabled(orderChecked);
         ui->btn_clearOrder->setEnabled(orderChecked);
-        updateActionConfig();
-    });
+        updateActionConfig(); });
 
     // 取消勾选时自动从顺序列表移除
     for (const auto &pair : actionItems)
     {
         connect(pair.second, &QCheckBox::toggled, [this, pair](bool checked)
-        {
+                {
             if (!checked) {
                 // 取消勾选时，从顺序列表中移除
                 for (int j = 0; j < ui->listWidget_order->count(); j++) {
@@ -310,26 +346,25 @@ void MainWindow::initActionControls()
                     }
                 }
             }
-            updateActionConfig();
-        });
+            updateActionConfig(); });
     }
 
     // 动作检测影响结果
-    connect(ui->checkBox_includeActionInResult, &QCheckBox::toggled, [this](bool checked) { updateActionConfig(); });
+    connect(ui->checkBox_includeActionInResult, &QCheckBox::toggled, [this](bool checked)
+            { updateActionConfig(); });
 
     // 启用顺序检测
     connect(ui->checkBox_enableOrder, &QCheckBox::toggled, [this](bool checked)
-    {
+            {
         ui->listWidget_order->setEnabled(checked);
         ui->btn_addToOrder->setEnabled(checked);
         ui->btn_removeFromOrder->setEnabled(checked);
         ui->btn_clearOrder->setEnabled(checked);
-        updateActionConfig();
-    });
+        updateActionConfig(); });
 
     // 添加选中到顺序列表
     connect(ui->btn_addToOrder, &QPushButton::clicked, [this]()
-    {
+            {
         // 收集所有勾选的动作
         QStringList selectedActions;
         for (const auto& pair : actionItems) {
@@ -345,28 +380,26 @@ void MainWindow::initActionControls()
                 ui->listWidget_order->addItem(action);
             }
         }
-        updateActionConfig();
-    });
+        updateActionConfig(); });
 
     // 移除选中的动作
     connect(ui->btn_removeFromOrder, &QPushButton::clicked, [this]()
-    {
+            {
         int row = ui->listWidget_order->currentRow();
         if (row >= 0) {
             delete ui->listWidget_order->takeItem(row);
             updateActionConfig();
-        }
-    });
+        } });
 
     // 清空顺序列表
     connect(ui->btn_clearOrder, &QPushButton::clicked, [this]()
-    {
+            {
         ui->listWidget_order->clear();
-        updateActionConfig();
-    });
+        updateActionConfig(); });
 
     // 拖拽排序时更新
-    connect(ui->listWidget_order->model(), &QAbstractItemModel::rowsMoved, [this]() { updateActionConfig(); });
+    connect(ui->listWidget_order->model(), &QAbstractItemModel::rowsMoved, [this]()
+            { updateActionConfig(); });
 }
 
 void MainWindow::initForceSaveVideoControl()
@@ -557,7 +590,8 @@ QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QStrin
                                "QPushButton:pressed { background-color: #0d47a1; }"
                                "QPushButton:disabled { background-color: #555555; color: #888888; }");
     btnOriginal->setEnabled(!originalPath.isEmpty() && QFile::exists(originalPath));
-    connect(btnOriginal, &QPushButton::clicked, [this, recordNumber, originalVideoText, logLine, originalPath]() { showVideo(recordNumber, originalVideoText, logLine, originalPath); });
+    connect(btnOriginal, &QPushButton::clicked, [this, recordNumber, originalVideoText, logLine, originalPath]()
+            { showVideo(recordNumber, originalVideoText, logLine, originalPath); });
 
     // 结果视频按钮
     QString resultVideoText = QStringLiteral("结果视频");
@@ -567,7 +601,8 @@ QWidget *MainWindow::createHistoryItem(int recordNumber, QString logLine, QStrin
                              "QPushButton:pressed { background-color: #1b5e20; }"
                              "QPushButton:disabled { background-color: #555555; color: #888888; }");
     btnResult->setEnabled(!resultPath.isEmpty() && QFile::exists(resultPath));
-    connect(btnResult, &QPushButton::clicked, [this, recordNumber, resultVideoText, logLine, resultPath]() { showVideo(recordNumber, resultVideoText, logLine, resultPath); });
+    connect(btnResult, &QPushButton::clicked, [this, recordNumber, resultVideoText, logLine, resultPath]()
+            { showVideo(recordNumber, resultVideoText, logLine, resultPath); });
 
     layout->addWidget(recordLabel);
     layout->addWidget(logLabel, 3);
@@ -840,7 +875,7 @@ void MainWindow::on_btn_history_clicked()
 
     // 窗口关闭时清空指针和释放资源
     connect(historyWindow, &QWidget::destroyed, [this]()
-    {
+            {
         if (player)
         {
             player->disconnect();
@@ -861,8 +896,7 @@ void MainWindow::on_btn_history_clicked()
         videoTitleLabel = nullptr;
         timeLabel = nullptr;
         videoSlider = nullptr;
-        speedCombo = nullptr;
-    });
+        speedCombo = nullptr; });
 
     QVBoxLayout *mainLayout = new QVBoxLayout(historyWindow);
 
@@ -907,7 +941,8 @@ void MainWindow::on_btn_history_clicked()
     currentPageRecordLabel->setAlignment(Qt::AlignCenter);
 
     // 上一页按钮
-    prevPageBtn = createBtn(QStringLiteral("上一页"), [this]() { if (currentPage > 0) { loadPage(--currentPage); } });
+    prevPageBtn = createBtn(QStringLiteral("上一页"), [this]()
+                            { if (currentPage > 0) { loadPage(--currentPage); } });
 
     // 页码信息
     pageInfoLabel = new QLabel("1 / 1", listContainer);
@@ -915,7 +950,8 @@ void MainWindow::on_btn_history_clicked()
     pageInfoLabel->setAlignment(Qt::AlignCenter);
 
     // 下一页按钮
-    nextPageBtn = createBtn(QStringLiteral("下一页"), [this]() { if (currentPage < totalPages - 1) { loadPage(++currentPage); } });
+    nextPageBtn = createBtn(QStringLiteral("下一页"), [this]()
+                            { if (currentPage < totalPages - 1) { loadPage(++currentPage); } });
 
     // 跳转功能
     QHBoxLayout *jumpLayout = new QHBoxLayout();
@@ -931,7 +967,7 @@ void MainWindow::on_btn_history_clicked()
                            "QPushButton:hover { background-color: #388e3c; }"
                            "QPushButton:pressed { background-color: #1b5e20; }");
     connect(jumpBtn, &QPushButton::clicked, [this]()
-    {
+            {
         if (!jumpLineEdit) return;
         bool ok;
         int page = jumpLineEdit->text().toInt(&ok);
@@ -946,8 +982,7 @@ void MainWindow::on_btn_history_clicked()
             // 输入无效，清空并提示
             jumpLineEdit->clear();
             jumpLineEdit->setPlaceholderText("1-" + QString::number(totalPages));
-        }
-    });
+        } });
     // 回车键触发跳转
     connect(jumpLineEdit, &QLineEdit::returnPressed, jumpBtn, &QPushButton::click);
 
@@ -1061,10 +1096,9 @@ void MainWindow::on_btn_history_clicked()
                               "}");
 
     connect(speedCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index)
-    {
+            {
         if (player)
-            player->setPlaybackRate(speedCombo->itemData(index).toReal());
-    });
+            player->setPlaybackRate(speedCombo->itemData(index).toReal()); });
 
     progressLayout->addWidget(timeLabel);
     progressLayout->addWidget(videoSlider, 1);
@@ -1095,7 +1129,8 @@ void MainWindow::on_btn_history_clicked()
     connect(videoPlayBtn, &QPushButton::clicked, player, &QMediaPlayer::play);
     connect(videoPauseBtn, &QPushButton::clicked, player, &QMediaPlayer::pause);
     connect(videoStopBtn, &QPushButton::clicked, player, &QMediaPlayer::stop);
-    connect(videoCloseBtn, &QPushButton::clicked, [this]() { showHistoryList(); });
+    connect(videoCloseBtn, &QPushButton::clicked, [this]()
+            { showHistoryList(); });
 
     videoControlLayout->addWidget(videoPlayBtn);
     videoControlLayout->addWidget(videoPauseBtn);
@@ -1123,63 +1158,6 @@ void MainWindow::on_btn_settings_clicked()
         ui->stackedWidget->setCurrentIndex(1);
     else
         ui->stackedWidget->setCurrentIndex(0);
-}
-
-void MainWindow::on_cb_enableROI_toggled(bool value)
-{
-    modifyROIParameter("EnableROI", value);
-    cam->enableROIDetection(value);
-}
-
-void MainWindow::on_spinBox_roi_x_valueChanged(int value)
-{
-    modifyROIParameter("RoiX", value);
-    cam->setRoiX(value);
-}
-
-void MainWindow::on_spinBox_roi_y_valueChanged(int value)
-{
-    modifyROIParameter("RoiY", value);
-    cam->setRoiY(value);
-}
-
-void MainWindow::on_spinBox_roi_w_valueChanged(int value)
-{
-    modifyROIParameter("RoiW", value);
-    cam->setRoiW(value);
-}
-
-void MainWindow::on_spinBox_roi_h_valueChanged(int value)
-{
-    modifyROIParameter("RoiH", value);
-    cam->setRoiH(value);
-}
-
-void MainWindow::on_btn_colorPicker_clicked()
-{
-    QColor color = QColorDialog::getColor(QColor(currentRoiColor), this, QStringLiteral("选择检测框颜色"));
-    if (color.isValid())
-    {
-        QString colorName = color.name();
-        modifyROIParameter("RoiColor", colorName);
-        currentRoiColor = colorName;
-        ui->label_color_preview->setStyleSheet(QString("QLabel { color: %1; }").arg(colorName));
-        cam->setRoiColor(colorName);
-    }
-}
-
-void MainWindow::on_slider_opacity_valueChanged(int value)
-{
-    modifyROIParameter("RoiOpacity", value);
-    ui->label_opacity_display->setText(QString("%1%").arg(value));
-    cam->setRoiOpacity(value / 100.0f);
-}
-
-void MainWindow::on_slider_line_width_valueChanged(int value)
-{
-    modifyROIParameter("RoiLineWidth", value);
-    ui->label_line_width_display->setText(QString("%1").arg(value));
-    cam->setRoiLineWidth(value);
 }
 
 void MainWindow::on_checkBox_forceSaveVideo_toggled(bool value)

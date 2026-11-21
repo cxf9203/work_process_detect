@@ -81,7 +81,6 @@ void Camera::run()
     QString modelPath = settings.value("modelPath").toString();
     qDebug() << "modelPath: " << modelPath;
     YoloV8Config config;
-    YoloV8 *yoloV8 = nullptr;
     try
     {
         yoloV8 = new YoloV8(modelPath.replace("/", "\\").toStdString(), config); // 加载深度学习模型
@@ -99,6 +98,13 @@ void Camera::run()
         emit finishedthread();
         return;
     }
+
+    // 设置检测区域ROI
+    yoloV8->enableROIDetection(roiDetectionEnabled);
+    yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
+    yoloV8->setRoiColor(roi_color);
+    yoloV8->setRoiOpacity(roi_opacity);
+    yoloV8->setRoiLineWidth(roi_line_width);
 
     bool useLocalVideo = settings.value("useLocalVideo").toBool();
     QString videoPath = settings.value("videoPath").toString();
@@ -266,12 +272,6 @@ void Camera::run()
                 // Run inference 推理
                 // qDebug() << "run inference";
                 const auto objects = yoloV8->detectObjects(BGR_image);
-                // 设置检测区域ROI
-                yoloV8->enableROIDetection(roiDetectionEnabled);
-                yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
-                yoloV8->setRoiColor(roi_color);
-                yoloV8->setRoiOpacity(roi_opacity);
-                yoloV8->setRoiLineWidth(roi_line_width);
                 // Draw the bounding boxes on the image
                 yoloV8->drawObjectLabels(BGR_image, objects);
                 std::vector<int> classCount = yoloV8->getclassnumer();
@@ -512,41 +512,57 @@ void Camera::resetDetectionState()
 void Camera::enableROIDetection(bool enable)
 {
     roiDetectionEnabled = enable;
+    if (yoloV8)
+        yoloV8->enableROIDetection(enable);
 }
 
 void Camera::setRoiX(int x)
 {
     roi_x = x;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiY(int y)
 {
     roi_y = y;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiW(int w)
 {
     roi_w = w;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiH(int h)
 {
     roi_h = h;
+    if (yoloV8)
+        yoloV8->setDetectionROI(cv::Rect(roi_x, roi_y, roi_w, roi_h));
 }
 
 void Camera::setRoiColor(QString color)
 {
     roi_color = color;
+    if (yoloV8)
+        yoloV8->setRoiColor(color);
 }
 
 void Camera::setRoiOpacity(float opacity)
 {
     roi_opacity = opacity;
+    if (yoloV8)
+        yoloV8->setRoiOpacity(opacity);
 }
 
 void Camera::setRoiLineWidth(int lineWidth)
 {
     roi_line_width = lineWidth;
+    if (yoloV8)
+        yoloV8->setRoiLineWidth(lineWidth);
 }
 
 void Camera::processActionDetection(const std::vector<bool> &actions)
