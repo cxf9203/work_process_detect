@@ -39,6 +39,14 @@ public slots:
     void modifyROIParameter(QString parameterName, QVariant newValue); // 修改 ROI 参数
     QString colorButtonStyle(const QColor &color); // 生成色块按钮样式（禁用态显示暗化原色）
     void initROIControls(); // 初始化 ROI 分组
+    QString formatLuosiROIText(const LuosiROIConfig &cfg, int index); // 格式化螺丝ROI列表项文本
+    void updateLuosiROIItemText(int row); // 更新列表项文本
+    void saveLuosiROIToINI(); // 保存螺丝ROI到INI
+    void syncLuosiROIToCamera(); // 同步螺丝ROI到相机线程
+    void commitLuosiROIChange(int row); // 提交编辑区改动到当前ROI
+    void updateLuosiROIEditState(); // 根据选中项刷新编辑区启用状态
+    void reselectLuosiROI(int row); // 重新选中指定行（刷新信号）
+    void initLuosiROIControls(); // 初始化螺丝ROI控件
     void modifyActionParameter(); // 修改动作参数
     QVector<int> getEnabledActions(); // 获取启用的动作
     QVector<int> getOrderedActions(); // 获取顺序检测的动作
@@ -128,5 +136,6 @@ private:
     QSlider *videoSlider = nullptr;
     QComboBox *speedCombo = nullptr;
     bool isSliderPressed = false;
+    QList<LuosiROIConfig> luosiROIList;
 };
 #endif // MAINWINDOW_H

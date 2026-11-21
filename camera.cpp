@@ -106,6 +106,8 @@ void Camera::run()
     yoloV8->setRoiColor(roi_color);
     yoloV8->setRoiOpacity(roi_opacity);
     yoloV8->setRoiLineWidth(roi_line_width);
+    yoloV8->enableLuosiROI(useLuosiROI);
+    yoloV8->setLuosiROIs(luosiROIs);
 
     bool useLocalVideo = settings.value("useLocalVideo").toBool();
     QString videoPath = settings.value("videoPath").toString();
@@ -306,6 +308,11 @@ void Camera::run()
                 int chilun_num = classCount[0];
                 int keti_num = classCount[1];
                 int luosi_num = classCount[2];
+                // 使用螺丝ROI达标数量时，检测数取达标的螺丝ROI个数
+                if (useLuosiROI && useLuosiReachedCount && !luosiROIs.empty())
+                {
+                    luosi_num = yoloV8->getLuosiReachedCount();
+                }
                 // 锁定模式：达标后锁存
                 if (chilunLockMode && chilun_num >= CHILUN_NUM)
                     chilunLatched = true;
@@ -550,6 +557,8 @@ void Camera::resetDetectionState()
     emit updateLabelState(false, false, false); // 齿轮/螺丝/总体
     chilunLatched = false;
     luosiLatched = false;
+    if (yoloV8)
+        yoloV8->resetLuosiROILatched();
     // 复位PLC输出(让PLC自己复位)
     // setD(0, 0); // 复位报警
     // setD(2, 0); // 复位绿灯
@@ -631,6 +640,37 @@ void Camera::setRoiLineWidth(int lineWidth)
     roi_line_width = lineWidth;
     if (yoloV8)
         yoloV8->setRoiLineWidth(lineWidth);
+}
+
+void Camera::enableLuosiROI(bool enable)
+{
+    useLuosiROI = enable;
+    if (yoloV8)
+        yoloV8->enableLuosiROI(enable);
+}
+
+void Camera::setLuosiUseReachedCount(bool enable)
+{
+    useLuosiReachedCount = enable;
+}
+
+void Camera::setLuosiROIs(const QList<LuosiROIConfig> &rois)
+{
+    luosiROIs.clear();
+    for (const auto &cfg : rois)
+    {
+        LuosiROI r;
+        r.enabled = cfg.enabled;
+        r.rect = cv::Rect(cfg.rect.x(), cfg.rect.y(), cfg.rect.width(), cfg.rect.height());
+        r.color = cv::Scalar(cfg.color.blue(), cfg.color.green(), cfg.color.red());
+        r.opacity = cfg.opacity;
+        r.lineWidth = cfg.lineWidth;
+        r.targetNum = cfg.targetNum;
+        r.lockReached = cfg.lockReached;
+        luosiROIs.push_back(r);
+    }
+    if (yoloV8)
+        yoloV8->setLuosiROIs(luosiROIs);
 }
 
 void Camera::processActionDetection(const std::vector<bool> &actions)

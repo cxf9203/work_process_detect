@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     initModelSettingControls();
     initNumberSettings();
     initROIControls();
+    initLuosiROIControls();
     initActionControls();
     initSaveSettings();
     loadStatsFromCsv();
@@ -352,6 +353,342 @@ void MainWindow::initROIControls()
         modifyROIParameter("RoiLineWidth", value);
         ui->label_line_width_display->setText(QString("%1").arg(value));
         cam->setRoiLineWidth(value); });
+}
+
+QString MainWindow::formatLuosiROIText(const LuosiROIConfig &cfg, int index)
+{
+    return QStringLiteral("ROI %1 [%2]  (%3,%4,%5,%6)  %7%/%8  达标:%9%10")
+        .arg(index + 1)
+        .arg(cfg.enabled ? QStringLiteral("启用") : QStringLiteral("禁用"))
+        .arg(cfg.rect.x())
+        .arg(cfg.rect.y())
+        .arg(cfg.rect.width())
+        .arg(cfg.rect.height())
+        .arg(cfg.opacity * 100)
+        .arg(cfg.lineWidth)
+        .arg(cfg.targetNum)
+        .arg(cfg.lockReached ? QStringLiteral("锁") : QStringLiteral(""));
+}
+
+void MainWindow::updateLuosiROIItemText(int row)
+{
+    if (row < 0 || row >= luosiROIList.size())
+        return;
+    const LuosiROIConfig &cfg = luosiROIList[row];
+    QListWidgetItem *item = ui->listWidget_luosiROI->item(row);
+    item->setText(formatLuosiROIText(cfg, row));
+    item->setForeground(QBrush(cfg.enabled ? cfg.color : QColor(160, 160, 160)));
+}
+
+void MainWindow::saveLuosiROIToINI()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    // 先读取组级开关，避免 remove 整组后丢失
+    settings.beginGroup("LuosiROI");
+    bool lockLuosiROI = settings.value("lockLuosiROI").toBool();
+    bool enabled = settings.value("enabled").toBool();
+    bool useReachedCount = settings.value("useReachedCount").toBool();
+    settings.endGroup();
+
+    settings.remove("LuosiROI");
+    settings.beginGroup("LuosiROI");
+    settings.setValue("lockLuosiROI", lockLuosiROI);
+    settings.setValue("enabled", enabled);
+    settings.setValue("useReachedCount", useReachedCount);
+    settings.setValue("count", luosiROIList.size());
+    for (int i = 0; i < luosiROIList.size(); ++i)
+    {
+        QString p = QString("%1_").arg(i);
+        const LuosiROIConfig &cfg = luosiROIList[i];
+        settings.setValue(p + "enabled", cfg.enabled);
+        settings.setValue(p + "rect", cfg.rect);
+        settings.setValue(p + "color", cfg.color.name());
+        settings.setValue(p + "opacity", static_cast<int>(cfg.opacity * 100));
+        settings.setValue(p + "lineWidth", cfg.lineWidth);
+        settings.setValue(p + "targetNum", cfg.targetNum);
+        settings.setValue(p + "lockReached", cfg.lockReached);
+    }
+    settings.endGroup();
+}
+
+void MainWindow::syncLuosiROIToCamera()
+{
+    cam->setLuosiROIs(luosiROIList);
+}
+
+void MainWindow::commitLuosiROIChange(int row)
+{
+    updateLuosiROIItemText(row);
+    saveLuosiROIToINI();
+    syncLuosiROIToCamera();
+}
+
+void MainWindow::updateLuosiROIEditState()
+{
+    bool sel = ui->listWidget_luosiROI->currentRow() >= 0;
+
+    QWidget *labels[] = {
+        ui->label_luosiROI_x,
+        ui->label_luosiROI_y,
+        ui->label_luosiROI_w,
+        ui->label_luosiROI_h,
+        ui->label_luosiROI_color,
+        ui->label_luosiROI_opacity,
+        ui->label_luosiROI_lineWidth,
+        ui->label_luosiROI_targetNum};
+
+    QWidget *edits[] = {
+        ui->btn_copyLuosiROI,
+        ui->btn_removeLuosiROI,
+        ui->cb_luosiROI_enabled,
+        ui->spinBox_luosiROI_x,
+        ui->spinBox_luosiROI_y,
+        ui->spinBox_luosiROI_w,
+        ui->spinBox_luosiROI_h,
+        ui->btn_luosiROI_color,
+        ui->spinBox_luosiROI_opacity,
+        ui->spinBox_luosiROI_lineWidth,
+        ui->spinBox_luosiROI_targetNum,
+        ui->cb_luosiROI_lockReached};
+    if (!sel)
+    {
+        QWidget *fw = QApplication::focusWidget();
+        if (fw && ui->groupBox_luosiROI->isAncestorOf(fw))
+            fw->clearFocus();
+    }
+    for (auto *w : labels)
+        w->setEnabled(sel);
+    for (auto *w : edits)
+        w->setEnabled(sel);
+
+    for (auto *w : edits)
+        w->blockSignals(true);
+    LuosiROIConfig cfg = sel ? luosiROIList[ui->listWidget_luosiROI->currentRow()] : LuosiROIConfig();
+    ui->cb_luosiROI_enabled->setChecked(cfg.enabled);
+    ui->spinBox_luosiROI_x->setValue(cfg.rect.x());
+    ui->spinBox_luosiROI_y->setValue(cfg.rect.y());
+    ui->spinBox_luosiROI_w->setValue(cfg.rect.width());
+    ui->spinBox_luosiROI_h->setValue(cfg.rect.height());
+    ui->btn_luosiROI_color->setStyleSheet(colorButtonStyle(cfg.color));
+    ui->spinBox_luosiROI_opacity->setValue(cfg.opacity);
+    ui->spinBox_luosiROI_lineWidth->setValue(cfg.lineWidth);
+    ui->spinBox_luosiROI_targetNum->setValue(cfg.targetNum);
+    ui->cb_luosiROI_lockReached->setChecked(cfg.lockReached);
+    for (auto *w : edits)
+        w->blockSignals(false);
+}
+
+void MainWindow::reselectLuosiROI(int row)
+{
+    ui->listWidget_luosiROI->blockSignals(true);
+    ui->listWidget_luosiROI->clear();
+    for (int i = 0; i < luosiROIList.size(); ++i)
+    {
+        const LuosiROIConfig &cfg = luosiROIList[i];
+        QListWidgetItem *item = new QListWidgetItem(formatLuosiROIText(cfg, i));
+        item->setForeground(QBrush(cfg.enabled ? cfg.color : QColor(160, 160, 160)));
+        ui->listWidget_luosiROI->addItem(item);
+    }
+    if (row >= 0)
+        ui->listWidget_luosiROI->setCurrentRow(row);
+    ui->listWidget_luosiROI->blockSignals(false);
+    updateLuosiROIEditState();
+}
+
+void MainWindow::initLuosiROIControls()
+{
+    QSettings settings(iniFilePath, QSettings::IniFormat);
+    settings.beginGroup("LuosiROI");
+    bool lockLuosiROI = settings.value("lockLuosiROI").toBool();
+    bool enabled = settings.value("enabled").toBool();
+    bool useReachedCount = settings.value("useReachedCount").toBool();
+    int count = settings.value("count").toInt();
+    for (int i = 0; i < count; ++i)
+    {
+        QString p = QString("%1_").arg(i);
+        LuosiROIConfig cfg;
+        cfg.enabled = settings.value(p + "enabled").toBool();
+        cfg.rect = settings.value(p + "rect").toRect();
+        cfg.color = QColor(settings.value(p + "color").toString());
+        cfg.opacity = settings.value(p + "opacity").toInt() / 100.0f;
+        cfg.lineWidth = settings.value(p + "lineWidth").toInt();
+        cfg.targetNum = settings.value(p + "targetNum").toInt();
+        cfg.lockReached = settings.value(p + "lockReached").toBool();
+        luosiROIList.append(cfg);
+    }
+    settings.endGroup();
+
+    ui->cb_lockLuosiROI->setChecked(lockLuosiROI);
+    ui->cb_enableLuosiROI->setChecked(enabled);
+    ui->cb_luosiROI_useReachedCount->setChecked(useReachedCount);
+    cam->enableLuosiROI(enabled);
+    cam->setLuosiUseReachedCount(useReachedCount);
+    setGroupLocked(ui->groupBox_luosiROI, ui->cb_lockLuosiROI, lockLuosiROI);
+    reselectLuosiROI(-1);
+    syncLuosiROIToCamera();
+
+    // 锁定螺丝ROI设置
+    connect(ui->cb_lockLuosiROI, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("LuosiROI");
+        settings.setValue("lockLuosiROI", checked);
+        settings.endGroup();
+
+        setGroupLocked(ui->groupBox_luosiROI, ui->cb_lockLuosiROI, checked);
+        if (!checked)
+            updateLuosiROIEditState(); });
+
+    // 启用螺丝ROI检测
+    connect(ui->cb_enableLuosiROI, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("LuosiROI");
+        settings.setValue("enabled", checked);
+        settings.endGroup();
+
+        cam->enableLuosiROI(checked); });
+
+    // 使用达标数量
+    connect(ui->cb_luosiROI_useReachedCount, &QCheckBox::toggled, [this](bool checked)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("LuosiROI");
+        settings.setValue("useReachedCount", checked);
+        settings.endGroup();
+
+        cam->setLuosiUseReachedCount(checked); });
+
+    // 添加ROI
+    connect(ui->btn_addLuosiROI, &QPushButton::clicked, [this]()
+            {
+        luosiROIList.append(LuosiROIConfig());
+        reselectLuosiROI(luosiROIList.size() - 1);
+        saveLuosiROIToINI();
+        syncLuosiROIToCamera(); });
+
+    // 复制ROI
+    connect(ui->btn_copyLuosiROI, &QPushButton::clicked, [this]()
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        luosiROIList.append(luosiROIList[row]);
+        reselectLuosiROI(luosiROIList.size() - 1);
+        saveLuosiROIToINI();
+        syncLuosiROIToCamera(); });
+
+    // 删除ROI
+    connect(ui->btn_removeLuosiROI, &QPushButton::clicked, [this]()
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        luosiROIList.removeAt(row);
+        reselectLuosiROI(qMin(row, luosiROIList.size() - 1));
+        saveLuosiROIToINI();
+        syncLuosiROIToCamera(); });
+
+    // 选中ROI时刷新编辑区
+    connect(ui->listWidget_luosiROI, &QListWidget::currentRowChanged, this, &MainWindow::updateLuosiROIEditState);
+
+    // ROI启用状态
+    connect(ui->cb_luosiROI_enabled, &QCheckBox::toggled, [this](bool checked)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        luosiROIList[row].enabled = checked;
+        commitLuosiROIChange(row); });
+
+    // ROI坐标X
+    connect(ui->spinBox_luosiROI_x, QOverload<int>::of(&QSpinBox::valueChanged), [this](int value)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        const QRect &r = luosiROIList[row].rect;
+        luosiROIList[row].rect = QRect(value, r.y(), r.width(), r.height());
+        commitLuosiROIChange(row); });
+
+    // ROI坐标Y
+    connect(ui->spinBox_luosiROI_y, QOverload<int>::of(&QSpinBox::valueChanged), [this](int value)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        const QRect &r = luosiROIList[row].rect;
+        luosiROIList[row].rect = QRect(r.x(), value, r.width(), r.height());
+        commitLuosiROIChange(row); });
+
+    // ROI宽度
+    connect(ui->spinBox_luosiROI_w, QOverload<int>::of(&QSpinBox::valueChanged), [this](int value)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        const QRect &r = luosiROIList[row].rect;
+        luosiROIList[row].rect = QRect(r.x(), r.y(), value, r.height());
+        commitLuosiROIChange(row); });
+
+    // ROI高度
+    connect(ui->spinBox_luosiROI_h, QOverload<int>::of(&QSpinBox::valueChanged), [this](int value)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        const QRect &r = luosiROIList[row].rect;
+        luosiROIList[row].rect = QRect(r.x(), r.y(), r.width(), value);
+        commitLuosiROIChange(row); });
+
+    // ROI颜色选择
+    connect(ui->btn_luosiROI_color, &QPushButton::clicked, [this]()
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        QColor c = QColorDialog::getColor(luosiROIList[row].color, this, QStringLiteral("选择ROI颜色"));
+        if (!c.isValid())
+            return;
+        luosiROIList[row].color = c;
+        ui->btn_luosiROI_color->setStyleSheet(colorButtonStyle(c));
+        commitLuosiROIChange(row); });
+
+    // ROI透明度
+    connect(ui->spinBox_luosiROI_opacity, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double value)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        luosiROIList[row].opacity = static_cast<float>(value);
+        commitLuosiROIChange(row); });
+
+    // ROI线宽
+    connect(ui->spinBox_luosiROI_lineWidth, QOverload<int>::of(&QSpinBox::valueChanged), [this](int value)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        luosiROIList[row].lineWidth = value;
+        commitLuosiROIChange(row); });
+
+    // ROI目标数量
+    connect(ui->spinBox_luosiROI_targetNum, QOverload<int>::of(&QSpinBox::valueChanged), [this](int value)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        luosiROIList[row].targetNum = value;
+        commitLuosiROIChange(row); });
+
+    // 达标后锁存
+    connect(ui->cb_luosiROI_lockReached, &QCheckBox::toggled, [this](bool checked)
+            {
+        int row = ui->listWidget_luosiROI->currentRow();
+        if (row < 0)
+            return;
+        luosiROIList[row].lockReached = checked;
+        commitLuosiROIChange(row); });
 }
 
 void MainWindow::modifyActionParameter()

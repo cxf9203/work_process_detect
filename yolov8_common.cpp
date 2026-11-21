@@ -11,6 +11,7 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
     classCount[1] = 0;
     classCount[2] = 0;
     actionFlag = {false, false, false, false, false}; // 初始化动作标志
+    luosiROICounts.assign(luosiROIs.size(), 0); // 清零每个螺丝ROI的检测数
 
     // 绘制检测区域ROI
     if (useROI && !detectionROI.empty())
@@ -18,6 +19,22 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
         cv::Mat overlay = image.clone();
         cv::rectangle(overlay, detectionROI, roiColor, roiLineWidth);
         cv::addWeighted(image, roiOpacity, overlay, 1.0f - roiOpacity, 0, image);
+    }
+
+    // 绘制螺丝ROI矩形
+    if (useLuosiROI)
+    {
+        for (const auto &roi : luosiROIs)
+        {
+            if (!roi.enabled)
+                continue;
+            cv::Mat overlay = image.clone();
+            cv::rectangle(overlay, roi.rect, roi.color, roi.lineWidth);
+            cv::addWeighted(image, roi.opacity, overlay, 1.0f - roi.opacity, 0, image);
+            // 标注每个ROI的达标数量
+            std::string label = "T:" + std::to_string(roi.targetNum);
+            cv::putText(image, label, cv::Point(roi.rect.x, roi.rect.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, roi.color, 1);
+        }
     }
 
     // If segmentation information is present, start with that
@@ -36,7 +53,7 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
     // Bounding boxes and annotations
     for (auto &object : objects)
     {
-        // 检查对象是否在ROI区域内
+        // 检查对象是否在主ROI区域内
         if (useROI && !detectionROI.empty())
         {
             // 计算对象中心点
@@ -46,6 +63,26 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
             {
                 continue; // 跳过不在ROI区域内的对象
             }
+        }
+
+        // 螺丝ROI过滤：启用时，label 2 必须在任一螺丝ROI内，否则丢弃
+        if (useLuosiROI && object.label == 2 && !luosiROIs.empty())
+        {
+            cv::Point center(object.rect.x + object.rect.width / 2, object.rect.y + object.rect.height / 2);
+            bool inAnyROI = false;
+            for (int i = 0; i < (int)luosiROIs.size(); ++i)
+            {
+                if (!luosiROIs[i].enabled)
+                    continue;
+                if (luosiROIs[i].rect.contains(center))
+                {
+                    inAnyROI = true;
+                    luosiROICounts[i]++;
+                    break;
+                }
+            }
+            if (!inAnyROI)
+                continue;
         }
 
         // Choose the color
@@ -120,6 +157,23 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
             }
         }
     }
+
+    // 计算达标的螺丝ROI个数：每个ROI内检测数达到其targetNum才算达标
+    luosiReachedCount = 0;
+    for (int i = 0; i < (int)luosiROIs.size(); ++i)
+    {
+        if (!luosiROIs[i].enabled || luosiROIs[i].targetNum < 0)
+            continue;
+        bool reached = (luosiROICounts[i] >= luosiROIs[i].targetNum);
+        if (luosiROIs[i].lockReached)
+        {
+            if (reached)
+                luosiROILatched[i] = true; // 达标后锁存
+            reached = luosiROILatched[i];
+        }
+        if (reached)
+            luosiReachedCount++;
+    }
 }
 
 std::vector<int> YoloV8::getclassnumer()
@@ -167,4 +221,30 @@ void YoloV8::setRoiOpacity(float opacity)
 void YoloV8::setRoiLineWidth(int lineWidth)
 {
     roiLineWidth = lineWidth;
+}
+
+// 启用或禁用螺丝ROI过滤
+void YoloV8::enableLuosiROI(bool enable)
+{
+    useLuosiROI = enable;
+}
+
+// 设置螺丝专用ROI列表
+void YoloV8::setLuosiROIs(const std::vector<LuosiROI> &rois)
+{
+    luosiROIs = rois;
+    luosiROILatched.resize(rois.size(), false); // 保留已有锁存状态，新增补false
+}
+
+// 获取螺丝ROI达标的数量
+int YoloV8::getLuosiReachedCount()
+{
+    return luosiReachedCount;
+}
+
+// 重置螺丝ROI锁存状态
+void YoloV8::resetLuosiROILatched()
+{
+    for (size_t i = 0; i < luosiROILatched.size(); ++i)
+        luosiROILatched[i] = false;
 }

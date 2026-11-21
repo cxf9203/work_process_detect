@@ -1132,7 +1132,7 @@ QPushButton:pressed {
            <x>0</x>
            <y>0</y>
            <width>573</width>
-           <height>1386</height>
+           <height>1914</height>
           </rect>
          </property>
          <widget class="QGroupBox" name="groupBox_ROI">
@@ -1497,11 +1497,444 @@ QLabel:disabled {
            </item>
           </layout>
          </widget>
-         <widget class="QGroupBox" name="groupBox_actionControl">
+         <widget class="QGroupBox" name="groupBox_luosiROI">
           <property name="geometry">
            <rect>
             <x>30</x>
             <y>773</y>
+            <width>471</width>
+            <height>508</height>
+           </rect>
+          </property>
+          <property name="title">
+           <string>螺丝ROI检测</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_luosiROI">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_luosiROI_top">
+             <item>
+              <widget class="QCheckBox" name="cb_lockLuosiROI">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>锁定所有参数</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cb_enableLuosiROI">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>启用螺丝ROI</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cb_luosiROI_useReachedCount">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>按ROI达标计数</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_luosiROI_tip">
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+    color: #888888;
+}</string>
+             </property>
+             <property name="text">
+              <string>提示：设置多个ROI区域，只识别区域内的螺丝（ROI为空时识别全部）</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="listWidget_luosiROI"/>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_luosiROI_btns">
+             <item>
+              <widget class="QPushButton" name="btn_addLuosiROI">
+               <property name="styleSheet">
+                <string notr="true">QPushButton {
+    background-color: #2e7d32;
+}
+
+QPushButton:hover {
+    background-color: #388e3c;
+}
+
+QPushButton:pressed {
+    background-color: #1b5e20;
+}</string>
+               </property>
+               <property name="text">
+                <string>添加</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btn_copyLuosiROI">
+               <property name="styleSheet">
+                <string notr="true">QPushButton {
+    background-color: #1976d2;
+}
+
+QPushButton:hover {
+    background-color: #1e88e5;
+}
+
+QPushButton:pressed {
+    background-color: #0d47a1;
+}</string>
+               </property>
+               <property name="text">
+                <string>复制</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btn_removeLuosiROI">
+               <property name="styleSheet">
+                <string notr="true">QPushButton {
+    background-color: #c62828;
+}
+
+QPushButton:hover {
+    background-color: #d32f2f;
+}
+
+QPushButton:pressed {
+    background-color: #b71c1c;
+}</string>
+               </property>
+               <property name="text">
+                <string>删除</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="cb_luosiROI_enabled">
+             <property name="font">
+              <font>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>启用该ROI</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_luosiROI_coord">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_luosiROI_x">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>ROI X:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSpinBox" name="spinBox_luosiROI_x">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <number>2147483647</number>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_luosiROI_y">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>ROI Y:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QSpinBox" name="spinBox_luosiROI_y">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <number>2147483647</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_luosiROI_w">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>ROI W:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="spinBox_luosiROI_w">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <number>2147483647</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="label_luosiROI_h">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>ROI H:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QSpinBox" name="spinBox_luosiROI_h">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <number>2147483647</number>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_luosiROI_color">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>颜色:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="btn_luosiROI_color">
+               <property name="maximumSize">
+                <size>
+                 <width>60</width>
+                 <height>22</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLabel" name="label_luosiROI_opacity">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>透明度:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="3">
+              <widget class="QDoubleSpinBox" name="spinBox_luosiROI_opacity">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.010000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_luosiROI_lineWidth">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>线宽:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSpinBox" name="spinBox_luosiROI_lineWidth">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="minimum">
+                <number>-1</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>5</number>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_luosiROI_targetNum">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QLabel {
+    padding: 5px;
+}</string>
+               </property>
+               <property name="text">
+                <string>达标数量:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QSpinBox" name="spinBox_luosiROI_targetNum">
+               <property name="font">
+                <font>
+                 <family>Arial</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="maximum">
+                <number>9999</number>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="2" colspan="2">
+              <widget class="QCheckBox" name="cb_luosiROI_lockReached">
+               <property name="font">
+                <font>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>达标后锁定该ROI</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QGroupBox" name="groupBox_actionControl">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>1301</y>
             <width>471</width>
             <height>346</height>
            </rect>
@@ -1967,7 +2400,7 @@ QLabel:disabled {
           <property name="geometry">
            <rect>
             <x>30</x>
-            <y>1139</y>
+            <y>1667</y>
             <width>471</width>
             <height>227</height>
            </rect>
