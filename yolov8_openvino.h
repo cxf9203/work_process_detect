@@ -69,6 +69,17 @@ struct YoloV8Config
     };
 };
 
+struct LuosiROI
+{
+    bool enabled = false;
+    cv::Rect rect = cv::Rect(0, 0, 0, 0);
+    cv::Scalar color = cv::Scalar(0, 255, 0);
+    float opacity = 0.5f;
+    int lineWidth = 5;
+    int targetNum = 0; // 达标数量
+    bool lockReached = false; // 达标后锁定
+};
+
 class YoloV8
 {
 public:
@@ -93,6 +104,14 @@ public:
     void setRoiOpacity(float opacity);
     // Set the line width of the detection ROI
     void setRoiLineWidth(int lineWidth);
+    // Enable or disable screw-specific ROI filtering
+    void enableLuosiROI(bool enable);
+    // Set the screw-specific ROI list
+    void setLuosiROIs(const std::vector<LuosiROI> &rois);
+    // Get the number of screw ROI that have reached the target number of screws in the ROI
+    int getLuosiReachedCount();
+    // Reset the status of all screw ROI to not reached the target number of screws
+    void resetLuosiROILatched();
 
 private:
     int numOutputs;
@@ -107,6 +126,11 @@ private:
     cv::Scalar roiColor = cv::Scalar(0, 255, 0); // ROI颜色
     float roiOpacity = 0.0f; // ROI透明度
     int roiLineWidth = 5; // ROI矩形线宽
+    bool useLuosiROI = false; // 是否启用螺丝ROI过滤
+    std::vector<LuosiROI> luosiROIs; // 螺丝专用ROI列表
+    std::vector<int> luosiROICounts; // 每个螺丝ROI内检测到的螺丝数
+    int luosiReachedCount = 0; // 达标的螺丝ROI个数
+    std::vector<bool> luosiROILatched; // 每个螺丝ROI是否已锁存达标
     // Preprocess the input
     cv::Mat preprocess(const cv::Mat &gpuImg);
     ov::InferRequest infer_request;

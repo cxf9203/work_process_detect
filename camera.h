@@ -21,6 +21,17 @@
 #include <plaympeg4.h>
 #include <PlayM4.h>
 
+struct LuosiROIConfig
+{
+    bool enabled = false;
+    QRect rect = QRect(0, 0, 0, 0);
+    QColor color = QColor("#00ff00");
+    float opacity = 0.5f;
+    int lineWidth = 5;
+    int targetNum = 0; // 达标数量
+    bool lockReached = false; // 达标后锁定
+};
+
 // 相机线程类
 class Camera : public QObject
 {
@@ -43,6 +54,12 @@ public:
     void setRoiColor(QString color);
     void setRoiOpacity(float opacity);
     void setRoiLineWidth(int lineWidth);
+    // 启用或禁用螺丝ROI过滤
+    void enableLuosiROI(bool enable);
+    // 是否使用螺丝ROI达标数量作为总达标数
+    void setLuosiUseReachedCount(bool enable);
+    // 螺丝ROI检测控制
+    void setLuosiROIs(const QList<LuosiROIConfig> &rois);
     // 动作检测控制
     void processActionDetection(const std::vector<bool> &actions);
     void setActionConfig(bool pEnableAction, const QVector<int> &pEnabledActions, bool pIncludeActionInResult, const QVector<int> &pOrderedActions);
@@ -121,6 +138,9 @@ private:
     QString roi_color = "#00ff00"; // ROI颜色
     float roi_opacity = 0.5f; // ROI透明度
     int roi_line_width = 5; // ROI矩形线宽
+    bool useLuosiROI = false; // 螺丝ROI过滤启用状态
+    bool useLuosiReachedCount = false; // 是否按ROI达标个数统计螺丝检测数
+    std::vector<LuosiROI> luosiROIs; // 螺丝专用ROI列表
     // 动作检测配置
     bool enableAction = false; // 动作检测启用状态
     QVector<int> enabledActions; // 启用的动作索引列表（用户勾选的所有动作）
