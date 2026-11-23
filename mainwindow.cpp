@@ -2,11 +2,14 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <iostream>
+#include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QColorDialog>
 #include <QScreen>
 #include <QLineEdit>
 #include <QVideoWidget>
 #include <QFile>
+#include <QHeaderView>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -26,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     initROIControls();
     initActionControls();
     initSaveSettings();
+    loadStatsFromCsv();
 
     cam->moveToThread(THREAD1_cam1); // 将Worker对象移到新线程中执行
     // 相机1槽函数
@@ -42,40 +46,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cam, &Camera::sendQStringtoMain, this, &MainWindow::receiveQStringtoMain, Qt::QueuedConnection);
     connect(cam, &Camera::finishedthread, this, &MainWindow::receivefinish);
     connect(this, &MainWindow::destroyed, cam, &Camera::deleteLater, Qt::QueuedConnection);
-
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
-    // 获取今天的日期（只保留年月日）
-    QString today = QDate::currentDate().toString("yyyy-MM-dd");
-    // 读取上一次保存的日期
-    QString last_date = statSettings.value("last_date").toString();
-    // 如果日期不同，重置计数
-    if (last_date != today)
-    {
-        last_date = today;
-        today_good_number = today_number = today_good_rates = 0;
-        // 将变量写入 QSettings 对象
-        statSettings.setValue("last_date", last_date);
-        statSettings.setValue("today_good_number", today_good_number);
-        statSettings.setValue("today_number", today_number);
-        statSettings.setValue("today_good_rates", today_good_rates);
-    }
-    else
-    {
-        today_good_number = statSettings.value("today_good_number").toInt();
-        today_number = statSettings.value("today_number").toInt();
-        today_good_rates = statSettings.value("today_good_rates").toDouble();
-    }
-
-    history_good_number = statSettings.value("history_good_number").toInt();
-    history_number = statSettings.value("history_number").toInt();
-    history_good_rates = statSettings.value("history_good_rates").toDouble();
-
-    ui->history_good_number->setText(QString::number(history_good_number));
-    ui->history_number->setText(QString::number(history_number));
-    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
-    ui->today_good_number->setText(QString::number(today_good_number));
-    ui->today_number->setText(QString::number(today_number));
-    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 
     // 启动相机1
     on_btn_start_clicked();
@@ -123,6 +93,14 @@ void MainWindow::applyTopMost(bool checked)
     setWindowFlag(Qt::WindowStaysOnTopHint, checked);
     if (wasVisible)
         show();
+
+    if (csvDialog)
+    {
+        bool dlgVisible = csvDialog->isVisible();
+        csvDialog->setWindowFlag(Qt::WindowStaysOnTopHint, checked);
+        if (dlgVisible)
+            csvDialog->show();
+    }
 
     pinBtn->setStyleSheet(checked
                               ? "QToolButton { background-color: #2e7d32; color: white; border: 1px solid #4caf50;"
@@ -627,6 +605,8 @@ void MainWindow::initSaveSettings()
     bool saveErrorVideo = settings.value("saveErrorVideo").toBool();
     bool forceSaveVideo = settings.value("forceSaveVideo").toBool();
     bool saveErrorLog = settings.value("saveErrorLog").toBool();
+    QString dayStartStr = settings.value("dayStart").toString();
+    dayStartTime = QTime::fromString(dayStartStr, "HH:mm");
     settings.endGroup();
 
     ui->cb_lockSaveSettings->setChecked(lockSaveSettings);
@@ -634,6 +614,7 @@ void MainWindow::initSaveSettings()
     ui->checkBox_saveErrorVideo->setChecked(saveErrorVideo);
     ui->checkBox_forceSaveVideo->setChecked(forceSaveVideo);
     ui->checkBox_saveErrorLog->setChecked(saveErrorLog);
+    ui->timeEdit_dayStart->setTime(QTime::fromString(dayStartStr, "HH:mm"));
     cam->setRecordVideo(recordVideo);
     cam->setSaveErrorVideo(saveErrorVideo);
     cam->setForceSaveVideo(forceSaveVideo);
@@ -692,6 +673,341 @@ void MainWindow::initSaveSettings()
         settings.endGroup();
 
         cam->setSaveErrorLog(value); });
+
+    // 当日起始时间
+    connect(ui->timeEdit_dayStart, &QTimeEdit::timeChanged, [this](const QTime &time)
+            {
+        QSettings settings(iniFilePath, QSettings::IniFormat);
+        settings.beginGroup("SaveSettings");
+        settings.setValue("dayStart", time.toString("HH:mm"));
+        settings.endGroup();
+
+        dayStartTime = time;
+        loadStatsFromCsv(); });
+}
+
+// 统计 CSV 内部标记行
+static const QString kCsvHeader = QStringLiteral("日期,合格数,检测数,合格率");
+static const QString kCsvResetMarker = QStringLiteral("--- 历史重置 ---");
+static const QString kCsvHistoryMarker = QStringLiteral("历史累计");
+
+void MainWindow::ensureStatCsvExists()
+{
+    QFile file(statFilePath);
+    if (file.exists())
+    {
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QTextStream in(&file);
+            QString firstLine = in.readLine().trimmed();
+            file.close();
+            if (firstLine == kCsvHeader)
+                return;
+        }
+    }
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qDebug() << "ensureStatCsvExists: cannot create" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream out(&file);
+    out << kCsvHeader << "\n";
+    file.close();
+}
+
+QString MainWindow::statisticalDate()
+{
+    QDateTime now = QDateTime::currentDateTime();
+    QDate date = now.date();
+    if (now.time() < dayStartTime)
+        date = date.addDays(-1);
+    return date.toString("yyyy/MM/dd");
+}
+
+bool MainWindow::isValidCsvRow(const QString &line)
+{
+    const QStringList p = line.split(',');
+    const QString first = p[0].trimmed();
+    if (first == kCsvResetMarker || first == kCsvHistoryMarker)
+        return true;
+    if (p.size() < 4)
+        return false;
+    return QDate::fromString(first, "yyyy/MM/dd").isValid();
+}
+
+void MainWindow::fillCsvTable()
+{
+    if (!csvDialog)
+        return;
+    QTableWidget *table = csvDialog->findChild<QTableWidget *>("csvTableWidget");
+    if (!table)
+        return;
+
+    table->setRowCount(0);
+
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+    QTextStream in(&file);
+    in.readLine();
+
+    int row = 0;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || !isValidCsvRow(line))
+            continue;
+        QStringList parts = line.split(',');
+
+        table->insertRow(row);
+
+        if (parts[0] == kCsvResetMarker)
+        {
+            for (int c = 0; c < 4; c++)
+            {
+                QTableWidgetItem *it = new QTableWidgetItem(c == 0 ? kCsvResetMarker : "");
+                it->setBackground(QColor(60, 30, 30));
+                it->setForeground(QColor(255, 150, 80));
+                table->setItem(row, c, it);
+            }
+        }
+        else if (parts[0] == kCsvHistoryMarker)
+        {
+            QStringList disp = {kCsvHistoryMarker, parts.value(1), parts.value(2), parts.value(3)};
+            for (int c = 0; c < 4; c++)
+            {
+                QTableWidgetItem *it = new QTableWidgetItem(disp[c]);
+                it->setBackground(QColor(20, 60, 30));
+                it->setForeground(QColor(0, 255, 100));
+                table->setItem(row, c, it);
+            }
+        }
+        else
+        {
+            for (int c = 0; c < 4; c++)
+                table->setItem(row, c, new QTableWidgetItem(parts.value(c)));
+        }
+        row++;
+    }
+    file.close();
+}
+
+void MainWindow::saveTodayRowToCsv()
+{
+    ensureStatCsvExists();
+
+    QString todayStr = statisticalDate();
+    double todayRate = today_number > 0 ? static_cast<double>(today_good_number) / today_number * 100.0 : 0.0;
+    QString todayRow = QString("%1,%2,%3,%4").arg(todayStr).arg(today_good_number).arg(today_number).arg(todayRate, 0, 'f', 2);
+
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "saveTodayRowToCsv: cannot read" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream in(&file);
+    QString header = in.readLine();
+    QStringList rows;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith(kCsvHistoryMarker) || !isValidCsvRow(line))
+            continue;
+        rows << line;
+    }
+    file.close();
+
+    int resetIdx = -1;
+    for (int i = 0; i < rows.size(); ++i)
+        if (rows[i].startsWith(kCsvResetMarker))
+        {
+            resetIdx = i;
+            break;
+        }
+
+    // 查找今日行：标记后优先，其次标记前（日期回退场景）
+    int idx = -1;
+    for (int i = (resetIdx >= 0 ? resetIdx + 1 : 0); i < rows.size(); ++i)
+    {
+        QStringList p = rows[i].split(',');
+        if (p.size() >= 4 && p[0] == todayStr)
+        {
+            idx = i;
+            break;
+        }
+    }
+    if (idx < 0 && resetIdx >= 0)
+        for (int i = 0; i < resetIdx; ++i)
+        {
+            QStringList p = rows[i].split(',');
+            if (p.size() >= 4 && p[0] == todayStr)
+            {
+                idx = i;
+                break;
+            }
+        }
+
+    if (idx >= 0)
+    {
+        if (resetIdx >= 0 && idx < resetIdx)
+        {
+            // 回退到标记前：把该日期及其之后的所有旧数据行一起移到标记下方继续使用
+            int count = resetIdx - idx;
+            QStringList block;
+            for (int i = 0; i < count; ++i)
+                block << rows.takeAt(idx);
+            block[0] = todayRow;
+            resetIdx -= count;
+            int pos = resetIdx + 1;
+            for (const QString &r : block)
+                rows.insert(pos++, r);
+        }
+        else
+            rows[idx] = todayRow;
+    }
+    else
+    {
+        // 未找到：按日期升序插入当前统计周期
+        int pos = resetIdx >= 0 ? resetIdx + 1 : 0;
+        for (; pos < rows.size(); ++pos)
+        {
+            QString first = rows[pos].split(',').value(0);
+            if (first == kCsvResetMarker)
+                continue;
+            if (first > todayStr)
+                break;
+        }
+        rows.insert(pos, todayRow);
+    }
+
+    // 历史累计 = 重置标记之后所有数据行之和
+    long long sumGood = 0, sumTotal = 0;
+    bool passed = resetIdx < 0;
+    for (const QString &r : rows)
+    {
+        QStringList p = r.split(',');
+        if (p[0] == kCsvResetMarker)
+        {
+            passed = true;
+            continue;
+        }
+        if (!passed || p.size() < 4)
+            continue;
+        sumGood += p[1].toLongLong();
+        sumTotal += p[2].toLongLong();
+    }
+    double sumRate = sumTotal > 0 ? static_cast<double>(sumGood) / sumTotal * 100.0 : 0.0;
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qDebug() << "saveTodayRowToCsv: cannot write" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream out(&file);
+    out << header << "\n";
+    for (const QString &r : rows)
+        out << r << "\n";
+    out << QString("%1,%2,%3,%4\n").arg(kCsvHistoryMarker).arg(sumGood).arg(sumTotal).arg(sumRate, 0, 'f', 2);
+    file.close();
+
+    if (csvDialog && csvDialog->isVisible())
+        fillCsvTable();
+}
+
+void MainWindow::loadStatsFromCsv()
+{
+    QString todayStr = statisticalDate();
+    lastStatDate = todayStr;
+
+    ensureStatCsvExists();
+
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "loadStatsFromCsv: cannot open" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream in(&file);
+    in.readLine();
+
+    QStringList rows;
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith(kCsvHistoryMarker) || !isValidCsvRow(line))
+            continue;
+        rows << line;
+    }
+    file.close();
+
+    int resetIdx = -1;
+    for (int i = 0; i < rows.size(); ++i)
+        if (rows[i].startsWith(kCsvResetMarker))
+        {
+            resetIdx = i;
+            break;
+        }
+
+    history_good_number = history_number = today_good_number = today_number = today_good_rates = 0;
+    bool passed = resetIdx < 0;
+    bool foundToday = false, todayBeforeReset = false;
+    int todayIdx = -1;
+
+    for (int i = 0; i < rows.size(); ++i)
+    {
+        QStringList p = rows[i].split(',');
+        if (p[0] == kCsvResetMarker)
+        {
+            passed = true;
+            continue;
+        }
+        if (p.size() < 4)
+            continue;
+        if (passed)
+        {
+            history_good_number += p[1].toLongLong();
+            history_number += p[2].toLongLong();
+        }
+        if (p[0] == todayStr)
+        {
+            foundToday = true;
+            todayBeforeReset = !passed;
+            todayIdx = i;
+            today_good_number = p[1].toLongLong();
+            today_number = p[2].toLongLong();
+        }
+    }
+
+    // 今日行位于历史重置标记之前：把该日期及其之后的旧数据一并计入历史，并移到标记下方
+    if (foundToday && todayBeforeReset)
+    {
+        history_good_number += today_good_number;
+        history_number += today_number;
+        for (int i = todayIdx + 1; i < resetIdx; ++i)
+        {
+            QStringList q = rows[i].split(',');
+            if (q.size() < 4)
+                continue;
+            history_good_number += q[1].toLongLong();
+            history_number += q[2].toLongLong();
+        }
+        saveTodayRowToCsv();
+    }
+    else if (!foundToday)
+    {
+        saveTodayRowToCsv();
+    }
+
+    history_good_rates = history_number > 0 ? static_cast<double>(history_good_number) / history_number * 100.0 : 0.0;
+    today_good_rates = today_number > 0 ? static_cast<double>(today_good_number) / today_number * 100.0 : 0.0;
+
+    ui->history_good_number->setText(QString::number(history_good_number));
+    ui->history_number->setText(QString::number(history_number));
+    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
+    ui->today_good_number->setText(QString::number(today_good_number));
+    ui->today_number->setText(QString::number(today_number));
+    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
 }
 
 void MainWindow::receiveslotQImg(QImage img)
@@ -733,7 +1049,32 @@ void MainWindow::onLogFileChanged()
 
 void MainWindow::updateStatistics(bool result)
 {
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
+    QString todayStr = statisticalDate();
+    if (todayStr != lastStatDate)
+    {
+        lastStatDate = todayStr;
+        QFile file(statFilePath);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QTextStream in(&file);
+            in.readLine();
+            today_good_number = today_number = 0;
+            while (!in.atEnd())
+            {
+                QString line = in.readLine().trimmed();
+                if (line.isEmpty() || !isValidCsvRow(line))
+                    continue;
+                QStringList p = line.split(',');
+                if (p.size() >= 4 && p[0] == todayStr)
+                {
+                    today_good_number = p[1].toLongLong();
+                    today_number = p[2].toLongLong();
+                    break;
+                }
+            }
+            file.close();
+        }
+    }
 
     if (result)
     {
@@ -744,13 +1085,8 @@ void MainWindow::updateStatistics(bool result)
     today_number++;
     history_good_rates = (static_cast<double>(history_good_number) / history_number) * 100;
     today_good_rates = (static_cast<double>(today_good_number) / today_number) * 100;
-    // 将变量写入 QSettings 对象
-    statSettings.setValue("history_good_number", history_good_number);
-    statSettings.setValue("history_number", history_number);
-    statSettings.setValue("history_good_rates", history_good_rates);
-    statSettings.setValue("today_good_number", today_good_number);
-    statSettings.setValue("today_number", today_number);
-    statSettings.setValue("today_good_rates", today_good_rates);
+
+    saveTodayRowToCsv();
 
     ui->history_good_number->setText(QString::number(history_good_number));
     ui->history_number->setText(QString::number(history_number));
@@ -1116,32 +1452,108 @@ void MainWindow::on_btn_disconnectPLC_clicked()
 
 void MainWindow::on_btn_history_rst_clicked()
 {
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
+    QString todayStr = statisticalDate();
 
-    history_good_number = history_number = history_good_rates = 0;
+    QFile file(statFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "on_btn_history_rst_clicked: cannot read" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream in(&file);
 
-    // 将变量写入 QSettings 对象
-    statSettings.setValue("history_good_number", history_good_number);
-    statSettings.setValue("history_number", history_number);
-    statSettings.setValue("history_good_rates", history_good_rates);
-    ui->history_good_number->setText(QString::number(history_good_number));
-    ui->history_number->setText(QString::number(history_number));
-    ui->history_good_rates->setText(QString::number(history_good_rates, 'f', 2) + " %");
+    QString header = in.readLine();
+    QStringList rows;
+
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith(kCsvResetMarker) || line.startsWith(kCsvHistoryMarker) || !isValidCsvRow(line))
+            continue;
+        rows << line;
+    }
+    file.close();
+
+    QStringList newRows;
+    bool inserted = false;
+    for (const QString &row : rows)
+    {
+        QStringList parts = row.split(',');
+        if (!inserted && parts[0] == todayStr)
+        {
+            newRows << kCsvResetMarker + ",,,";
+            inserted = true;
+        }
+        newRows << row;
+    }
+    if (!inserted)
+    {
+        newRows << kCsvResetMarker + ",,,";
+        newRows << todayStr + ",0,0,0.00";
+    }
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qDebug() << "on_btn_history_rst_clicked: cannot write" << statFilePath << file.errorString();
+        return;
+    }
+    QTextStream out(&file);
+    out << header << "\n";
+    for (const QString &row : newRows)
+        out << row << "\n";
+    file.close();
+
+    saveTodayRowToCsv();
+    loadStatsFromCsv();
 }
 
 void MainWindow::on_btn_today_rst_clicked()
 {
-    QSettings statSettings(statFilePath, QSettings::IniFormat);
-
     today_good_number = today_number = today_good_rates = 0;
+    saveTodayRowToCsv();
+    loadStatsFromCsv();
+}
 
-    // 将变量写入 QSettings 对象
-    statSettings.setValue("today_good_number", today_good_number);
-    statSettings.setValue("today_number", today_number);
-    statSettings.setValue("today_good_rates", today_good_rates);
-    ui->today_good_number->setText(QString::number(today_good_number));
-    ui->today_number->setText(QString::number(today_number));
-    ui->today_good_rates->setText(QString::number(today_good_rates, 'f', 2) + " %");
+void MainWindow::on_btn_csv_detail_clicked()
+{
+    if (!csvDialog)
+    {
+        csvDialog = new QDialog(this);
+        csvDialog->setWindowTitle(QStringLiteral("统计数据详情"));
+        csvDialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+        csvDialog->resize(560, 380);
+        csvDialog->setMinimumSize(560, 380);
+        QVBoxLayout *layout = new QVBoxLayout(csvDialog);
+
+        QTableWidget *table = new QTableWidget(csvDialog);
+        table->setColumnCount(4);
+        table->setHorizontalHeaderLabels({QStringLiteral("日期"), QStringLiteral("合格数"), QStringLiteral("检测数"), QStringLiteral("合格率")});
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->verticalHeader()->setVisible(false);
+        table->setStyleSheet("QTableWidget { background-color: #1e1e1e; color: #ffffff; border: 1px solid #555;"
+                             "border-radius: 4px; gridline-color: #444; font-family: Consolas, monospace; font-size: 12px; }"
+                             "QHeaderView::section { background-color: #2d2d2d; color: #00ff00; border: 1px solid #555; padding: 4px; font-weight: bold; }");
+        table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+        table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
+        table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);
+        table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+        table->setColumnWidth(0, 140);
+        table->setColumnWidth(1, 80);
+        table->setColumnWidth(2, 80);
+        table->setObjectName("csvTableWidget");
+        layout->addWidget(table);
+
+        QLabel *pathLabel = new QLabel(QStringLiteral("文件: ") + statFilePath, csvDialog);
+        pathLabel->setStyleSheet("QLabel { color: #888; font-size: 11px; padding: 4px; }");
+        layout->addWidget(pathLabel);
+    }
+
+    csvDialog->show();
+    csvDialog->raise();
+    csvDialog->activateWindow();
+
+    fillCsvTable();
 }
 
 void MainWindow::on_btn_history_clicked()
