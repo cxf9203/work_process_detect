@@ -1,5 +1,4 @@
-﻿#include <QDir>
-#include "camera.h"
+﻿#include "camera.h"
 #include <QDebug>
 #include <QMutex>
 #include <QImage>
@@ -8,6 +7,7 @@
 #include <string>
 #include <QSettings>
 #include <QDateTime>
+#include <QFile>
 
 std::queue<cv::Mat> Camera::gImage;
 LONG g_nPort = -1; // 初始化为-1表示未获取端口
@@ -27,7 +27,7 @@ void CALLBACK DecCBFun(long nPort, char *pBuf, long nSize, FRAME_INFO *pFrameInf
         // cv::imshow("RGBImage1", bgrImage);
         // cv::waitKey(15);
         QMutexLocker locker(&queueMutex);
-        if (Camera::gImage.size() > 1)
+        if (Camera::gImage.size() > 5)
         {
             Camera::gImage.pop();
         }
@@ -56,6 +56,13 @@ void CALLBACK g_RealDataCallBack_V30(LONG lPlayHandle, DWORD dwDataType, BYTE *p
 
 Camera::Camera(QObject *parent)
 {
+    videoSaveThread = new VideoSaveThread();
+    // 将视频保存线程的信号桥接给外部（DirectConnection：在保存线程内直接转发，避免排队到相机线程被阻塞的 run 阻塞）
+    connect(videoSaveThread, &VideoSaveThread::sendQStringtoMain, this, &Camera::sendQStringtoMain, Qt::DirectConnection);
+    // 视频控制信号连接（跨线程，自动排队到保存线程）
+    connect(this, &Camera::sigStartRecording, videoSaveThread, &VideoSaveThread::doStartRecording, Qt::QueuedConnection);
+    connect(this, &Camera::sigWriteFrame, videoSaveThread, &VideoSaveThread::doWriteFrame, Qt::QueuedConnection);
+    connect(this, &Camera::sigStopRecording, videoSaveThread, &VideoSaveThread::doStopRecording, Qt::QueuedConnection);
 }
 
 Camera::~Camera()
@@ -65,9 +72,6 @@ Camera::~Camera()
 void Camera::run()
 {
     Camera_thread_flag = false;
-
-    // 清理上次运行残留的临时录制目录
-    QDir(baseVideoPath + "temp/").removeRecursively();
 
     // 链接PLC
     if (!connectPLC())
@@ -372,21 +376,19 @@ void Camera::run()
 
                 if (cur_keti == 1 && last_keti == 0)
                 {
-                    if (recordVideoEnabled)
-                        startRecording(original_image, BGR_image);
+                    if (videoSaveThread->isRecordEnabled())
+                    {
+                        currentVideoTimestamp = QDateTime::currentDateTime().toString("yyyyMMddhhmmss_zzz");
+                        emit sigStartRecording(original_image, BGR_image, currentVideoTimestamp);
+                    }
                     else
                         currentVideoTimestamp.clear();
                 }
 
-                if (!recordVideoEnabled && isRecording)
-                {
-                    stopRecording(false);
-                }
-                else if (isRecording)
-                {
-                    originalVideoWriter.write(original_image);
-                    resultVideoWriter.write(BGR_image);
-                }
+                if (!videoSaveThread->isRecordEnabled() && videoSaveThread->recording())
+                    emit sigStopRecording(false);
+                else if (videoSaveThread->recording())
+                    emit sigWriteFrame(original_image, BGR_image);
 
                 if (cur_keti == 0 && last_keti == 1)
                 {
@@ -404,13 +406,13 @@ void Camera::run()
                         if (!isActionsCompleted())
                             errorDetails.append("actions NG");
                         QString logMsg = QString("ERROR | %1").arg(errorDetails.join(", "));
-                        stopRecording(hasError);
+                        emit sigStopRecording(hasError);
                         if (saveErrorLogEnabled)
                             saveErrorLog(logMsg);
                     }
                     else
                     {
-                        stopRecording(hasError);
+                        emit sigStopRecording(hasError);
                     }
                     emit updateStatistics(!hasError);
                 }
@@ -468,7 +470,7 @@ void Camera::run()
         }
 
         emit finishedthread();
-        stopRecording(false);
+        emit sigStopRecording(false);
 
         if (useLocalVideo)
             emit sendQStringtoMain("Local video closed");
@@ -751,104 +753,22 @@ bool Camera::isActionsCompleted()
 
 void Camera::setRecordVideo(bool enable)
 {
-    recordVideoEnabled = enable;
+    videoSaveThread->setRecordVideo(enable);
 }
 
 void Camera::setSaveErrorVideo(bool enable)
 {
-    saveErrorVideoEnabled = enable;
+    videoSaveThread->setSaveErrorVideo(enable);
 }
 
 void Camera::setForceSaveVideo(bool enable)
 {
-    forceSaveVideo = enable;
+    videoSaveThread->setForceSaveVideo(enable);
 }
 
 void Camera::setSaveErrorLog(bool enable)
 {
     saveErrorLogEnabled = enable;
-}
-
-void Camera::startRecording(const cv::Mat &originalFrame, const cv::Mat &resultFrame)
-{
-    if (isRecording)
-        return;
-
-    currentVideoTimestamp = QDateTime::currentDateTime().toString("yyyyMMddhhmmss_zzz");
-
-    currentTempDir = baseVideoPath + "temp/" + currentVideoTimestamp + "/";
-    QDir().mkpath(currentTempDir);
-
-    // 原图视频
-    QString originalPath = currentTempDir + "original.avi";
-    originalVideoWriter.open(originalPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, originalFrame.size());
-
-    // 结果图视频
-    QString resultPath = currentTempDir + "result.avi";
-    resultVideoWriter.open(resultPath.toStdString(), cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 15, resultFrame.size());
-
-    if (originalVideoWriter.isOpened() && resultVideoWriter.isOpened())
-    {
-        isRecording = true;
-        qDebug() << "Started recording:" << originalPath << "and" << resultPath;
-    }
-    else
-    {
-        if (originalVideoWriter.isOpened())
-            originalVideoWriter.release();
-        if (resultVideoWriter.isOpened())
-            resultVideoWriter.release();
-
-        // 打开失败，清掉本段空目录
-        QDir(currentTempDir).removeRecursively();
-        currentTempDir.clear();
-    }
-}
-
-void Camera::stopRecording(bool save)
-{
-    if (!isRecording)
-        return;
-
-    // 关闭视频写入
-    if (originalVideoWriter.isOpened())
-        originalVideoWriter.release();
-    if (resultVideoWriter.isOpened())
-        resultVideoWriter.release();
-
-    QString originalPath = currentTempDir + "original.avi";
-    QString resultPath = currentTempDir + "result.avi";
-
-    auto copyToPairDirs = [&](const QString &saveDir, const QString &origSubDir, const QString &resSubDir, const QString &logTag)
-    {
-        QString originalDir = saveDir + origSubDir + "/";
-        QString resultDir = saveDir + resSubDir + "/";
-        QDir(originalDir).mkpath(".");
-        QDir(resultDir).mkpath(".");
-
-        if (QFile::exists(originalPath))
-            QFile::copy(originalPath, originalDir + currentVideoTimestamp + ".avi");
-        if (QFile::exists(resultPath))
-            QFile::copy(resultPath, resultDir + currentVideoTimestamp + ".avi");
-
-        emit sendQStringtoMain(logTag + currentVideoTimestamp);
-    };
-
-    if (recordVideoEnabled && forceSaveVideo)
-        copyToPairDirs(baseVideoPath + "/force_save/", "original_force", "result_force", "Force saved videos: ");
-
-    if (saveErrorVideoEnabled && save)
-        copyToPairDirs(baseVideoPath + QDateTime::currentDateTime().toString("yyyyMMdd") + "/", "original_error", "result_error", "Error videos saved: ");
-
-    // 删除本次录制的临时子目录
-    if (!currentTempDir.isEmpty())
-    {
-        QDir(currentTempDir).removeRecursively();
-        currentTempDir.clear();
-    }
-
-    isRecording = false;
-    qDebug() << "Stopped recording:" << originalPath << "and" << resultPath;
 }
 
 void Camera::saveErrorLog(const QString &message)

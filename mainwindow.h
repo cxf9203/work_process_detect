@@ -138,4 +138,5 @@ private:
     bool isSliderPressed = false;
     QList<LuosiROIConfig> luosiROIList;
 };
+
 #endif // MAINWINDOW_H

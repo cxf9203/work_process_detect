@@ -64,6 +64,8 @@ set(BASE_SOURCES
     mainwindow.ui
     camera.cpp
     camera.h
+    videosavethread.cpp
+    videosavethread.h
     yolov8_common.cpp
     qdarkstyle/dark/darkstyle.qrc
     app.rc
